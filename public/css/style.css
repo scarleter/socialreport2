@@ -1,0 +1,29 @@
+
+/*login*/
+.content.login form{
+    max-width:800px;
+}
+.fb_icon{
+    background: url(../images/RqQo1U5NOq1.png);
+    height: 16px;
+    width: 16px!important;
+    vertical-align: text-bottom;
+}
+.fb_like{
+    background-position: -34px -94px;
+}
+.fb_love{
+    background-position: -51px -94px;
+}
+.fb_haha{
+    background-position: -17px -94px;
+}
+.fb_wow{
+    background-position: -102px -94px;
+}
+.fb_sad{
+    background-position: -85px -94px;
+}
+.fb_anger{
+    background-position: -119px -77px;
+}
