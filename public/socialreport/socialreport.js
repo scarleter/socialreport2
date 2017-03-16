@@ -155,7 +155,7 @@
         var Operation = SocialReport.Operation = function (Data, Options) {
             this.data = Data || {};
             this.options = Options || {};
-            this.dayRange = Toolbox.sectoday(this.options.seconds) || 0;
+            this.dayRange = Toolbox.secToDay(this.options.seconds) || 0;
             this.options.parse && this.options.parse() || this.parse(this.options.datasource);
         };
 
@@ -319,11 +319,18 @@
         var Toolbox = SocialReport.Toolbox = {
             
             //convert seconds to day
-            sectoday: function(Seconds){
+            secToDay: function(Seconds){
                 var seconds = parseInt(Seconds) || 0;
                 return Math.ceil(seconds/(60*60*24));
             },
             
+            //format time
+            formatTime: function(Time){
+                var time = Time || '';
+                time = new Date(new Date(time).getTime());//UTC base on created_time: XXX-XX-XXTXX:XX:XX+0000(GMT) 
+                time = time.getFullYear() + "-" + ("0"+(time.getMonth()+1)).slice(-2) + "-" + ("0" + time.getDate()).slice(-2) + " " + ("0" + time.getHours()).slice(-2) + ":" + ("0" + time.getMinutes()).slice(-2) + ":" + ("0" + time.getSeconds()).slice(-2);
+                return time;
+            }
         };
 
 
