@@ -155,7 +155,83 @@
         var Operation = SocialReport.Operation = function (Data, Options) {
             this.data = Data || {};
             this.options = Options || {};
+            this.options.parse && this.options.parse() || this.parse(this.options.datasource);
         };
+
+        //parse Data
+        Operation.prototype.parse = function (Datasource) {
+            var datasource = Datasource || '';
+            datasource = datasource.toLowerCase();
+            switch (datasource) {
+                case 'facebook':
+                    return this.parseFacebookData();
+                    break;
+                case 'google':
+                    return this.parseGoogleData();
+                    break;
+                default:
+                    return false;
+                    break;
+            }
+        };
+
+        //parse facebook data
+        Operation.prototype.parseFacebookData = function () {
+            var result = [],
+                origin = this.getData(),
+                size = this.getSize();
+            for (var i = 0; i < size; i++) {
+                var obj = {};
+                obj['comments'] = origin[i]['comments'] ? origin[i]['comments']['summary']['total_count'] : 0;
+                obj['shares'] = origin[i]['shares'] ? origin[i]['shares']['count'] : 0;
+                obj['created_time'] = origin[i]['created_time'] || '';
+                obj['id'] = origin[i]['id'] || '';
+                obj['message'] = origin[i]['message'] || '';
+                obj['permalink_url'] = origin[i]['permalink_url'] || '';
+                obj['insights'] = origin[i]['insights']['data'] || '';
+                //get insights object data
+                for (var j = 0; j < obj['insights'].length; j++) {
+                    switch (obj['insights'][j]['name']) {
+                        case 'post_impressions_organic':
+                            obj['post_impressions_organic'] = obj['insights'][j]['values']['0']['value'];
+                            break;
+                        case 'post_impressions_by_story_type':
+                            obj['post_impressions_by_story_type'] = obj['insights'][j]['values']['0']['value'];
+                            break;
+                        case 'post_impressions_paid':
+                            obj['post_impressions_paid'] = obj['insights'][j]['values']['0']['value'];
+                            break;
+                        case 'post_impressions':
+                            obj['post_impressions'] = obj['insights'][j]['values']['0']['value'];
+                            break;
+                        case 'post_impressions_unique':
+                            obj['post_impressions_unique'] = obj['insights'][j]['values']['0']['value'];
+                            break;
+                        case 'post_impressions_paid_unique':
+                            obj['post_impressions_paid_unique'] = obj['insights'][j]['values']['0']['value'];
+                            break;
+                        case 'post_reactions_by_type_total':
+                            obj['post_reactions_by_type_total'] = obj['insights'][j]['values']['0']['value'];
+                            break;
+                        case 'post_consumptions_by_type':
+                            obj['post_consumptions_by_type'] = obj['insights'][j]['values']['0']['value'];
+                            break;
+                        case 'post_video_views':
+                            obj['post_video_views'] = obj['insights'][j]['values']['0']['value'];
+                            break;
+                        case 'post_video_views':
+                            obj['post_video_views'] = obj['insights'][j]['values']['0']['value'];
+                            break;
+                        default:
+                            break;
+                    };
+                }
+                result[i] = obj;
+            }
+            this.setData(result);
+        };
+
+
 
         //get Data
         Operation.prototype.getData = function () {
@@ -251,8 +327,11 @@ $(function () {
     //set facebook posts request callback
     function FBPostsCallback(resp) {
         var postsOperation;
-        postsOperation = new SocialReport.Operation(resp);
+        postsOperation = new SocialReport.Operation(resp, {
+            datasource: 'facebook'
+        });
         console.info(postsOperation.getSize());
+        console.info(postsOperation.getData());
     };
     SocialReport.DataInterface.getFacebookPosts(params, FBPostsCallback);
 
