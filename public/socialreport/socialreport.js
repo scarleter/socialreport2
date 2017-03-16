@@ -84,17 +84,58 @@
             DataInterface.post(data, Options);
         };
 
-//        //temporary function to get facebook posts data before the sever php versin upgrade to 5.4 or above
-//        DataInterface.getFacebookPosts = function (Data, Options) {
-//            //build empty object `result`
-//            var data = Data || {},
-//                options = Options || {},
-//                result = {};
-//            //if `data.since` or `data.until` or `data.access_token` or `options.url` is empty return `result`
-//            if (!(data.since && data.until && data.access_token && options.url)) return result;
-//            //call DataInterface.ajax to get the whole request Data
-//            DataInterface.ajax(data, options);
-//        };
+        //temporary function to get facebook posts data before the sever php versin upgrade to 5.4 or above
+        DataInterface.getFacebookPosts = function (Params, Callback) {
+
+            var params = Params || {},
+                data = {
+                    since: params.since || '',
+                    until: params.until || '',
+                    access_token: params.access_token || ''
+                },
+                options = {},
+                result = {
+                    data: []
+                },
+                error = '',
+                success = '',
+                callback = Callback || function (resp) {
+                    console.info(resp)
+                };
+
+            //if `data.since` or `data.until` or `data.access_token` or `params.pageid` is empty return `result`
+            if (!(data.since && data.until && data.access_token && params.pageid)) return result.data;
+            options = {
+                url: 'https://graph.facebook.com/v2.8/' + params.pageid + '/posts?fields=id,permalink_url,message,type,created_time,insights.metric(post_impressions_organic,post_impressions_by_story_type,post_impressions_paid,post_impressions,post_impressions_unique,post_impressions_paid_unique,post_reactions_by_type_total,post_consumptions_by_type,post_video_views),shares,comments.limit(0).summary(1)',
+                context: result
+            };
+
+            //set the `options.error`
+            error = options.error = function (resp) {
+                console.info(resp);
+            };
+            //set the `options.success`
+            success = options.success = function (resp) {
+                if (resp['data']) {
+                    this.data = this.data.concat(resp['data']);
+                    if (resp['paging']) {
+                        var nextUrl = resp['paging']['next'];
+                        SocialReport.DataInterface.ajax({}, {
+                            url: nextUrl,
+                            context: this,
+                            success: success,
+                            error: error
+                        });
+                    } else {
+                        callback(result.data);
+                    }
+                } else {
+                    callback(result.data);
+                }
+            };
+
+            SocialReport.DataInterface.ajax(data, options);
+        };
 
 
 
@@ -151,7 +192,7 @@
         Operation.prototype.getSize = function () {
             var data = this.data || {},
                 type = (typeof data).toLowerCase();
-            type = type === 'object' ? (Operation._isArray(data) ? 'array' : 'object') : type;
+            type = type === 'object' ? (this._isArray(data) ? 'array' : 'object') : type;
 
             switch (type) {
                 case 'string':
@@ -161,7 +202,7 @@
                     return data.length;
                     break;
                 case 'object':
-                    return Operation._getObjectSize(data);
+                    return this._getObjectSize(data);
                     break;
                 default:
                     return 0;
@@ -200,51 +241,20 @@
 })($, window);
 
 $(function () {
+    //set facebook posts request params
+    var params = {
+        since: 1489075200,
+        until: 1489679999,
+        pageid: 'easttouchhk',
+        access_token: 'EAAFXtii9o4kBAKORsZAcZCj2wSk3cNI1ZC5aXwR5IafH6lfLeBx3y8b8U7EdHPkNot4vzS5R8AJOfiZCHPFt7FZBAoP9fhsao3IlvTEo58tbKrFUOOzD3vIZAqqvdPpjhROoMfwW0EY4fbd7E9sL8rehd95wHXejnOcm4GNeLKKwMT2QUcvCccvsJzDZC1IX5UZD'
+    };
+    //set facebook posts request callback
+    function FBPostsCallback(resp) {
+        var postsOperation;
+        postsOperation = new SocialReport.Operation(resp);
+        console.info(postsOperation.getSize());
+    };
+    SocialReport.DataInterface.getFacebookPosts(params, FBPostsCallback);
 
-    function test() {
-        //set `data` and `options`
-        var data = {
-                since: 1489507200,
-                until: 1489593599,
-                access_token: 'EAAFXtii9o4kBAJgTjcc6EutPBJjQGbdmFHZBNfd0s6is1B6cxMu3ZBXjyaoj2fy6p3qNZA2ZAJTl04169tkd8GPEFRLeaqcMM9Ua70r7oj9AAQbn6Jk0y7oZBOGbUjl4Cc7ENceNRhFI1tqbXIINRL7BawoJhrcVJ6wy31oeYulfNCTCBFVrRU8LjNhD6YaYZD',
-            },
-            options = {
-                url: 'https://graph.facebook.com/v2.8/easttouchhk/posts?fields=id,permalink_url,message,type,created_time,insights.metric(post_impressions_organic,post_impressions_by_story_type,post_impressions_paid,post_impressions,post_impressions_unique,post_impressions_paid_unique,post_reactions_by_type_total,post_consumptions_by_type,post_video_views),shares,comments.limit(0).summary(1)'
-            },
-            result = {
-                data: []
-            },
-            error = '',
-            success = '';
-        options.context = result;
 
-        //set the `options.error`
-        error = options.error = function (resp) {
-            console.info(resp);
-        };
-        //set the `options.success`
-        success = options.success = function (resp) {
-            console.info(resp);
-            console.info(this);
-            if (resp['data']) {
-                this.data = this.data.concat(resp['data']);
-                if (resp['paging']) {
-                    var nextUrl = resp['paging']['next'];
-                    SocialReport.DataInterface.ajax({}, {
-                        url: nextUrl,
-                        context: this,
-                        success: success,
-                        error: error
-                    });
-                } else {
-                    console.info(result.data);
-                }
-            } else {
-                console.info(result.data);
-            }
-        };
-
-        SocialReport.DataInterface.ajax(data, options);
-    }
-    test();
 });
