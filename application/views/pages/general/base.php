@@ -97,6 +97,7 @@
 <script src="<?= base_url() ?>public/dist/js/pages/dashboard.js"></script>-->
 <!-- AdminLTE for demo purposes -->
 <script src="<?= base_url() ?>public/dist/js/demo.js"></script>
+<script src="<?= base_url() ?>public/socialreport/socialreport.js"></script>
 <body class="hold-transition skin-blue sidebar-mini">
 <div class="wrapper">
 

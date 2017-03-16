@@ -8,54 +8,95 @@
     window.SocialReport = function () {
         var SocialReport = {};
 
-        //SocialReport.Data
-        //-----------------
+        //SocialReport.DataInterface
+        //--------------------------
 
-        //Data class is designed to get the facebook and google data by ajax.
-        var Data = SocialReport.Data = {};
+        //DataInterface class is designed to get the facebook and google data by ajax.
+        var DataInterface = SocialReport.DataInterface = {};
 
         //url for get data from server
-        Data.url = '';
+        DataInterface.url = '';
 
         //wrap ajax
-        Data.ajax = function (data, options) {
+        DataInterface.ajax = function (Data, Options) {
+            //set `success` function
+            var success = function (resp) {
+                //if `Options.success` exists call it
+                if (Options.success) {
+                    //if `Options.context` exists use function.prototype.call to call `Options.success`
+                    if (Options.context) {
+                        Options.success.call(Options.context, resp);
+                    } else {
+                        Options.success(resp);
+                    }
+                }
+            };
+
+            //set `error` function
+            var error = function (resp) {
+                //if `Options.error` exists call it
+                if (Options.error) {
+                    //if `Options.context` exists use function.prototype.call to call `Options.error`
+                    if (Options.context) {
+                        Options.error.call(Options.context, resp);
+                    } else {
+                        Options.error(resp);
+                    }
+                }
+            };
+
+
             $.ajax({
-                url: options.url || Data.url,
-                type: options.type || 'GET',
-                data: data,
-                dataType: options.datatype || 'json',
-                success: options.success || '',
-                error: options.error || ''
+                url: Options.url,
+                type: Options.type || 'GET',
+                data: Data,
+                dataType: Options.datatype || 'json',
+                success: success,
+                error: error
             });
         };
 
         //get data from server by ajax.
-        Data.get = function (data, options) {
-            Data.ajax(data, options || '');
+        DataInterface.get = function (Data, Options) {
+            DataInterface.ajax(Data, Options || '');
         };
 
         //post data to server by ajax.
-        Data.post = function (data, options) {
-            Data.ajax(data, options || '');
+        DataInterface.post = function (Data, Options) {
+            DataInterface.ajax(Data, Options || '');
         };
 
         //update the whole data to server.
-        Data.put = function (data, options) {
-            //use Data.post for now, do not figure out the best way to simulate RESTful api.
-            Data.post(data, options);
+        DataInterface.put = function (Data, Options) {
+            //use DataInterface.post for now, do not figure out the best way to simulate RESTful api.
+            DataInterface.post(Data, Options);
         };
 
         //update the property of data to server.
-        Data.patch = function (data, options) {
-            //use Data.post for now, do not figure out the best way to simulate RESTful api.
-            Data.post(data, options);
+        DataInterface.patch = function (Data, Options) {
+            //use DataInterface.post for now, do not figure out the best way to simulate RESTful api.
+            DataInterface.post(Data, Options);
         };
 
         //delete data from server by ajax simulate RESTful api.
-        Data.delete = function (data, options) {
-            //use Data.post for now, do not figure out the best way to simulate RESTful api.
-            Data.post(data, options);
+        DataInterface.delete = function (data, Options) {
+            //use DataInterface.post for now, do not figure out the best way to simulate RESTful api.
+            DataInterface.post(data, Options);
         };
+
+//        //temporary function to get facebook posts data before the sever php versin upgrade to 5.4 or above
+//        DataInterface.getFacebookPosts = function (Data, Options) {
+//            //build empty object `result`
+//            var data = Data || {},
+//                options = Options || {},
+//                result = {};
+//            //if `data.since` or `data.until` or `data.access_token` or `options.url` is empty return `result`
+//            if (!(data.since && data.until && data.access_token && options.url)) return result;
+//            //call DataInterface.ajax to get the whole request Data
+//            DataInterface.ajax(data, options);
+//        };
+
+
 
 
         //SocialReport.View
@@ -157,3 +198,53 @@
 
 
 })($, window);
+
+$(function () {
+
+    function test() {
+        //set `data` and `options`
+        var data = {
+                since: 1489507200,
+                until: 1489593599,
+                access_token: 'EAAFXtii9o4kBAJgTjcc6EutPBJjQGbdmFHZBNfd0s6is1B6cxMu3ZBXjyaoj2fy6p3qNZA2ZAJTl04169tkd8GPEFRLeaqcMM9Ua70r7oj9AAQbn6Jk0y7oZBOGbUjl4Cc7ENceNRhFI1tqbXIINRL7BawoJhrcVJ6wy31oeYulfNCTCBFVrRU8LjNhD6YaYZD',
+            },
+            options = {
+                url: 'https://graph.facebook.com/v2.8/easttouchhk/posts?fields=id,permalink_url,message,type,created_time,insights.metric(post_impressions_organic,post_impressions_by_story_type,post_impressions_paid,post_impressions,post_impressions_unique,post_impressions_paid_unique,post_reactions_by_type_total,post_consumptions_by_type,post_video_views),shares,comments.limit(0).summary(1)'
+            },
+            result = {
+                data: []
+            },
+            error = '',
+            success = '';
+        options.context = result;
+
+        //set the `options.error`
+        error = options.error = function (resp) {
+            console.info(resp);
+        };
+        //set the `options.success`
+        success = options.success = function (resp) {
+            console.info(resp);
+            console.info(this);
+            if (resp['data']) {
+                this.data = this.data.concat(resp['data']);
+                if (resp['paging']) {
+                    var nextUrl = resp['paging']['next'];
+                    SocialReport.DataInterface.ajax({}, {
+                        url: nextUrl,
+                        context: this,
+                        success: success,
+                        error: error
+                    });
+                } else {
+                    console.info(result.data);
+                }
+            } else {
+                console.info(result.data);
+            }
+        };
+
+        SocialReport.DataInterface.ajax(data, options);
+    }
+    test();
+});
