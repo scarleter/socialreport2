@@ -1,7 +1,7 @@
 //SocialReport.js
 
 //It is dependent on jQuery.
-//It has three subclassess: Data, vVew and Operation
+//It has some subclassess: Data, vVew, Operation and Toolbox
 
 ;
 (function ($, window) {
@@ -155,6 +155,7 @@
         var Operation = SocialReport.Operation = function (Data, Options) {
             this.data = Data || {};
             this.options = Options || {};
+            this.dayRange = Toolbox.sectoday(this.options.seconds) || 0;
             this.options.parse && this.options.parse() || this.parse(this.options.datasource);
         };
 
@@ -180,6 +181,7 @@
             var result = [],
                 origin = this.getData(),
                 size = this.getSize();
+            //loop to set data
             for (var i = 0; i < size; i++) {
                 var obj = {};
                 obj['comments'] = origin[i]['comments'] ? origin[i]['comments']['summary']['total_count'] : 0;
@@ -189,7 +191,7 @@
                 obj['message'] = origin[i]['message'] || '';
                 obj['permalink_url'] = origin[i]['permalink_url'] || '';
                 obj['insights'] = origin[i]['insights']['data'] || '';
-                //get insights object data
+                //loop to set insights object data
                 for (var j = 0; j < obj['insights'].length; j++) {
                     switch (obj['insights'][j]['name']) {
                         case 'post_impressions_organic':
@@ -245,19 +247,19 @@
 
         //get dateRange
         Operation.prototype.getDateRange = function () {
-            return this.data.dateRange || 0;
+            return this.dateRange || 0;
         };
 
         //set dateRange
         Operation.prototype.setDateRange = function (DateRange) {
-            return this.data.dateRange = DateRange || 0;
+            return this.dateRange = DateRange || 0;
         };
 
         //calculate frequency
         Operation.prototype.frequency = function () {
-            var dateRange = parseInt(this.data.dateRange),
+            var dateRange = parseInt(this.getDateRange()),
                 size = parseInt(this.getSize());
-            if (this.data.dateRange) {
+            if (dateRange) {
                 return Math.float(size / dateRange).toFixed(2);
             } else {
                 return 0;
@@ -266,7 +268,7 @@
 
         //get data size
         Operation.prototype.getSize = function () {
-            var data = this.data || {},
+            var data = this.getData() || {},
                 type = (typeof data).toLowerCase();
             type = type === 'object' ? (this._isArray(data) ? 'array' : 'object') : type;
 
@@ -307,6 +309,21 @@
         Operation.prototype._isArray = function (Obj) {
             var obj = Obj || {};
             return Object.prototype.toString.call(obj) === '[object Array]';
+        };
+        
+        
+        //class Toolbox
+        //-------------
+        
+        //class to deal with some calculation
+        var Toolbox = SocialReport.Toolbox = {
+            
+            //convert seconds to day
+            sectoday: function(Seconds){
+                var seconds = parseInt(Seconds) || 0;
+                return Math.ceil(seconds/(60*60*24));
+            },
+            
         };
 
 
