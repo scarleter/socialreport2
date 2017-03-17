@@ -143,8 +143,83 @@
         //SocialReport.View
         //-----------------
 
-        //View class deal with UI 
-        var View = SocialReport.View = {};
+        //View class is an Abstract Data Type
+        var View = SocialReport.View = function (Id) {
+            //set `id`
+            this.setId(Id);
+            //initialize
+            this.initialize();
+
+        };
+
+        $.extend(View.prototype, {
+            //set `id`
+            setId: function (Id) {
+                this.id = Id || '';
+                //if `this.id` empty or alreay in the `_idList` object then assert and return
+                if (!this.id || this._existInIdList(this.id)) {
+                    Toolbox.assert('Function SocialReport.View.setId: `id` is empty or alreay in the `idList` object');
+                    return;
+                }
+
+            },
+
+            //get `id`
+            getId: function () {
+                return this.id || '';
+            },
+
+            //object for saving used id
+            _idList: {},
+
+            //internal function check `id` exist in `idList`
+            _existInIdList: function () {
+                var id = this.getId();
+                return !!this._idList[id];
+            },
+
+            //insert `id` in `idList`
+            _insertInIdList: function () {
+                var id = this.getId();
+                return this._idList[id] = true;
+            },
+
+            //delete `id` in `idList`
+            _deleteInIdList: function () {
+                var id = this.getId();
+                return !(this._idList[id] = false);
+            },
+
+            //template
+            _templateInArray: [],
+
+            //set template
+            setTemplate: function (Template) {
+                var template = Template || '';
+                if (Toolbox.isArray(template)) {
+                    return this._templateInArray = template;
+                } else {
+                    Toolbox.assert('Function SocialReport.View.setTemplate: `template` is empty or not a array');
+                    return false;
+                }
+            },
+
+            //get template
+            getTemplate: function () {
+                return this._templateInArray;
+            },
+
+
+            //initialize
+            initialize: function () {
+
+            },
+
+            //render
+            render: function () {
+
+            }
+        });
 
 
 
@@ -280,7 +355,7 @@
         Operation.prototype.getSize = function () {
             var data = this.getData() || {},
                 type = (typeof data).toLowerCase();
-            type = type === 'object' ? (this._isArray(data) ? 'array' : 'object') : type;
+            type = type === 'object' ? (Toolbox.isArray(data) ? 'array' : 'object') : type;
 
             switch (type) {
                 case 'string':
@@ -315,12 +390,6 @@
             return size;
         };
 
-        //internal function which check Object is Array
-        Operation.prototype._isArray = function (Obj) {
-            var obj = Obj || {};
-            return Object.prototype.toString.call(obj) === '[object Array]';
-        };
-
 
         //class Toolbox
         //-------------
@@ -347,6 +416,12 @@
                 var msg = Msg || '';
                 console.warn(msg);
             },
+
+            //check Object is Array
+            isArray: function (Obj) {
+                var obj = Obj || {};
+                return Object.prototype.toString.call(obj) === '[object Array]';
+            },
         };
 
 
@@ -355,7 +430,7 @@
 
         //Facebook class contain function relative facebook
         var Facebook = SocialReport.Facebook = {
-            
+
             //get function posts data base on which to generate a Operation object
             genPostsOperationObj: function (Params, Callback) {
                 //set facebook posts request params

@@ -181,7 +181,7 @@
     //initialize posts view after genPostsOperation
     function initPostsView() {
         var postOperations = this;
-        console.info(postOperations.getData());
+        console.info(postOperations.getSize());
     };
 
 </script>
