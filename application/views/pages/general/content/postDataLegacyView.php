@@ -30,12 +30,7 @@
                             <!--<label>Date range button:</label>-->
 
                             <div class="input-group">
-                                <button type="button" class="btn btn-default pull-right" id="daterange-btn">
-                    <span>
-                      <i class="fa fa-calendar"></i> Date range picker
-                    </span>
-                    <i class="fa fa-caret-down"></i>
-                  </button>
+                                <span id="dateRangePickerOne"></span>
                             </div>
                         </div>
 
@@ -168,7 +163,7 @@
             pageid: '<?php echo $pageId;?>',
             access_token: '<?php echo $pageAccessToken;?>'
         };
-        
+
         //use asynchronous to get data and put the follow steps in the callback function such as `initPostsView`.
         SocialReport.Facebook.genPostsOperationObj(postsParams, initPostsView);
 
