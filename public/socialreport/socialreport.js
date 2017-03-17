@@ -1,7 +1,7 @@
 //SocialReport.js
 
 //It is dependent on jQuery.
-//It has some subclassess: Data, vVew, Operation and Toolbox
+//It has some subclassess: Data, vVew, Operation, Toolbox, Facebook
 
 ;
 (function ($, window) {
@@ -340,6 +340,40 @@
                 time = new Date(new Date(time).getTime()); //UTC base on created_time: XXX-XX-XXTXX:XX:XX+0000(GMT) 
                 time = time.getFullYear() + "-" + ("0" + (time.getMonth() + 1)).slice(-2) + "-" + ("0" + time.getDate()).slice(-2) + " " + ("0" + time.getHours()).slice(-2) + ":" + ("0" + time.getMinutes()).slice(-2) + ":" + ("0" + time.getSeconds()).slice(-2);
                 return time;
+            },
+
+            //assert function
+            assert: function (Msg) {
+                var msg = Msg || '';
+                console.warn(msg);
+            },
+        };
+
+
+        //class Facebook
+        //--------------
+
+        //Facebook class contain function relative facebook
+        var Facebook = SocialReport.Facebook = {
+            
+            //get function posts data base on which to generate a Operation object
+            genPostsOperationObj: function (Params, Callback) {
+                //set facebook posts request params
+                var params = Params || {};
+                //if `params.since` or `params.until` or `params.pageid` or `params.access_token` is 0 console assert the msg and return
+                if (!(params.since && params.until && params.pageid && params.access_token)) {
+                    SocialReport.Toolbox.assert('Function SocialReport.Facebook.genPostsOperationObj: params since or until or pageid or access_token is undefined');
+                    return;
+                }
+                //set facebook posts request callback
+                function FBPostsCallback(resp) {
+                    var postsOperation = new SocialReport.Operation(resp, {
+                        datasource: 'facebook',
+                        seconds: parseInt(params.until - params.since)
+                    });
+                    if (Callback) Callback.call(postsOperation);
+                };
+                SocialReport.DataInterface.getFacebookPosts(params, FBPostsCallback);
             }
         };
 
@@ -349,4 +383,3 @@
 
 
 })($, window);
-

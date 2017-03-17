@@ -160,33 +160,28 @@
 </div>
 <!-- /.content-wrapper -->
 
-<script type="" text/javascript>
+<script type="text/javascript">
     $(function() {
-
-        genPostsOperationObj();
-        //get function posts data base on which to generate a Operation object
-        function genPostsOperationObj() {
-            //set facebook posts request params
-            var params = {
-                since: 1489075200,
-                until: 1489679999,
-                pageid: '<?php echo $pageId;?>',
-                access_token: '<?php echo $pageAccessToken;?>'
-            };
-            //set facebook posts request callback
-            function FBPostsCallback(resp) {
-                var postsOperation;
-                postsOperation = new SocialReport.Operation(resp, {
-                    datasource: 'facebook',
-                    seconds: (84000)
-                });
-                console.info(postsOperation.getSize());
-                console.info(postsOperation.getData());
-                console.info(postsOperation.getDayRange());
-                console.info(postsOperation.frequency());
-            };
-            SocialReport.DataInterface.getFacebookPosts(params, FBPostsCallback);
+        var postsParams = {
+            since: 1489161600,
+            until: 1489766399,
+            pageid: '<?php echo $pageId;?>',
+            access_token: '<?php echo $pageAccessToken;?>'
         };
+        
+        //use asynchronous to get data and put the follow steps in the callback function such as `initPostsView`.
+        SocialReport.Facebook.genPostsOperationObj(postsParams, initPostsView);
+
+
+
+
+
     });
+
+    //initialize posts view after genPostsOperation
+    function initPostsView() {
+        var postOperations = this;
+        console.info(postOperations.getData());
+    };
 
 </script>
