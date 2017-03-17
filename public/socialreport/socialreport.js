@@ -186,7 +186,7 @@
                 var obj = {};
                 obj['comments'] = originObj[i]['comments'] ? originObj[i]['comments']['summary']['total_count'] : 0;
                 obj['shares'] = originObj[i]['shares'] ? originObj[i]['shares']['count'] : 0;
-                obj['created_time'] = originObj[i]['created_time'] || '';
+                obj['created_time'] = Toolbox.formatTime(originObj[i]['created_time']) || '';
                 obj['id'] = originObj[i]['id'] || '';
                 obj['message'] = originObj[i]['message'] || '';
                 obj['permalink_url'] = originObj[i]['permalink_url'] || '';
@@ -256,21 +256,21 @@
         };
 
         //get dateRange
-        Operation.prototype.getDateRange = function () {
-            return this.dateRange || 0;
+        Operation.prototype.getDayRange = function () {
+            return this.dayRange || 0;
         };
 
         //set dateRange
-        Operation.prototype.setDateRange = function (DateRange) {
-            return this.dateRange = DateRange || 0;
+        Operation.prototype.setDayRange = function (DayRange) {
+            return this.dayRange = DayRange || 0;
         };
 
         //calculate frequency
         Operation.prototype.frequency = function () {
-            var dateRange = parseInt(this.getDateRange()),
+            var dateRange = parseInt(this.getDayRange()),
                 size = parseInt(this.getSize());
             if (dateRange) {
-                return Math.float(size / dateRange).toFixed(2);
+                return parseFloat(size / dateRange).toFixed(2);
             } else {
                 return 0;
             }
@@ -362,10 +362,13 @@ $(function () {
     function FBPostsCallback(resp) {
         var postsOperation;
         postsOperation = new SocialReport.Operation(resp, {
-            datasource: 'facebook'
+            datasource: 'facebook',
+            seconds: (84000)
         });
         console.info(postsOperation.getSize());
         console.info(postsOperation.getData());
+        console.info(postsOperation.getDayRange());
+        console.info(postsOperation.frequency());
     };
     SocialReport.DataInterface.getFacebookPosts(params, FBPostsCallback);
 
