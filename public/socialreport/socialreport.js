@@ -178,19 +178,19 @@
 
         //parse facebook data
         Operation.prototype.parseFacebookData = function () {
-            var result = [],
-                origin = this.getData(),
+            var resultObj = [],
+                originObj = this.getData(),
                 size = this.getSize();
             //loop to set data
             for (var i = 0; i < size; i++) {
                 var obj = {};
-                obj['comments'] = origin[i]['comments'] ? origin[i]['comments']['summary']['total_count'] : 0;
-                obj['shares'] = origin[i]['shares'] ? origin[i]['shares']['count'] : 0;
-                obj['created_time'] = origin[i]['created_time'] || '';
-                obj['id'] = origin[i]['id'] || '';
-                obj['message'] = origin[i]['message'] || '';
-                obj['permalink_url'] = origin[i]['permalink_url'] || '';
-                obj['insights'] = origin[i]['insights']['data'] || '';
+                obj['comments'] = originObj[i]['comments'] ? originObj[i]['comments']['summary']['total_count'] : 0;
+                obj['shares'] = originObj[i]['shares'] ? originObj[i]['shares']['count'] : 0;
+                obj['created_time'] = originObj[i]['created_time'] || '';
+                obj['id'] = originObj[i]['id'] || '';
+                obj['message'] = originObj[i]['message'] || '';
+                obj['permalink_url'] = originObj[i]['permalink_url'] || '';
+                obj['insights'] = originObj[i]['insights']['data'] || '';
                 //loop to set insights object data
                 for (var j = 0; j < obj['insights'].length; j++) {
                     switch (obj['insights'][j]['name']) {
@@ -198,7 +198,7 @@
                             obj['post_impressions_organic'] = obj['insights'][j]['values']['0']['value'];
                             break;
                         case 'post_impressions_by_story_type':
-                            obj['post_impressions_by_story_type'] = obj['insights'][j]['values']['0']['value'];
+                            obj['post_impressions_by_story_type'] = obj['insights'][j]['values']['0']['value']['other'];
                             break;
                         case 'post_impressions_paid':
                             obj['post_impressions_paid'] = obj['insights'][j]['values']['0']['value'];
@@ -213,10 +213,58 @@
                             obj['post_impressions_paid_unique'] = obj['insights'][j]['values']['0']['value'];
                             break;
                         case 'post_reactions_by_type_total':
-                            obj['post_reactions_by_type_total'] = obj['insights'][j]['values']['0']['value'];
+                            //`reactionsObj` has different types of reactions need to break it down
+                            var reactionsObj = obj['insights'][j]['values']['0']['value'];
+                            obj['post_reactions_by_type_total'] = reactionsObj;
+                            for (var key in reactionsObj) {
+                                key = key.toLowerCase();
+                                switch (key) {
+                                    case 'like':
+                                        obj['like'] = reactionsObj['like'];
+                                        break;
+                                    case 'love':
+                                        obj['love'] = reactionsObj['love'];
+                                        break;
+                                    case 'haha':
+                                        obj['haha'] = reactionsObj['haha'];
+                                        break;
+                                    case 'wow':
+                                        obj['wow'] = reactionsObj['wow'];
+                                        break;
+                                    case 'sorry':
+                                        obj['sorry'] = reactionsObj['sorry'];
+                                        break;
+                                    case 'angry':
+                                        obj['angry'] = reactionsObj['angry'];
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
                             break;
                         case 'post_consumptions_by_type':
-                            obj['post_consumptions_by_type'] = obj['insights'][j]['values']['0']['value'];
+                            //`consumptionsObj` has different types of consumptions need to break it down
+                            var consumptionsObj = obj['insights'][j]['values']['0']['value'];
+                            obj['post_consumptions_by_type'] = consumptionsObj;
+                            for (var key in consumptionsObj) {
+                                key = key.toLowerCase();
+                                switch (key) {
+                                    case 'link clicks':
+                                        obj['link clicks'] = consumptionsObj['link clicks'];
+                                        break;
+                                    case 'other clicks':
+                                        obj['other clicks'] = consumptionsObj['other clicks'];
+                                        break;
+                                    case 'photo view':
+                                        obj['photo view'] = consumptionsObj['photo view'];
+                                        break;
+                                    case 'video play':
+                                        obj['video play'] = consumptionsObj['video play'];
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
                             break;
                         case 'post_video_views':
                             obj['post_video_views'] = obj['insights'][j]['values']['0']['value'];
@@ -228,9 +276,9 @@
                             break;
                     };
                 }
-                result[i] = obj;
+                resultObj[i] = obj;
             }
-            this.setData(result);
+            this.setData(resultObj);
         };
 
 
@@ -310,25 +358,25 @@
             var obj = Obj || {};
             return Object.prototype.toString.call(obj) === '[object Array]';
         };
-        
-        
+
+
         //class Toolbox
         //-------------
-        
+
         //class to deal with some calculation
         var Toolbox = SocialReport.Toolbox = {
-            
+
             //convert seconds to day
-            secToDay: function(Seconds){
+            secToDay: function (Seconds) {
                 var seconds = parseInt(Seconds) || 0;
-                return Math.ceil(seconds/(60*60*24));
+                return Math.ceil(seconds / (60 * 60 * 24));
             },
-            
+
             //format time
-            formatTime: function(Time){
+            formatTime: function (Time) {
                 var time = Time || '';
-                time = new Date(new Date(time).getTime());//UTC base on created_time: XXX-XX-XXTXX:XX:XX+0000(GMT) 
-                time = time.getFullYear() + "-" + ("0"+(time.getMonth()+1)).slice(-2) + "-" + ("0" + time.getDate()).slice(-2) + " " + ("0" + time.getHours()).slice(-2) + ":" + ("0" + time.getMinutes()).slice(-2) + ":" + ("0" + time.getSeconds()).slice(-2);
+                time = new Date(new Date(time).getTime()); //UTC base on created_time: XXX-XX-XXTXX:XX:XX+0000(GMT) 
+                time = time.getFullYear() + "-" + ("0" + (time.getMonth() + 1)).slice(-2) + "-" + ("0" + time.getDate()).slice(-2) + " " + ("0" + time.getHours()).slice(-2) + ":" + ("0" + time.getMinutes()).slice(-2) + ":" + ("0" + time.getSeconds()).slice(-2);
                 return time;
             }
         };
@@ -346,7 +394,7 @@ $(function () {
         since: 1489075200,
         until: 1489679999,
         pageid: 'easttouchhk',
-        access_token: 'EAAFXtii9o4kBAKORsZAcZCj2wSk3cNI1ZC5aXwR5IafH6lfLeBx3y8b8U7EdHPkNot4vzS5R8AJOfiZCHPFt7FZBAoP9fhsao3IlvTEo58tbKrFUOOzD3vIZAqqvdPpjhROoMfwW0EY4fbd7E9sL8rehd95wHXejnOcm4GNeLKKwMT2QUcvCccvsJzDZC1IX5UZD'
+        access_token: 'EAAFXtii9o4kBAOtsYRReEAxrguhZAUgEmnXIGn0KZAICO1p2oH563AUqJpd8VXiVYGYOz3l2msgPAFiZBZByWddwZBpSnZBBp1oTf6L0Uyf8IQX6ZBFVaMMFeSABfSuvk1nZCbW1VCMz87ga1vnBq5ZBuuZBXpHVgblpMjA9ARNHzQZAKHkxhu42cY4gS1vwR5XgusZD'
     };
     //set facebook posts request callback
     function FBPostsCallback(resp) {
