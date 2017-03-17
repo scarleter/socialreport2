@@ -217,29 +217,7 @@
                             var reactionsObj = obj['insights'][j]['values']['0']['value'];
                             obj['post_reactions_by_type_total'] = reactionsObj;
                             for (var key in reactionsObj) {
-                                key = key.toLowerCase();
-                                switch (key) {
-                                    case 'like':
-                                        obj['like'] = reactionsObj['like'];
-                                        break;
-                                    case 'love':
-                                        obj['love'] = reactionsObj['love'];
-                                        break;
-                                    case 'haha':
-                                        obj['haha'] = reactionsObj['haha'];
-                                        break;
-                                    case 'wow':
-                                        obj['wow'] = reactionsObj['wow'];
-                                        break;
-                                    case 'sorry':
-                                        obj['sorry'] = reactionsObj['sorry'];
-                                        break;
-                                    case 'angry':
-                                        obj['angry'] = reactionsObj['angry'];
-                                        break;
-                                    default:
-                                        break;
-                                }
+                                obj[key] = reactionsObj[key];
                             }
                             break;
                         case 'post_consumptions_by_type':
@@ -247,23 +225,7 @@
                             var consumptionsObj = obj['insights'][j]['values']['0']['value'];
                             obj['post_consumptions_by_type'] = consumptionsObj;
                             for (var key in consumptionsObj) {
-                                key = key.toLowerCase();
-                                switch (key) {
-                                    case 'link clicks':
-                                        obj['link clicks'] = consumptionsObj['link clicks'];
-                                        break;
-                                    case 'other clicks':
-                                        obj['other clicks'] = consumptionsObj['other clicks'];
-                                        break;
-                                    case 'photo view':
-                                        obj['photo view'] = consumptionsObj['photo view'];
-                                        break;
-                                    case 'video play':
-                                        obj['video play'] = consumptionsObj['video play'];
-                                        break;
-                                    default:
-                                        break;
-                                }
+                                obj[key] = consumptionsObj[key];
                             }
                             break;
                         case 'post_video_views':
