@@ -144,11 +144,7 @@
         //-----------------
 
         //View class is an Abstract Data Type
-        var View = SocialReport.View = function (Id) {
-            //set `id`
-            this.setId(Id);
-            //initialize
-            this.initialize();
+        var View = SocialReport.View = function () {
 
         };
 
@@ -218,6 +214,35 @@
             //render
             render: function () {
 
+            }
+        });
+
+        //SocialReport.DateRangePicker
+        //----------------------------
+
+        //DateRangePicker is inherited from View
+        //It a dateRangePicker ui component (http://www.daterangepicker.com/)
+        var DateRangePicker = SocialReport.DateRangePicker = function (Id) {
+            this.setId(Id);
+            this.setTemplate(['<button type="button" class="btn btn-default pull-right" id="', '%ID%', '"><span><i class="fa fa-calendar"></i> Date range picker</span><i class="fa fa-caret-down"></i></button>']);
+            this.initialize();
+        };
+
+        $.extend(DateRangePicker.prototype, View.prototype, {
+            render: function () {
+                var id = this.getId(),
+                    $obj = $('#' + id),
+                    template = this.getTemplate().join('').replace('%ID%', id);
+                //check if has element which id is `id`
+                if ($obj.size() === 0) {
+                    Toolbox.assert('Function SocialReport.DateRangePicker.render: there is no element\'s id is ' + id);
+                    return false;
+                }
+                $obj.prop('outerHTML', template);
+            },
+
+            initialize: function () {
+                this.render();
             }
         });
 
