@@ -350,27 +350,3 @@
 
 })($, window);
 
-$(function () {
-    //set facebook posts request params
-    var params = {
-        since: 1489075200,
-        until: 1489679999,
-        pageid: 'easttouchhk',
-        access_token: 'EAAFXtii9o4kBAOtsYRReEAxrguhZAUgEmnXIGn0KZAICO1p2oH563AUqJpd8VXiVYGYOz3l2msgPAFiZBZByWddwZBpSnZBBp1oTf6L0Uyf8IQX6ZBFVaMMFeSABfSuvk1nZCbW1VCMz87ga1vnBq5ZBuuZBXpHVgblpMjA9ARNHzQZAKHkxhu42cY4gS1vwR5XgusZD'
-    };
-    //set facebook posts request callback
-    function FBPostsCallback(resp) {
-        var postsOperation;
-        postsOperation = new SocialReport.Operation(resp, {
-            datasource: 'facebook',
-            seconds: (84000)
-        });
-        console.info(postsOperation.getSize());
-        console.info(postsOperation.getData());
-        console.info(postsOperation.getDayRange());
-        console.info(postsOperation.frequency());
-    };
-    SocialReport.DataInterface.getFacebookPosts(params, FBPostsCallback);
-
-
-});

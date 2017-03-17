@@ -7,6 +7,10 @@ class Website extends MY_Controller {
     }
 
 	public function index(){
-		$this->loadview();
+        $data = array();
+        $data['pageId'] = FACEBOOK_WEBSITE_PAGEID;
+        $data['pageAccessToken'] = FACEBOOK_WEBSITE_PAGE_ACCESS_TOKEN;
+        $content = $this->load->view('pages/general/content/postDataLegacyView', $data, true);
+		$this->loadview($content);
 	}
 }
