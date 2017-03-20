@@ -50,7 +50,7 @@
                     </div>
                     <!-- /.box-header -->
                     <div class="box-body">
-                        <table id="fqyDataTable" class="table table-striped table-bordered dt-responsive" cellspacing="0" width="100%"></table>
+                        <span id="fqyDataTable"></span>
                     </div>
                     <!-- /.box-body -->
                 </div>
@@ -157,8 +157,10 @@
 
 <script type="text/javascript">
     $(function() {
+        //set a gobal variable
+        window.troperlaicos = {};
 
-        var dateRange = new SocialReport.DateRangePicker('dateRange', {
+        troperlaicos.dateRange = new SocialReport.DateRangePicker('dateRange', {
             callback: dateRangeCallback
         });
 
@@ -186,8 +188,39 @@
 
     //initialize posts view after genPostsOperation
     function initPostsView() {
-        var postOperations = this;
-        console.info(postOperations.getSize());
+        //set the data for frequency datatable
+        var postOperations = this,
+            numbersOfPosts = postOperations.getSize(),
+            dateRange = troperlaicos.dateRange.getRangeInDay(),
+            frequency, data;
+        postOperations.setDayRange(dateRange);
+        frequency = postOperations.frequency();
+        data = [
+            ['Data', numbersOfPosts, dateRange, frequency]
+        ];
+
+        //build datatable object for frequency
+        window.fqyDataTable = new SocialReport.DataTables('fqyDataTable', data, {
+            paging: false,
+            lengthChange: false,
+            searching: false,
+            ordering: false,
+            info: false,
+            autoWidth: false,
+            border: false,
+            columns: [{
+                    title: ""
+                }, {
+                    title: "Number of posts"
+                },
+                {
+                    title: "Period(day)"
+                },
+                {
+                    title: "Frequency"
+                }
+            ]
+        });
     };
 
 </script>

@@ -1,6 +1,6 @@
 //SocialReport.js
 
-//It is dependent on jQuery.
+//It is dependent on jQuery,moment,DataTables,DateRangePicker.
 //It has some subclassess: Data, vVew, Operation, Toolbox, Facebook
 
 ;
@@ -272,18 +272,22 @@
                 return this.callback;
             },
 
+            //get range in day
+            getRangeInDay: function () {
+                return Toolbox.secToDay((this.getEnd() - this.getStart()) / 1000);
+            },
+
+            //render
             render: function () {
-                var _this = this,
-                    id = this.getId(),
+                var id = this.getId(),
                     $obj = $('#' + id),
                     template = this.getTemplate().join('').replace('%ID%', id);
-                //check if has element which id is `id`
+                //check if there is element obj whose id attribute is `id`
                 if ($obj.size() === 0) {
                     Toolbox.assert('Function SocialReport.DateRangePicker.render: there is no element\'s id is ' + id);
                     return false;
                 }
                 $obj.prop('outerHTML', template);
-
             },
 
             //set daterangerpicker
@@ -329,6 +333,116 @@
                 this.setTemplate(['<button type="button" class="btn btn-default pull-right" id="', '%ID%', '"><span><i class="fa fa-calendar"></i> Date range picker</span><i class="fa fa-caret-down"></i></button>']);
                 this.render();
                 this.setDateRangePikcer();
+            }
+        });
+
+
+        //SocialReport.DataTables
+        //-----------------------
+
+        //DataTables is inherited from View
+        //It a DataTables ui component (https://datatables.net/)
+        //temporary add `Options` for further useage
+        var DataTables = SocialReport.DataTables = function (Id, TableData, TableAttrs, Options) {
+            this.initialize(Id, TableData, TableAttrs, Options);
+        };
+
+        $.extend(DataTables.prototype, View.prototype, {
+            //set dataTableObj
+            _setDataTableObj: function (Obj) {
+                if (!Obj || typeof (Obj) !== 'object') {
+                    Toolbox.assert('Function SocialReport.DataTables._setDataTableObj: Obj can not be undefined and should be an object');
+                    return false;
+                } else {
+                    this.dataTableObj = Obj;
+                }
+            },
+
+            //get dataTableObj
+            _getDataTableObj: function () {
+                return this.dataTableObj;
+            },
+
+            //set data
+            setData: function (Data) {
+                if (!Toolbox.isArray(Data)) {
+                    Toolbox.assert('Function SocialReport.DataTables.setData: Data can not be undefined and need to be an two dimensioin array.');
+                    return false;
+                } else {
+                    this.data = Data;
+                }
+            },
+
+            //get table
+            getData: function () {
+                return this.data;
+            },
+
+            //set tableAttrs
+            setTableAttrs: function (Attrs) {
+                if (!Attrs) {
+                    Toolbox.assert('Function SocialReport.DataTables.setTableAttrs: Attrs can not be undefined.');
+                    return false;
+                } else {
+                    return this.tableAttrs = Attrs;
+                }
+            },
+
+            //get tableAttrs
+            getTableAttrs: function () {
+                return this.tableAttrs;
+            },
+
+            //render the element obj
+            render: function () {
+                var id = this.getId(),
+                    $obj = $('#' + id),
+                    template = this.getTemplate().join('').replace('%ID%', id);
+                //check if there is element obj whose id attribute is `id`
+                if ($obj.size() === 0) {
+                    Toolbox.assert('Function SocialReport.DateRangePicker.render: there is no element\'s id is ' + id);
+                    return false;
+                }
+                $obj.prop('outerHTML', template);
+            },
+
+            //set DataTables
+            setDataTables: function () {
+                var id = this.getId(),
+                    $obj = $('#' + id),
+                    tableAttrs = $.extend({}, this.getTableAttrs(), {
+                        'data': this.getData()
+                    }),
+                    dataTableObj = $obj.DataTable(tableAttrs);
+                this._setDataTableObj(dataTableObj);
+            },
+
+            //destory the datatable
+            destoryDataTables: function () {
+                var dataTableObj = this._getDataTableObj();
+                if (dataTableObj) {
+                    dataTableObj.destroy();
+                }
+            },
+
+            //repaint the datatable
+            repaint: function (TableData, TableAttrs, Options) {
+                this.setData(TableData);
+                if (TableAttrs) {
+                    this.setTableAttrs(TableAttrs);
+                }
+                this.destoryDataTables();
+                this.setDataTables();
+            },
+
+            //initialize the element obj
+            initialize: function (Id, TableData, TableAttrs, Options) {
+                this.setId(Id);
+                this.setData(TableData);
+                this.setTableAttrs(TableAttrs);
+                this.setTemplate(['<table id="', '%ID%', '" class="table table-striped table-bordered dt-responsive" cellspacing="0" width="100%"></table>']);
+                this.render();
+                this.setDataTables();
             }
         });
 
