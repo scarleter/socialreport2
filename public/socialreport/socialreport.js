@@ -314,7 +314,7 @@
                     end = this.getEnd(),
                     cb = function (start, end) { //`start` and `end` is millisecond,you need to change it to unix stamp when you commuicate with server
                         //change the content of the daterangepicker
-                        $obj.find('span').html(moment(start).format('MMMM D, YYYY') + ' - ' + moment(end).format('MMMM D, YYYY'));
+                        $obj.find('span').html(_this.getDateRangeInText(start, end));
                         //call user's callback function
                         _this.callback.call(_this, moment(start), moment(end));
                     };
@@ -337,6 +337,11 @@
                 );
                 //first time to run the callback function by default
                 cb(start, end);
+            },
+
+            //get dateRange in text format
+            getDateRangeInText: function (Start, End) {
+                return moment(Start).format('MMMM D, YYYY') + ' - ' + moment(End).format('MMMM D, YYYY');
             },
 
             //initialize the element obj
@@ -505,6 +510,7 @@
                 obj['id'] = originObj[i]['id'] || '';
                 obj['message'] = originObj[i]['message'] || '';
                 obj['permalink_url'] = originObj[i]['permalink_url'] || '';
+                obj['type'] = originObj[i]['type'] || '';
                 obj['insights'] = originObj[i]['insights']['data'] || '';
                 //loop to set insights object data
                 for (var j = 0; j < obj['insights'].length; j++) {
@@ -668,7 +674,7 @@
                 var obj = Obj || {};
                 return typeof obj === 'function';
             },
-
+            
         };
 
 
