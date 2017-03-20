@@ -159,8 +159,10 @@
     $(function() {
 
         var dateRange = new SocialReport.DateRangePicker('dateRange', {
+            start: 1489161600000,
+            end: 1489766399000,
             callback: dateRangeCallback
-        });console.info(dateRange.getId());
+        });
 
         var postsParams = {
             since: 1489161600,
@@ -179,9 +181,9 @@
     });
 
     //call this function after the dateRange change
-    function dateRangeCallback() {
-        console.info(this.getStart());
-        console.info(this.getEnd());
+    function dateRangeCallback(start, end) {
+        console.info(this);
+        console.info(start);
     };
 
     //initialize posts view after genPostsOperation

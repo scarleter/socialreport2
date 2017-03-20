@@ -4,7 +4,7 @@
 //It has some subclassess: Data, vVew, Operation, Toolbox, Facebook
 
 ;
-(function ($, window, daterangepicker, moment) {
+(function ($, window, moment) {
     window.SocialReport = function () {
         var SocialReport = {};
 
@@ -223,22 +223,6 @@
         //DateRangePicker is inherited from View
         //It a dateRangePicker ui component (http://www.daterangepicker.com/)
         var DateRangePicker = SocialReport.DateRangePicker = function (Id, Options) {
-            
-            $('#'+Id).daterangepicker({
-                        alwaysShowCalendars: true,
-                        opens: 'right',
-                        ranges: {
-                            'Today': [moment().hours(0).minutes(0).seconds(0), moment().hours(23).minutes(59).seconds(59)],
-                            'Yesterday': [moment().subtract(1, 'days').hours(0).minutes(0).seconds(0), moment().subtract(1, 'days').hours(23).minutes(59).seconds(59)],
-                            'Last 7 Days': [moment().subtract(6, 'days').hours(0).minutes(0).seconds(0), moment().hours(23).minutes(59).seconds(59)],
-                            'Last 30 Days': [moment().subtract(29, 'days').hours(0).minutes(0).seconds(0), moment().hours(23).minutes(59).seconds(59)],
-                            'This Month': [moment().startOf('month').hours(0).minutes(0).seconds(0), moment().endOf('month').hours(23).minutes(59).seconds(59)],
-                            'Last Month': [moment().subtract(1, 'month').startOf('month').hours(0).minutes(0).seconds(0), moment().subtract(1, 'month').endOf('month').hours(23).minutes(59).seconds(59)]
-                        }
-                    },
-                    function(){console.info(123);}
-                );
-            
             this.initialize(Id, Options);
         };
 
@@ -288,8 +272,9 @@
                 return this.callback;
             },
 
-            render: function (Start, End, Callback) {
-                var id = this.getId(),
+            render: function () {
+                var _this = this,
+                    id = this.getId(),
                     $obj = $('#' + id),
                     template = this.getTemplate().join('').replace('%ID%', id);
                 //check if has element which id is `id`
@@ -298,7 +283,10 @@
                     return false;
                 }
                 $obj.prop('outerHTML', template);
-
+                //need to refresh the %obj because it is the old element obj
+                $obj = $('#' + id);
+                console.info(this);
+                //initialize daterangepicker
                 $obj.daterangepicker({
                         alwaysShowCalendars: true,
                         opens: 'right',
@@ -310,10 +298,15 @@
                             'This Month': [moment().startOf('month').hours(0).minutes(0).seconds(0), moment().endOf('month').hours(23).minutes(59).seconds(59)],
                             'Last Month': [moment().subtract(1, 'month').startOf('month').hours(0).minutes(0).seconds(0), moment().subtract(1, 'month').endOf('month').hours(23).minutes(59).seconds(59)]
                         },
-                        startDate: Start || this.getStart(),
-                        endDate: End || this.getEnd()
+                        startDate: this.getStart(),
+                        endDate: this.getEnd()
                     },
-                    Callback || this.getCallback()
+                    function (start, end) {
+                        //change the content of the daterangepicker
+                        $obj.find('span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
+                        //call user's callback function
+                        _this.callback.call(_this, start, end);
+                    }
                 );
             },
 
@@ -570,4 +563,4 @@
     }();
 
 
-})($, window, daterangepicker, moment);
+})($, window, moment);
