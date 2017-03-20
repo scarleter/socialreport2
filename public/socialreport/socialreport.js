@@ -1,12 +1,15 @@
 //SocialReport.js
 
-//It is dependent on jQuery,moment,DataTables,DateRangePicker.
+//It is dependent on jQuery,moment,DataTables(https://datatables.net/),DateRangePicker(http://www.daterangepicker.com/),layer(http://www.layui.com/doc/modules/layer.html).
 //It has some subclassess: Data, vVew, Operation, Toolbox, Facebook
 
 ;
-(function ($, window, moment) {
+(function ($, window, moment, layer) {
     window.SocialReport = function () {
         var SocialReport = {};
+
+        //variable for layer plugin ajax loading layer
+        var ajaxLoadingLayer = '';
 
         //SocialReport.DataInterface
         //--------------------------
@@ -21,6 +24,8 @@
         DataInterface.ajax = function (Data, Options) {
             //set `success` function
             var success = function (resp) {
+                //close ajax loading layer
+                layer.close(ajaxLoadingLayer);
                 //if `Options.success` exists call it
                 if (Options.success) {
                     //if `Options.context` exists use function.prototype.call to call `Options.success`
@@ -34,6 +39,8 @@
 
             //set `error` function
             var error = function (resp) {
+                //close ajax loading layer
+                layer.close(ajaxLoadingLayer);
                 //if `Options.error` exists call it
                 if (Options.error) {
                     //if `Options.context` exists use function.prototype.call to call `Options.error`
@@ -45,6 +52,14 @@
                 }
             };
 
+            //if has ajax loading layer then close it
+            if (ajaxLoadingLayer) {
+                layer.close(ajaxLoadingLayer);
+            }
+            //set a new one ajax loading layer
+            ajaxLoadingLayer = layer.load(2, {
+                shade: [0.1, '#000']
+            });
 
             $.ajax({
                 url: Options.url,
@@ -689,4 +704,4 @@
     }();
 
 
-})($, window, moment);
+})($, window, moment, layer);
