@@ -293,7 +293,7 @@
                     $obj = $('#' + id),
                     start = this.getStart(),
                     end = this.getEnd(),
-                    cb = function (start, end) {
+                    cb = function (start, end) { //`start` and `end` is millisecond,you need to change it to unix stamp when you commuicate with server
                         //change the content of the daterangepicker
                         $obj.find('span').html(moment(start).format('MMMM D, YYYY') + ' - ' + moment(end).format('MMMM D, YYYY'));
                         //call user's callback function

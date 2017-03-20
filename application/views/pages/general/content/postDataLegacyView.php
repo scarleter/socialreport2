@@ -170,8 +170,9 @@
 
     });
 
-    //call this function after the dateRange change
+    //dateRange change will trigger this function
     function dateRangeCallback(start, end) {
+        //set paras for getting facebook posts data
         var postsParams = {
             since: start.unix(),
             until: end.unix(),
