@@ -4,7 +4,7 @@
 //It has some subclassess: Data, vVew, Operation, Toolbox, Facebook
 
 ;
-(function ($, window) {
+(function ($, window, daterangepicker, moment) {
     window.SocialReport = function () {
         var SocialReport = {};
 
@@ -222,14 +222,73 @@
 
         //DateRangePicker is inherited from View
         //It a dateRangePicker ui component (http://www.daterangepicker.com/)
-        var DateRangePicker = SocialReport.DateRangePicker = function (Id) {
-            this.setId(Id);
-            this.setTemplate(['<button type="button" class="btn btn-default pull-right" id="', '%ID%', '"><span><i class="fa fa-calendar"></i> Date range picker</span><i class="fa fa-caret-down"></i></button>']);
-            this.initialize();
+        var DateRangePicker = SocialReport.DateRangePicker = function (Id, Options) {
+            
+            $('#'+Id).daterangepicker({
+                        alwaysShowCalendars: true,
+                        opens: 'right',
+                        ranges: {
+                            'Today': [moment().hours(0).minutes(0).seconds(0), moment().hours(23).minutes(59).seconds(59)],
+                            'Yesterday': [moment().subtract(1, 'days').hours(0).minutes(0).seconds(0), moment().subtract(1, 'days').hours(23).minutes(59).seconds(59)],
+                            'Last 7 Days': [moment().subtract(6, 'days').hours(0).minutes(0).seconds(0), moment().hours(23).minutes(59).seconds(59)],
+                            'Last 30 Days': [moment().subtract(29, 'days').hours(0).minutes(0).seconds(0), moment().hours(23).minutes(59).seconds(59)],
+                            'This Month': [moment().startOf('month').hours(0).minutes(0).seconds(0), moment().endOf('month').hours(23).minutes(59).seconds(59)],
+                            'Last Month': [moment().subtract(1, 'month').startOf('month').hours(0).minutes(0).seconds(0), moment().subtract(1, 'month').endOf('month').hours(23).minutes(59).seconds(59)]
+                        }
+                    },
+                    function(){console.info(123);}
+                );
+            
+            this.initialize(Id, Options);
         };
 
         $.extend(DateRangePicker.prototype, View.prototype, {
-            render: function () {
+            //set start time millisecond
+            setStart: function (millisecond) {
+                if (!isNaN(parseInt(millisecond))) {
+                    return this.start = millisecond;
+                } else {
+                    Toolbox.assert('Function SocialReport.DateRangePicker.setStart: millisecond is undefined or is invalid (need to be 1489420800000 or "1489420800")');
+                    return false;
+                }
+            },
+
+            //get start time millisecond
+            getStart: function () {
+                return this.start;
+            },
+
+            //set end time millisecond
+            setEnd: function (millisecond) {
+                if (!isNaN(parseInt(millisecond))) {
+                    return this.end = millisecond;
+                } else {
+                    Toolbox.assert('Function SocialReport.DateRangePicker.setEnd: millisecond is undefined or is invalid (need to be 1489420800000 or "1489420800")');
+                    return false;
+                }
+            },
+
+            //get end time millisecond
+            getEnd: function () {
+                return this.end;
+            },
+
+            //set callback function
+            setCallback: function (Callback) {
+                if (Toolbox.isFunction(Callback)) {
+                    this.callback = Callback;
+                } else {
+                    Toolbox.assert('Function SocialReport.DateRangePicker.setCallback: Callback is not a function');
+                    return false;
+                }
+            },
+
+            //get callback function
+            getCallback: function () {
+                return this.callback;
+            },
+
+            render: function (Start, End, Callback) {
                 var id = this.getId(),
                     $obj = $('#' + id),
                     template = this.getTemplate().join('').replace('%ID%', id);
@@ -239,9 +298,31 @@
                     return false;
                 }
                 $obj.prop('outerHTML', template);
+
+                $obj.daterangepicker({
+                        alwaysShowCalendars: true,
+                        opens: 'right',
+                        ranges: {
+                            'Today': [moment().hours(0).minutes(0).seconds(0), moment().hours(23).minutes(59).seconds(59)],
+                            'Yesterday': [moment().subtract(1, 'days').hours(0).minutes(0).seconds(0), moment().subtract(1, 'days').hours(23).minutes(59).seconds(59)],
+                            'Last 7 Days': [moment().subtract(6, 'days').hours(0).minutes(0).seconds(0), moment().hours(23).minutes(59).seconds(59)],
+                            'Last 30 Days': [moment().subtract(29, 'days').hours(0).minutes(0).seconds(0), moment().hours(23).minutes(59).seconds(59)],
+                            'This Month': [moment().startOf('month').hours(0).minutes(0).seconds(0), moment().endOf('month').hours(23).minutes(59).seconds(59)],
+                            'Last Month': [moment().subtract(1, 'month').startOf('month').hours(0).minutes(0).seconds(0), moment().subtract(1, 'month').endOf('month').hours(23).minutes(59).seconds(59)]
+                        },
+                        startDate: Start || this.getStart(),
+                        endDate: End || this.getEnd()
+                    },
+                    Callback || this.getCallback()
+                );
             },
 
-            initialize: function () {
+            initialize: function (Id, Options) {
+                this.setId(Id);
+                this.start = Options.start || moment().subtract(6, 'days').hours(0).minutes(0).seconds(0);
+                this.end = Options.end || moment().hours(23).minutes(59).seconds(59);
+                this.callback = Options.callback || '';
+                this.setTemplate(['<button type="button" class="btn btn-default pull-right" id="', '%ID%', '"><span><i class="fa fa-calendar"></i> Date range picker</span><i class="fa fa-caret-down"></i></button>']);
                 this.render();
             }
         });
@@ -442,11 +523,18 @@
                 console.warn(msg);
             },
 
-            //check Object is Array
+            //check if the Object is Array
             isArray: function (Obj) {
                 var obj = Obj || {};
                 return Object.prototype.toString.call(obj) === '[object Array]';
             },
+
+            //check if it is a function
+            isFunction: function (Obj) {
+                var obj = Obj || {};
+                return typeof obj === 'function';
+            },
+
         };
 
 
@@ -482,4 +570,4 @@
     }();
 
 
-})($, window);
+})($, window, daterangepicker, moment);

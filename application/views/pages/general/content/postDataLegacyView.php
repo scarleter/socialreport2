@@ -30,7 +30,7 @@
                             <!--<label>Date range button:</label>-->
 
                             <div class="input-group">
-                                <span id="dateRangePickerOne"></span>
+                                <span id="dateRange"></span>
                             </div>
                         </div>
 
@@ -157,6 +157,11 @@
 
 <script type="text/javascript">
     $(function() {
+
+        var dateRange = new SocialReport.DateRangePicker('dateRange', {
+            callback: dateRangeCallback
+        });console.info(dateRange.getId());
+
         var postsParams = {
             since: 1489161600,
             until: 1489766399,
@@ -172,6 +177,12 @@
 
 
     });
+
+    //call this function after the dateRange change
+    function dateRangeCallback() {
+        console.info(this.getStart());
+        console.info(this.getEnd());
+    };
 
     //initialize posts view after genPostsOperation
     function initPostsView() {
