@@ -151,13 +151,13 @@
         $.extend(View.prototype, {
             //set `id`
             setId: function (Id) {
-                this.id = Id || '';
-                //if `this.id` empty or alreay in the `_idList` object then assert and return
-                if (!this.id || this._existInIdList(this.id)) {
+                //if `Id` is not undefined and not in de existInIdList then set to `this.id`
+                if (Id && !this._existInIdList(Id)) {
+                    this.id = Id;
+                } else {
                     Toolbox.assert('Function SocialReport.View.setId: `id` is empty or alreay in the `idList` object');
                     return;
                 }
-
             },
 
             //get `id`
@@ -283,9 +283,22 @@
                     return false;
                 }
                 $obj.prop('outerHTML', template);
-                //need to refresh the %obj because it is the old element obj
-                $obj = $('#' + id);
-                console.info(this);
+
+            },
+
+            //set daterangerpicker
+            setDateRangePikcer: function () {
+                var _this = this,
+                    id = this.getId(),
+                    $obj = $('#' + id),
+                    start = this.getStart(),
+                    end = this.getEnd(),
+                    cb = function (start, end) {
+                        //change the content of the daterangepicker
+                        $obj.find('span').html(moment(start).format('MMMM D, YYYY') + ' - ' + moment(end).format('MMMM D, YYYY'));
+                        //call user's callback function
+                        _this.callback.call(_this, moment(start), moment(end));
+                    };
                 //initialize daterangepicker
                 $obj.daterangepicker({
                         alwaysShowCalendars: true,
@@ -298,18 +311,16 @@
                             'This Month': [moment().startOf('month').hours(0).minutes(0).seconds(0), moment().endOf('month').hours(23).minutes(59).seconds(59)],
                             'Last Month': [moment().subtract(1, 'month').startOf('month').hours(0).minutes(0).seconds(0), moment().subtract(1, 'month').endOf('month').hours(23).minutes(59).seconds(59)]
                         },
-                        startDate: this.getStart(),
-                        endDate: this.getEnd()
+                        startDate: start,
+                        endDate: end
                     },
-                    function (start, end) {
-                        //change the content of the daterangepicker
-                        $obj.find('span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
-                        //call user's callback function
-                        _this.callback.call(_this, start, end);
-                    }
+                    cb
                 );
+                //first time to run the callback function by default
+                cb(start, end);
             },
 
+            //initialize the element obj
             initialize: function (Id, Options) {
                 this.setId(Id);
                 this.start = Options.start || moment().subtract(6, 'days').hours(0).minutes(0).seconds(0);
@@ -317,6 +328,7 @@
                 this.callback = Options.callback || '';
                 this.setTemplate(['<button type="button" class="btn btn-default pull-right" id="', '%ID%', '"><span><i class="fa fa-calendar"></i> Date range picker</span><i class="fa fa-caret-down"></i></button>']);
                 this.render();
+                this.setDateRangePikcer();
             }
         });
 

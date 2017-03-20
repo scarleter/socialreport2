@@ -159,20 +159,10 @@
     $(function() {
 
         var dateRange = new SocialReport.DateRangePicker('dateRange', {
-            start: 1489161600000,
-            end: 1489766399000,
             callback: dateRangeCallback
         });
 
-        var postsParams = {
-            since: 1489161600,
-            until: 1489766399,
-            pageid: '<?php echo $pageId;?>',
-            access_token: '<?php echo $pageAccessToken;?>'
-        };
 
-        //use asynchronous to get data and put the follow steps in the callback function such as `initPostsView`.
-        SocialReport.Facebook.genPostsOperationObj(postsParams, initPostsView);
 
 
 
@@ -182,8 +172,15 @@
 
     //call this function after the dateRange change
     function dateRangeCallback(start, end) {
-        console.info(this);
-        console.info(start);
+        var postsParams = {
+            since: start.unix(),
+            until: end.unix(),
+            pageid: '<?php echo $pageId;?>',
+            access_token: '<?php echo $pageAccessToken;?>'
+        };
+
+        //use asynchronous to get data and put the follow steps in the callback function such as `initPostsView`.
+        SocialReport.Facebook.genPostsOperationObj(postsParams, initPostsView);
     };
 
     //initialize posts view after genPostsOperation
