@@ -111,7 +111,7 @@
                         <span id="postsDataTable"></span>
                         <br/><br/>
                         <label>2. Average of a,b,c,d,e,f</label>
-                        <table id="aosTable" class="table table-striped table-bordered dt-responsive" cellspacing="0" width="100%"></table>
+                        <span id="averagePostsDataTable"></span>
                         <br/><br/>
                         <label>3. Reach%</label>
                         <table id="reachTable" class="table table-striped table-bordered dt-responsive" cellspacing="0" width="100%"></table>
@@ -186,12 +186,12 @@
         //build tables
         buildFqyTable(facebookOperation);
         buildPostsDataTable(facebookOperation);
+        buildAveragePostsDataTable(facebookOperation);
 
     };
 
     //build frequency table
     function buildFqyTable(Operation) {
-        //set the data for frequency datatable
         var facebookOperation = Operation,
             numbersOfPosts = facebookOperation.getSize(),
             dateRange = troperlaicos.dateRange.getRangeInDay(),
@@ -202,12 +202,12 @@
             ['Data', numbersOfPosts, dateRange, frequency]
         ];
 
-        //if fqyTable is exist
+        //if table is exist
         if (troperlaicos.fqyDataTable) {
             //use repaint function to 
             troperlaicos.fqyDataTable.repaint(data);
         } else {
-            //build datatable object for frequency
+            //build datatable object
             troperlaicos.fqyDataTable = new SocialReport.DataTables('fqyDataTable', data, {
                 paging: false,
                 lengthChange: false,
@@ -235,7 +235,6 @@
 
     //build PostsData table
     function buildPostsDataTable(Operation) {
-        //set the data for posts data datatable
         var facebookOperation = Operation,
             //it returan an object include attribute of `data` and `columnTitle`
             data = facebookOperation.getFormatDataFromTableType('postsdata'),
@@ -259,14 +258,37 @@
                     }
                 ]
             };
-
-        //if posts data table is exist
+        //if table is exist
         if (troperlaicos.postsDataTable) {
             //use repaint
             troperlaicos.postsDataTable.repaint(data['data'], tableAttrs);
         } else {
-            //build datatable object for posts data
+            //build datatable object
             troperlaicos.postsDataTable = new SocialReport.DataTables('postsDataTable', data['data'], tableAttrs);
+        }
+    };
+
+    //build Average PostsData table
+    function buildAveragePostsDataTable(Operation) {
+        var facebookOperation = Operation,
+            //it returan an object include attribute of `data` and `columnTitle`
+            data = facebookOperation.getFormatDataFromTableType('averagepostsdata'),
+            tableAttrs = {
+                paging: false,
+                lengthChange: false,
+                searching: false,
+                ordering: false,
+                info: false,
+                autoWidth: false,
+                columns: data['columnTitle']
+            };
+        //if table is exist
+        if (troperlaicos.averagePostsDataTable) {
+            //use repaint
+            troperlaicos.averagePostsDataTable.repaint(data['data'], tableAttrs);
+        } else {
+            //build datatable object
+            troperlaicos.averagePostsDataTable = new SocialReport.DataTables('averagePostsDataTable', data['data'], tableAttrs);
         }
     };
 

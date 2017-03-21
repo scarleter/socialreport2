@@ -11,6 +11,7 @@
         //variable for layer plugin ajax loading layer
         var ajaxLoadingLayer = '';
 
+
         //SocialReport.DataInterface
         //--------------------------
 
@@ -153,8 +154,6 @@
         };
 
 
-
-
         //SocialReport.View
         //-----------------
 
@@ -231,6 +230,7 @@
 
             }
         });
+
 
         //SocialReport.DateRangePicker
         //----------------------------
@@ -491,7 +491,6 @@
         });
 
 
-
         //SocialReport.Operation
         //----------------------
 
@@ -572,8 +571,12 @@
                                 var consumptionsObj = obj['insights'][j]['values']['0']['value'];
                                 obj['post_consumptions_by_type'] = consumptionsObj;
                                 for (var key in consumptionsObj) {
+                                    //if `type` is video and `key` is photo view or `type` is not video and `key` is video play, skip it
+                                    if ((obj['type'] === 'video' && key === 'photo view')||(obj['type'] !== 'video' && key === 'video play')) {
+                                        continue;
+                                    }
                                     obj[key] = consumptionsObj[key];
-                                }
+                                };
                                 break;
                             case 'post_video_views':
                                 obj['post_video_views'] = obj['insights'][j]['values']['0']['value'];
@@ -674,6 +677,9 @@
                             case 'postsdata':
                                 return this._getPostsDataInFacebook();
                                 break;
+                            case 'averagepostsdata':
+                                return this._getAveragePostsDataInFacebook();
+                                break;
                             default:
                                 return this.getData();
                                 break;
@@ -688,8 +694,8 @@
                 }
             },
 
-            //get column's title and data of datatable in facebook style format
-            //data is two dimension array format
+            //get postsdata in facebook
+            //return `columnTitle` and `data`
             _getPostsDataInFacebook: function () {
                 //set the variable for looping
                 var originData = this.getData(),
@@ -788,8 +794,85 @@
                     arr.push(totalImpressions.toLocaleString());
                     //push in data array
                     data.push(arr);
-
                 };
+                return {
+                    data: data,
+                    columnTitle: columnTitle
+                };
+            },
+
+            //get average posts data in facebook
+            _getAveragePostsDataInFacebook: function () {
+                //set the variable for looping
+                var originData = this.getData(),
+                    dataSize = this.getSize(),
+                    columnTitle = [
+                        {
+                            title: "Name"
+                        },
+                        {
+                            title: "Sum"
+                        },
+                        {
+                            title: "Number of posts"
+                        },
+                        {
+                            title: "Average"
+                        }
+                    ],
+                    summary = [],
+                    data = [];
+                //loop to get the summary of the posts data
+                for (var i = 0; i < dataSize; i++) {
+                    $.each(originData[i], function (key, value) {
+                        //make sure `value` is integer
+                        if (!isNaN(value)) {
+                            //if summary[key] is not exist 
+                            if (typeof summary[key] === 'undefined') {
+                                //init it 0
+                                summary[key] = 0;
+                            }
+                            summary[key] = summary[key] + parseInt(value);
+                        }
+                    });
+                }
+                //calculate some variable
+                var paidReach = parseInt(summary['post_impressions_paid_unique']),
+                    totalReach = parseInt(summary['post_impressions_unique']),
+                    organicReach = totalReach - paidReach,
+                    like = parseInt(summary['like']),
+                    share = parseInt(summary['shares']),
+                    comment = parseInt(summary['comments']),
+                    videoPlay = parseInt(summary['post_video_views']),
+                    haha = parseInt(summary['haha']),
+                    wow = parseInt(summary['wow']),
+                    love = parseInt(summary['love']),
+                    sorry = parseInt(summary['sorry']),
+                    anger = parseInt(summary['anger']),
+                    reaction = (like + love + wow + haha + sorry + anger).toLocaleString() + '&nbsp;&nbsp;(<i class="fa fb_icon fb_like" title="like"></i><span> ' + like.toLocaleString() + '</span> ' + '&nbsp;&nbsp;<i class="fa fb_icon fb_love" title="love"></i><span> ' + love.toLocaleString() + '</span>' + '&nbsp;&nbsp;<i class="fa fb_icon fb_haha" title="haha"></i><span> ' + haha.toLocaleString() + '</span>' + '&nbsp;&nbsp;<i class="fa fb_icon fb_wow" title="wow"></i><span> ' + wow.toLocaleString() + '</span>' + '&nbsp;&nbsp;<i class="fa fb_icon fb_sad" title="sad"></i><span> ' + sorry.toLocaleString() + '</span>' + '&nbsp;&nbsp;<i class="fa fb_icon fb_anger" title="anger"></i><span> ' + anger.toLocaleString() + '</span>)',
+                    averageReaction = Math.round((like + love + wow + haha + sorry + anger) / dataSize).toLocaleString() + '&nbsp;&nbsp;(<i class="fa fb_icon fb_like" title="like"></i><span> ' + Math.round(like / dataSize).toLocaleString() + '</span> ' + '&nbsp;&nbsp;<i class="fa fb_icon fb_love" title="love"></i><span> ' + Math.round(love / dataSize).toLocaleString() + '</span>' + '&nbsp;&nbsp;<i class="fa fb_icon fb_haha" title="haha"></i><span> ' + Math.round(haha / dataSize).toLocaleString() + '</span>' + '&nbsp;&nbsp;<i class="fa fb_icon fb_wow" title="wow"></i><span> ' + Math.round(wow / dataSize).toLocaleString() + '</span>' + '&nbsp;&nbsp;<i class="fa fb_icon fb_sad" title="sad"></i><span> ' + Math.round(sorry / dataSize).toLocaleString() + '</span>' + '&nbsp;&nbsp;<i class="fa fb_icon fb_anger" title="anger"></i><span> ' + Math.round(anger / dataSize).toLocaleString() + '</span>)',
+                    vieworplays = parseInt(summary['video play']) + parseInt(summary['photo view']),
+                    linkclick = parseInt(summary['link clicks']),
+                    otherclick = parseInt(summary['other clicks']),
+                    postclick = (vieworplays + linkclick + otherclick).toLocaleString() + '&nbsp;&nbsp;(<label>Photo Views & Clicks to Play:</label><span> ' + vieworplays.toLocaleString() + '</span>' + '&nbsp;&nbsp;<label>Link Clicks:</label><span> ' + linkclick.toLocaleString() + '</span>' + '&nbsp;&nbsp;<label>Other Clicks:</label><span> ' + otherclick.toLocaleString() + '</span>)',
+                    averagePostclick = Math.round((vieworplays + linkclick + otherclick) / dataSize).toLocaleString() + '&nbsp;&nbsp;(<label>Photo Views & Clicks to Play:</label><span> ' + Math.round(vieworplays / dataSize).toLocaleString() + '</span>' + '&nbsp;&nbsp;<label>Link Clicks:</label><span> ' + Math.round(linkclick / dataSize).toLocaleString() + '</span>' + '&nbsp;&nbsp;<label>Other Clicks:</label><span> ' + Math.round(otherclick / dataSize).toLocaleString() + '</span>)',
+                    paidImpression = parseInt(summary['post_impressions_paid']),
+                    totalImpression = parseInt(summary['post_impressions']),
+                    organicImpression = totalImpression - paidImpression;
+                //build the result into data array
+                data.push(['Organic Reach(a)', organicReach.toLocaleString(), dataSize.toLocaleString(), Math.round(organicReach / dataSize).toLocaleString()]);
+                data.push(['Paid Reach(b)', paidReach.toLocaleString(), dataSize.toLocaleString(), Math.round(paidReach / dataSize).toLocaleString()]);
+                data.push(['Total Reached(c)', totalReach.toLocaleString(), dataSize.toLocaleString(), Math.round(totalReach / dataSize).toLocaleString()]);
+                data.push(['Like(d)', like.toLocaleString(), dataSize.toLocaleString(), Math.round(like / dataSize).toLocaleString()]);
+                data.push(['Share(e)', share.toLocaleString(), dataSize.toLocaleString(), Math.round(share / dataSize).toLocaleString()]);
+                data.push(['Comment(f)', comment.toLocaleString(), dataSize.toLocaleString(), Math.round(comment / dataSize).toLocaleString()]);
+                data.push(['Video Views(g)', videoPlay.toLocaleString(), dataSize.toLocaleString(), Math.round(videoPlay / dataSize).toLocaleString()]);
+                data.push(['Reactions(h)', reaction, dataSize.toLocaleString(), averageReaction]);
+                data.push(['Post Clicks(i)', postclick, dataSize.toLocaleString(), averagePostclick]);
+                data.push(['Lifetime Post Organic Impressions(j)', organicImpression.toLocaleString(), dataSize.toLocaleString(), Math.round(organicImpression / dataSize).toLocaleString()]);
+                data.push(['Lifetime Post Paid Impressions(k)', paidImpression.toLocaleString(), dataSize.toLocaleString(), Math.round(paidImpression / dataSize).toLocaleString()]);
+                data.push(['Lifetime Post Total Impressions(l)', totalImpression.toLocaleString(), dataSize.toLocaleString(), Math.round(totalImpression / dataSize).toLocaleString()]);
+
                 return {
                     data: data,
                     columnTitle: columnTitle
@@ -835,8 +918,6 @@
                 return size;
             },
         });
-
-
 
 
         //class Toolbox
