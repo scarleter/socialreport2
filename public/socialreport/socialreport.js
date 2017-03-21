@@ -306,18 +306,16 @@
             },
 
             //set daterangerpicker
-            setDateRangePikcer: function () {
+            setDateRangePikcer: function (start,end) {
                 var _this = this,
                     id = this.getId(),
                     $obj = $('#' + id),
-                    start = this.getStart(),
-                    end = this.getEnd(),
                     cb = function (start, end) { //`start` and `end` is millisecond,you need to change it to unix stamp when you commuicate with server
                         //change the content of the daterangepicker
                         $obj.find('span').html(_this.getDateRangeInText(start, end));
                         //set current `start` and `end`
-                        _this.setStart(start);
-                        _this.setEnd(end);
+                        _this.setStart(moment(start).format("x"));
+                        _this.setEnd(moment(end).format("x"));
                         //call user's callback function
                         _this.callback.call(_this, moment(start), moment(end));
                     };
@@ -349,13 +347,13 @@
 
             //initialize the element obj
             initialize: function (Id, Options) {
+                var start = Options.start || moment().subtract(6, 'days').hours(0).minutes(0).seconds(0),
+                    end = Options.end || moment().hours(23).minutes(59).seconds(59);
                 this.setId(Id);
-                this.start = Options.start || moment().subtract(6, 'days').hours(0).minutes(0).seconds(0);
-                this.end = Options.end || moment().hours(23).minutes(59).seconds(59);
-                this.callback = Options.callback || '';
+                this.setCallback(Options.callback || '');
                 this.setTemplate(['<button type="button" class="btn btn-default pull-right" id="', '%ID%', '"><span><i class="fa fa-calendar"></i> Date range picker</span><i class="fa fa-caret-down"></i></button>']);
                 this.render();
-                this.setDateRangePikcer();
+                this.setDateRangePikcer(start, end);
             }
         });
 
@@ -364,14 +362,14 @@
         //-----------------------
 
         //DataTables is inherited from View
-        //It a DataTables ui component (https://datatables.net/)
+        //It is a DataTables ui component (https://datatables.net/)
         //temporary add `Options` for further useage
         var DataTables = SocialReport.DataTables = function (Id, TableData, TableAttrs, Options) {
             this.initialize(Id, TableData, TableAttrs, Options);
         };
 
         $.extend(DataTables.prototype, View.prototype, {
-            //set dataTableObj
+            //set dataTableObj which can use DataTable api
             _setDataTableObj: function (Obj) {
                 if (!Obj || typeof (Obj) !== 'object') {
                     Toolbox.assert('Function SocialReport.DataTables._setDataTableObj: Obj can not be undefined and should be an object');
@@ -437,6 +435,7 @@
                         'data': this.getData()
                     }),
                     dataTableObj = $obj.DataTable(tableAttrs);
+                //save dataTable obj for further use
                 this._setDataTableObj(dataTableObj);
             },
 
@@ -482,162 +481,234 @@
             this.options.parse && this.options.parse() || this.parse(this.options.datasource);
         };
 
-        //parse Data
-        Operation.prototype.parse = function (Datasource) {
-            var datasource = Datasource || '';
-            datasource = datasource.toLowerCase();
-            switch (datasource) {
-                case 'facebook':
-                    return this.parseFacebookData();
-                    break;
-                case 'google':
-                    return this.parseGoogleData();
-                    break;
-                default:
-                    return false;
-                    break;
-            }
-        };
-
-        //parse facebook data
-        Operation.prototype.parseFacebookData = function () {
-            var resultObj = [],
-                originObj = this.getData(),
-                size = this.getSize();
-            //loop to set data
-            for (var i = 0; i < size; i++) {
-                var obj = {};
-                obj['comments'] = originObj[i]['comments'] ? originObj[i]['comments']['summary']['total_count'] : 0;
-                obj['shares'] = originObj[i]['shares'] ? originObj[i]['shares']['count'] : 0;
-                obj['created_time'] = Toolbox.formatTime(originObj[i]['created_time']) || '';
-                obj['id'] = originObj[i]['id'] || '';
-                obj['message'] = originObj[i]['message'] || '';
-                obj['permalink_url'] = originObj[i]['permalink_url'] || '';
-                obj['type'] = originObj[i]['type'] || '';
-                obj['insights'] = originObj[i]['insights']['data'] || '';
-                //loop to set insights object data
-                for (var j = 0; j < obj['insights'].length; j++) {
-                    switch (obj['insights'][j]['name']) {
-                        case 'post_impressions_organic':
-                            obj['post_impressions_organic'] = obj['insights'][j]['values']['0']['value'];
-                            break;
-                        case 'post_impressions_by_story_type':
-                            obj['post_impressions_by_story_type'] = obj['insights'][j]['values']['0']['value']['other'];
-                            break;
-                        case 'post_impressions_paid':
-                            obj['post_impressions_paid'] = obj['insights'][j]['values']['0']['value'];
-                            break;
-                        case 'post_impressions':
-                            obj['post_impressions'] = obj['insights'][j]['values']['0']['value'];
-                            break;
-                        case 'post_impressions_unique':
-                            obj['post_impressions_unique'] = obj['insights'][j]['values']['0']['value'];
-                            break;
-                        case 'post_impressions_paid_unique':
-                            obj['post_impressions_paid_unique'] = obj['insights'][j]['values']['0']['value'];
-                            break;
-                        case 'post_reactions_by_type_total':
-                            //`reactionsObj` has different types of reactions need to break it down
-                            var reactionsObj = obj['insights'][j]['values']['0']['value'];
-                            obj['post_reactions_by_type_total'] = reactionsObj;
-                            for (var key in reactionsObj) {
-                                obj[key] = reactionsObj[key];
-                            }
-                            break;
-                        case 'post_consumptions_by_type':
-                            //`consumptionsObj` has different types of consumptions need to break it down
-                            var consumptionsObj = obj['insights'][j]['values']['0']['value'];
-                            obj['post_consumptions_by_type'] = consumptionsObj;
-                            for (var key in consumptionsObj) {
-                                obj[key] = consumptionsObj[key];
-                            }
-                            break;
-                        case 'post_video_views':
-                            obj['post_video_views'] = obj['insights'][j]['values']['0']['value'];
-                            break;
-                        case 'post_video_views':
-                            obj['post_video_views'] = obj['insights'][j]['values']['0']['value'];
-                            break;
-                        default:
-                            break;
-                    };
+        $.extend(Operation.prototype, {
+            //parse Data
+            parse: function (Datasource) {
+                var datasource = Datasource || '';
+                datasource = datasource.toLowerCase();
+                switch (datasource) {
+                    case 'facebook':
+                        return this.parseFacebookData();
+                        break;
+                    case 'google':
+                        return this.parseGoogleData();
+                        break;
+                    default:
+                        return false;
+                        break;
                 }
-                resultObj[i] = obj;
-            }
-            this.setData(resultObj);
-        };
+            },
+
+            //parse facebook data
+            parseFacebookData: function () {
+                var resultObj = [],
+                    originObj = this.getData(),
+                    size = this.getSize();
+                //loop to set data
+                for (var i = 0; i < size; i++) {
+                    var obj = {};
+                    obj['comments'] = originObj[i]['comments'] ? originObj[i]['comments']['summary']['total_count'] : 0;
+                    obj['shares'] = originObj[i]['shares'] ? originObj[i]['shares']['count'] : 0;
+                    obj['created_time'] = Toolbox.formatTime(originObj[i]['created_time']) || '';
+                    obj['id'] = originObj[i]['id'] || '';
+                    obj['message'] = originObj[i]['message'] || '';
+                    obj['permalink_url'] = originObj[i]['permalink_url'] || '';
+                    obj['type'] = originObj[i]['type'] || '';
+                    obj['insights'] = originObj[i]['insights']['data'] || '';
+                    //loop to set insights object data
+                    for (var j = 0; j < obj['insights'].length; j++) {
+                        switch (obj['insights'][j]['name']) {
+                            case 'post_impressions_organic':
+                                obj['post_impressions_organic'] = obj['insights'][j]['values']['0']['value'];
+                                break;
+                            case 'post_impressions_by_story_type':
+                                obj['post_impressions_by_story_type'] = obj['insights'][j]['values']['0']['value']['other'];
+                                break;
+                            case 'post_impressions_paid':
+                                obj['post_impressions_paid'] = obj['insights'][j]['values']['0']['value'];
+                                break;
+                            case 'post_impressions':
+                                obj['post_impressions'] = obj['insights'][j]['values']['0']['value'];
+                                break;
+                            case 'post_impressions_unique':
+                                obj['post_impressions_unique'] = obj['insights'][j]['values']['0']['value'];
+                                break;
+                            case 'post_impressions_paid_unique':
+                                obj['post_impressions_paid_unique'] = obj['insights'][j]['values']['0']['value'];
+                                break;
+                            case 'post_reactions_by_type_total':
+                                //`reactionsObj` has different types of reactions need to break it down
+                                var reactionsObj = obj['insights'][j]['values']['0']['value'];
+                                obj['post_reactions_by_type_total'] = reactionsObj;
+                                for (var key in reactionsObj) {
+                                    obj[key] = reactionsObj[key];
+                                }
+                                break;
+                            case 'post_consumptions_by_type':
+                                //`consumptionsObj` has different types of consumptions need to break it down
+                                var consumptionsObj = obj['insights'][j]['values']['0']['value'];
+                                obj['post_consumptions_by_type'] = consumptionsObj;
+                                for (var key in consumptionsObj) {
+                                    obj[key] = consumptionsObj[key];
+                                }
+                                break;
+                            case 'post_video_views':
+                                obj['post_video_views'] = obj['insights'][j]['values']['0']['value'];
+                                break;
+                            case 'post_video_views':
+                                obj['post_video_views'] = obj['insights'][j]['values']['0']['value'];
+                                break;
+                            default:
+                                break;
+                        };
+                    }
+                    resultObj[i] = obj;
+                }
+                this.setData(resultObj);
+            },
 
 
 
-        //get Data
-        Operation.prototype.getData = function () {
-            return this.data;
-        };
+            //get Data
+            getData: function () {
+                return this.data;
+            },
 
-        //set Data
-        Operation.prototype.setData = function (Data) {
-            return this.data = Data || {};
-        };
+            //set Data
+            setData: function (Data) {
+                return this.data = Data || {};
+            },
 
-        //get dateRange
-        Operation.prototype.getDayRange = function () {
-            return this.dayRange || 0;
-        };
+            //get dateRange
+            getDayRange: function () {
+                return this.dayRange || 0;
+            },
 
-        //set dateRange
-        Operation.prototype.setDayRange = function (DayRange) {
-            return this.dayRange = DayRange || 0;
-        };
+            //set dateRange
+            setDayRange: function (DayRange) {
+                return this.dayRange = DayRange || 0;
+            },
 
-        //calculate frequency
-        Operation.prototype.frequency = function () {
-            var dateRange = parseInt(this.getDayRange()),
-                size = parseInt(this.getSize());
-            if (dateRange) {
-                return parseFloat(size / dateRange).toFixed(2);
-            } else {
-                return 0;
-            }
-        };
-
-        //get data size
-        Operation.prototype.getSize = function () {
-            var data = this.getData() || {},
-                type = (typeof data).toLowerCase();
-            type = type === 'object' ? (Toolbox.isArray(data) ? 'array' : 'object') : type;
-
-            switch (type) {
-                case 'string':
-                    return data.length;
-                    break;
-                case 'array':
-                    return data.length;
-                    break;
-                case 'object':
-                    return this._getObjectSize(data);
-                    break;
-                default:
+            //calculate frequency
+            frequency: function () {
+                var dateRange = parseInt(this.getDayRange()),
+                    size = parseInt(this.getSize());
+                if (dateRange) {
+                    return parseFloat(size / dateRange).toFixed(2);
+                } else {
                     return 0;
-            };
+                }
+            },
 
-        };
+            //get format data
+            getFormatData: function (Type) {
+                var type = (Type).toLowerCase() || 'facebook';
+                switch (type) {
+                    case 'facebook':
+                        return this._formatDataInFacebook();
+                        break;
+                    case 'google':
+                        return this._formatDataInGoogle();
+                        break;
+                    default:
+                        return this.getData();
+                        break;
+                }
+            },
 
-        //internal function which is to get the Object size
-        Operation.prototype._getObjectSize = function (Obj) {
-            var size = 0,
-                obj = Obj || {};
-            //Object.keys could not support under IE9
-            if (!!Object.keys) {
-                size = Object.keys(obj).length;
-            } else {
-                for (var i in obj) {
-                    if (obj.hasOwnProperty(i)) {
-                        size++;
+            //get data in facebook style format
+            _formatDataInFacebook: function () {
+                //set the variable for looping
+                var originData = this.getData(),
+                    dataSize = this.getSize(),
+                    data = [];
+                //loop to set a two dimension array to get datatable data
+                for (var i = 0; i < dataSize; i++) {
+                    //some middle variable
+                    var arr = [],
+                        type = originData[i]['type'],
+                        like = originData[i]['like'] || 0,
+                        love = originData[i]['love'] || 0,
+                        haha = originData[i]['haha'] || 0,
+                        wow = originData[i]['wow'] || 0,
+                        sorry = originData[i]['sorry'] || 0,
+                        anger = originData[i]['anger'] || 0,
+                        reactionsTotal = like + love + haha + wow + sorry + anger,
+                        vieworplay = ((type === 'video') ? originData[i]['video play'] : originData[i]['photo view']) || 0,
+                        linkClick = originData[i]['link clicks'] || 0,
+                        otherClick = originData[i]['other clicks'] || 0,
+                        postsClickTotal = vieworplay + linkClick + otherClick,
+                        paidReached = originData[i]['post_impressions_paid_unique'],
+                        totalReached = originData[i]['post_impressions_unique'],
+                        paidImpressions = originData[i]['post_impressions_paid'],
+                        totalImpressions = originData[i]['post_impressions'];
+                    //set data in `arr` in order
+                    arr.push(originData[i]['id']);
+                    arr.push(originData[i]['permalink_url']);
+                    arr.push('<div class="post_message">' + (originData[i]['message']) + '</div>');
+                    arr.push(originData[i]['type']);
+                    arr.push(originData[i]['created_time']);
+                    arr.push((totalReached - paidReached).toLocaleString());
+                    arr.push(paidReached.toLocaleString());
+                    arr.push(totalReached.toLocaleString());
+                    arr.push(originData[i]['like'].toLocaleString());
+                    arr.push(originData[i]['shares'].toLocaleString());
+                    arr.push(originData[i]['comments'].toLocaleString());
+                    arr.push(originData[i]['post_video_views'].toLocaleString());
+                    arr.push('<p><label>' + reactionsTotal.toLocaleString() + '</label></p>' + '<p><i class="fa fb_icon fb_like" title="like"></i><span> ' + like.toLocaleString() + '</span></p> ' + '<p><i class="fa fb_icon fb_love" title="love"></i><span> ' + love.toLocaleString() + '</span></p>' + '<p><i class="fa fb_icon fb_haha" title="haha"></i><span> ' + haha.toLocaleString() + '</span></p>' + '<p><i class="fa fb_icon fb_wow" title="wow"></i><span> ' + wow.toLocaleString() + '</span></p>' + '<p><i class="fa fb_icon fb_sad" title="sad"></i><span> ' + sorry.toLocaleString() + '</span></p>' + '<p><i class="fa fb_icon fb_anger" title="anger"></i><span> ' + anger.toLocaleString() + '</span></p>');
+
+                    arr.push('<p><label>' + postsClickTotal.toLocaleString() + '</label></p>' + '<p><label>' + ((type === 'video') ? 'Clicks to Play:' : 'Photo Views:') + '</label><span> ' + vieworplay.toLocaleString() + '</span></p>' + '<p><label>Link Clicks:</label><span> ' + linkClick.toLocaleString() + '</span></p>' + '<p><label>Other Clicks:</label><span> ' + otherClick.toLocaleString() + '</span></p>');
+                    arr.push((totalImpressions - paidImpressions).toLocaleString());
+                    arr.push(paidImpressions.toLocaleString());
+                    arr.push(totalImpressions.toLocaleString());
+                    //push in data array
+                    data.push(arr);
+
+                }
+                return data;
+            },
+
+            //get data size
+            getSize: function () {
+                var data = this.getData() || {},
+                    type = (typeof data).toLowerCase();
+                type = type === 'object' ? (Toolbox.isArray(data) ? 'array' : 'object') : type;
+
+                switch (type) {
+                    case 'string':
+                        return data.length;
+                        break;
+                    case 'array':
+                        return data.length;
+                        break;
+                    case 'object':
+                        return this._getObjectSize(data);
+                        break;
+                    default:
+                        return 0;
+                };
+
+            },
+
+            //internal function which is to get the Object size
+            _getObjectSize: function (Obj) {
+                var size = 0,
+                    obj = Obj || {};
+                //Object.keys could not support under IE9
+                if (!!Object.keys) {
+                    size = Object.keys(obj).length;
+                } else {
+                    for (var i in obj) {
+                        if (obj.hasOwnProperty(i)) {
+                            size++;
+                        }
                     }
                 }
-            }
-            return size;
-        };
+                return size;
+            },
+        });
+
+
 
 
         //class Toolbox
@@ -677,7 +748,7 @@
                 var obj = Obj || {};
                 return typeof obj === 'function';
             },
-            
+
         };
 
 
