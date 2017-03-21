@@ -237,15 +237,8 @@
     function buildPostsDataTable(Operation) {
         //set the data for posts data datatable
         var postOperation = Operation,
-            data = postOperation.getFormatData('facebook');
-
-        //if posts data table is exist
-        if (troperlaicos.postsDataTable) {
-            //use repaint
-            troperlaicos.postsDataTable.repaint(data);
-        } else {
-            //build datatable object for posts data
-            troperlaicos.postsDataTable = new SocialReport.DataTables('postsDataTable', data, {
+            data = postOperation.getFormatData('facebook'),
+            tableAttrs = {
                 order: [7, 'des'],
                 columns: [{
                         title: "Post ID"
@@ -315,7 +308,15 @@
                         filename: '<?php echo $pageId;?> Facebook Report during ' + troperlaicos.dateRange.getDateRangeInText(),
                     }
                 ]
-            });
+            };
+
+        //if posts data table is exist
+        if (troperlaicos.postsDataTable) {
+            //use repaint
+            troperlaicos.postsDataTable.repaint(data, tableAttrs);
+        } else {
+            //build datatable object for posts data
+            troperlaicos.postsDataTable = new SocialReport.DataTables('postsDataTable', data, tableAttrs);
         }
     };
 
