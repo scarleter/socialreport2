@@ -315,6 +315,9 @@
                     cb = function (start, end) { //`start` and `end` is millisecond,you need to change it to unix stamp when you commuicate with server
                         //change the content of the daterangepicker
                         $obj.find('span').html(_this.getDateRangeInText(start, end));
+                        //set current `start` and `end`
+                        _this.setStart(start);
+                        _this.setEnd(end);
                         //call user's callback function
                         _this.callback.call(_this, moment(start), moment(end));
                     };

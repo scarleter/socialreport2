@@ -276,7 +276,6 @@
             data.push(arr);
 
         }
-        console.info(data);
         //build datatable object for posts data
         troperlaicos.postsDataTable = new SocialReport.DataTables('postsDataTable', data, {
             order: [7, 'des'],
