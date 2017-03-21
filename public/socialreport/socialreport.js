@@ -242,33 +242,53 @@
         };
 
         $.extend(DateRangePicker.prototype, View.prototype, {
-            //set start time millisecond
-            setStart: function (millisecond) {
-                if (!isNaN(parseInt(millisecond))) {
-                    return this.start = millisecond;
-                } else {
-                    Toolbox.assert('Function SocialReport.DateRangePicker.setStart: millisecond is undefined or is invalid (need to be 1489420800000 or "1489420800")');
+            //check if the Object is constructor by moment
+            _isMomentObj: function (Obj) {
+                var obj = Obj || {};
+                return obj.constructor === moment().constructor;
+            },
+
+            //set start time in moment object
+            setStart: function (Moment) {
+                var moment = Moment || {};
+                if (!this._isMomentObj(moment)) {
+                    Toolbox.assert('Function SocialReport.DateRangePicker.setStart: Moment is undefined or is invalid (need to be constructor by moment');
                     return false;
+                } else {
+                    return this.start = moment;
                 }
             },
 
-            //get start time millisecond
-            getStart: function () {
+            //get start time in moment obj and can format it by using moment format(http://momentjs.cn/docs/#/displaying/format/)
+            getStart: function (FormatString) {
+                var formatString = FormatString || '';
+                //if formatString exist
+                if (formatString) {
+                    //then we format it
+                    return this.start.format(formatString);
+                }
                 return this.start;
             },
 
-            //set end time millisecond
-            setEnd: function (millisecond) {
-                if (!isNaN(parseInt(millisecond))) {
-                    return this.end = millisecond;
-                } else {
-                    Toolbox.assert('Function SocialReport.DateRangePicker.setEnd: millisecond is undefined or is invalid (need to be 1489420800000 or "1489420800")');
+            //set end time in moment object
+            setEnd: function (Moment) {
+                var moment = Moment || {};
+                if (!this._isMomentObj(moment)) {
+                    Toolbox.assert('Function SocialReport.DateRangePicker.setEnd: Moment is undefined or is invalid (need to be constructor by moment');
                     return false;
+                } else {
+                    return this.end = moment;
                 }
             },
 
-            //get end time millisecond
-            getEnd: function () {
+            //get end time in moment obj and can format it by using moment format(http://momentjs.cn/docs/#/displaying/format/)
+            getEnd: function (FormatString) {
+                var formatString = FormatString || '';
+                //if formatString exist
+                if (formatString) {
+                    //then we format it
+                    return this.end.format(formatString);
+                }
                 return this.end;
             },
 
@@ -289,7 +309,7 @@
 
             //get range in day
             getRangeInDay: function () {
-                return Toolbox.secToDay((this.getEnd() - this.getStart()) / 1000);
+                return Toolbox.secToDay((this.getEnd("x") - this.getStart("x")) / 1000);
             },
 
             //render
@@ -306,16 +326,18 @@
             },
 
             //set daterangerpicker
-            setDateRangePikcer: function (start,end) {
+            setDateRangePikcer: function () {
                 var _this = this,
                     id = this.getId(),
                     $obj = $('#' + id),
+                    start = this.getStart(),
+                    end = this.getEnd(),
                     cb = function (start, end) { //`start` and `end` is millisecond,you need to change it to unix stamp when you commuicate with server
-                        //change the content of the daterangepicker
-                        $obj.find('span').html(_this.getDateRangeInText(start, end));
                         //set current `start` and `end`
-                        _this.setStart(moment(start).format("x"));
-                        _this.setEnd(moment(end).format("x"));
+                        _this.setStart(start);
+                        _this.setEnd(end);
+                        //change the content of the daterangepicker
+                        $obj.find('span').html(_this.getDateRangeInText());
                         //call user's callback function
                         _this.callback.call(_this, moment(start), moment(end));
                     };
@@ -341,19 +363,19 @@
             },
 
             //get dateRange in text format
-            getDateRangeInText: function (Start, End) {
-                return moment(Start).format('MMMM D, YYYY') + ' - ' + moment(End).format('MMMM D, YYYY');
+            getDateRangeInText: function () {
+                return this.getStart('MMMM D, YYYY') + ' - ' + this.getEnd('MMMM D, YYYY');
             },
 
             //initialize the element obj
             initialize: function (Id, Options) {
-                var start = Options.start || moment().subtract(6, 'days').hours(0).minutes(0).seconds(0),
-                    end = Options.end || moment().hours(23).minutes(59).seconds(59);
                 this.setId(Id);
+                this.setStart(Options.start || moment().subtract(6, 'days').hours(0).minutes(0).seconds(0));
+                this.setEnd(Options.end || moment().hours(23).minutes(59).seconds(59));
                 this.setCallback(Options.callback || '');
                 this.setTemplate(['<button type="button" class="btn btn-default pull-right" id="', '%ID%', '"><span><i class="fa fa-calendar"></i> Date range picker</span><i class="fa fa-caret-down"></i></button>']);
                 this.render();
-                this.setDateRangePikcer(start, end);
+                this.setDateRangePikcer();
             }
         });
 
