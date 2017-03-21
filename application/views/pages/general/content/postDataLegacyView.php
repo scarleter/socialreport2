@@ -181,23 +181,23 @@
 
     //initialize posts view after genPostsOperation
     function initPostsView() {
-        var postOperation = this;
+        var facebookOperation = this;
 
         //build tables
-        buildFqyTable(postOperation);
-        buildPostsDataTable(postOperation);
+        buildFqyTable(facebookOperation);
+        buildPostsDataTable(facebookOperation);
 
     };
 
     //build frequency table
     function buildFqyTable(Operation) {
         //set the data for frequency datatable
-        var postOperation = Operation,
-            numbersOfPosts = postOperation.getSize(),
+        var facebookOperation = Operation,
+            numbersOfPosts = facebookOperation.getSize(),
             dateRange = troperlaicos.dateRange.getRangeInDay(),
             frequency, data;
-        postOperation.setDayRange(dateRange);
-        frequency = postOperation.frequency();
+        facebookOperation.setDayRange(dateRange);
+        frequency = facebookOperation.frequency();
         data = [
             ['Data', numbersOfPosts, dateRange, frequency]
         ];
@@ -236,62 +236,12 @@
     //build PostsData table
     function buildPostsDataTable(Operation) {
         //set the data for posts data datatable
-        var postOperation = Operation,
-            data = postOperation.getFormatData('facebook'),
+        var facebookOperation = Operation,
+            //it returan an object include attribute of `data` and `columnTitle`
+            data = facebookOperation.getFormatDataFromTableType('postsdata'),
             tableAttrs = {
                 order: [7, 'des'],
-                columns: [{
-                        title: "Post ID"
-                    },
-                    {
-                        title: "Permalink"
-                    },
-                    {
-                        title: "Post Message"
-                    },
-                    {
-                        title: "Type"
-                    },
-                    {
-                        title: "Posted"
-                    },
-                    {
-                        title: "Organic Reached(a)"
-                    },
-                    {
-                        title: "Paid Reached(b)"
-                    },
-                    {
-                        title: "Total Reached(c)"
-                    },
-                    {
-                        title: "Like(d)"
-                    },
-                    {
-                        title: "Share(e)"
-                    },
-                    {
-                        title: "Comment(f)"
-                    },
-                    {
-                        title: "Video Views(h)"
-                    },
-                    {
-                        title: "Reactions(i)"
-                    },
-                    {
-                        title: "Post Clicks(j)"
-                    },
-                    {
-                        title: "Lifetime Post <br/>Organic Impressions(k)"
-                    },
-                    {
-                        title: "Lifetime Post <br/>Paid Impressions(l)"
-                    },
-                    {
-                        title: "Lifetime Post <br/>Total Impressions(g)"
-                    }
-                ],
+                columns: data['columnTitle'],
                 columnDefs: [{
                     "className": "longnumber",
                     "targets": [0, 1]
@@ -313,10 +263,10 @@
         //if posts data table is exist
         if (troperlaicos.postsDataTable) {
             //use repaint
-            troperlaicos.postsDataTable.repaint(data, tableAttrs);
+            troperlaicos.postsDataTable.repaint(data['data'], tableAttrs);
         } else {
             //build datatable object for posts data
-            troperlaicos.postsDataTable = new SocialReport.DataTables('postsDataTable', data, tableAttrs);
+            troperlaicos.postsDataTable = new SocialReport.DataTables('postsDataTable', data['data'], tableAttrs);
         }
     };
 

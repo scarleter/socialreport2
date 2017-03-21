@@ -495,20 +495,21 @@
         //SocialReport.Operation
         //----------------------
 
-        //Operatioin is a Abstract Data Type which define a pile of functions to help calculate the date from the data class before render by view class
+        //Operatioin is a Abstract Data Type which define a pile of functions to help calculate the date from the Datainterface class before render by view class
         var Operation = SocialReport.Operation = function (Data, Options) {
-            this.data = Data || {};
-            this.options = Options || {};
-            this.dayRange = Toolbox.secToDay(this.options.seconds) || 0;
-            this.options.parse && this.options.parse() || this.parse(this.options.datasource);
+            this.setData(Data);
+            this.setOptions(Options);
+            this.setDayRange(Toolbox.secToDay(this.getOptions('seconds')) || 0);
+            this.setDataOrigin(this.getOptions('dataOrigin').toLowerCase() || 'facebook');
+            var parseFun = this.getOptions('parse');
+            parseFun && parseFun.call(this) || this.parse();
         };
 
         $.extend(Operation.prototype, {
             //parse Data
-            parse: function (Datasource) {
-                var datasource = Datasource || '';
-                datasource = datasource.toLowerCase();
-                switch (datasource) {
+            parse: function () {
+                var dataOrigin = this.getOptions('dataOrigin') || '';
+                switch (dataOrigin.toLowerCase()) {
                     case 'facebook':
                         return this.parseFacebookData();
                         break;
@@ -521,7 +522,7 @@
                 }
             },
 
-            //parse facebook data
+            //parse facebook data in json format for further use
             parseFacebookData: function () {
                 var resultObj = [],
                     originObj = this.getData(),
@@ -589,7 +590,38 @@
                 this.setData(resultObj);
             },
 
+            //get options
+            getOptions: function (AttrName) {
+                if (AttrName) {
+                    return this.options[AttrName] || undefined;
+                }
+                return this.options;
+            },
 
+            //set options
+            setOptions: function (Options) {
+                if (!Options) {
+                    Toolbox.assert('Function SocialReport.setOptions.setDataOrigin: Options is undefined.');
+                    return false;
+                } else {
+                    this.options = Options;
+                }
+            },
+
+            //get data origin
+            getDataOrigin: function () {
+                return this.dataOrigin;
+            },
+
+            //set data origin
+            setDataOrigin: function (DataOrigin) {
+                if (!DataOrigin) {
+                    Toolbox.assert('Function SocialReport.Operation.setDataOrigin: DataOrigin is undefined.');
+                    return false;
+                } else {
+                    return this.dataOrigin = DataOrigin;
+                }
+            },
 
             //get Data
             getData: function () {
@@ -598,7 +630,12 @@
 
             //set Data
             setData: function (Data) {
-                return this.data = Data || {};
+                if (!Data) {
+                    Toolbox.assert('Function SocialReport.Operation.setData: Data is undefined.');
+                    return false;
+                } else {
+                    return this.data = Data;
+                }
             },
 
             //get dateRange
@@ -608,7 +645,12 @@
 
             //set dateRange
             setDayRange: function (DayRange) {
-                return this.dayRange = DayRange || 0;
+                if (!DayRange) {
+                    Toolbox.assert('Function SocialReport.Operation.setDayRange: DayRange is undefined.');
+                    return false;
+                } else {
+                    return this.dayRange = DayRange;
+                }
             },
 
             //calculate frequency
@@ -622,15 +664,23 @@
                 }
             },
 
-            //get format data
-            getFormatData: function (Type) {
-                var type = (Type).toLowerCase() || 'facebook';
-                switch (type) {
+            //get standard format data from `TableType` to build datatable
+            getFormatDataFromTableType: function (TableType) {
+                var dataOrigin = this.getOptions('dataOrigin') || '',
+                    tableType = TableType.toLowerCase() || '';
+                switch (dataOrigin.toLowerCase()) {
                     case 'facebook':
-                        return this._formatDataInFacebook();
+                        switch (tableType) {
+                            case 'postsdata':
+                                return this._getPostsDataInFacebook();
+                                break;
+                            default:
+                                return this.getData();
+                                break;
+                        };
                         break;
                     case 'google':
-                        return this._formatDataInGoogle();
+                        //return this._formatDataInGoogle();
                         break;
                     default:
                         return this.getData();
@@ -638,11 +688,64 @@
                 }
             },
 
-            //get data in facebook style format
-            _formatDataInFacebook: function () {
+            //get column's title and data of datatable in facebook style format
+            //data is two dimension array format
+            _getPostsDataInFacebook: function () {
                 //set the variable for looping
                 var originData = this.getData(),
                     dataSize = this.getSize(),
+                    columnTitle = [{
+                            title: "Post ID"
+                        },
+                        {
+                            title: "Permalink"
+                        },
+                        {
+                            title: "Post Message"
+                        },
+                        {
+                            title: "Type"
+                        },
+                        {
+                            title: "Posted"
+                        },
+                        {
+                            title: "Organic Reached(a)"
+                        },
+                        {
+                            title: "Paid Reached(b)"
+                        },
+                        {
+                            title: "Total Reached(c)"
+                        },
+                        {
+                            title: "Like(d)"
+                        },
+                        {
+                            title: "Share(e)"
+                        },
+                        {
+                            title: "Comment(f)"
+                        },
+                        {
+                            title: "Video Views(h)"
+                        },
+                        {
+                            title: "Reactions(i)"
+                        },
+                        {
+                            title: "Post Clicks(j)"
+                        },
+                        {
+                            title: "Lifetime Post <br/>Organic Impressions(k)"
+                        },
+                        {
+                            title: "Lifetime Post <br/>Paid Impressions(l)"
+                        },
+                        {
+                            title: "Lifetime Post <br/>Total Impressions(g)"
+                        }
+                    ],
                     data = [];
                 //loop to set a two dimension array to get datatable data
                 for (var i = 0; i < dataSize; i++) {
@@ -686,8 +789,11 @@
                     //push in data array
                     data.push(arr);
 
-                }
-                return data;
+                };
+                return {
+                    data: data,
+                    columnTitle: columnTitle
+                };
             },
 
             //get data size
@@ -792,7 +898,7 @@
                 //set facebook posts request callback
                 function FBPostsCallback(resp) {
                     var postsOperation = new SocialReport.Operation(resp, {
-                        datasource: 'facebook',
+                        dataOrigin: 'facebook',
                         seconds: parseInt(params.until - params.since)
                     });
                     if (Callback) Callback.call(postsOperation);
