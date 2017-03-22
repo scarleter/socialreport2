@@ -756,6 +756,9 @@
                             case 'reachrate':
                                 return this._getReachRateInFacebook();
                                 break;
+                            case 'engagementrate':
+                                return this._getEngagementRateInFacebook();
+                                break;
                             default:
                                 return this.getData();
                                 break;
@@ -987,7 +990,58 @@
                 reachRate = (parseFloat(averageTotalReach / averageFanLikeSummary) * 100).toFixed(2) + '%';
                 //push in `data`
                 data.push(['Data', totalReach.toLocaleString(), averageTotalReach.toLocaleString(), averageFanLikeSummary.toLocaleString(), reachRate]);
-                console.info(data);
+
+                return {
+                    data: data,
+                    columnTitle: columnTitle
+                };
+            },
+
+            //build facebook engagementrate data in datatable format
+            //return `columnTitle` and `data`
+            _getEngagementRateInFacebook: function () {
+                //set the variable for looping
+                var postsData = this.getData('postsData'),
+                    dataSize = this.getSize(),
+                    columnTitle = [
+                        {
+                            title: ""
+                        },
+                        {
+                            title: "Avg Like & Comment & Share"
+                        },
+                        {
+                            title: "Avg Reaction & Post Click"
+                        },
+                        {
+                            title: "Avg Reach"
+                        },
+                        {
+                            title: "Avg Like & Comment & Share / Avg Reach"
+                        },
+                        {
+                            title: "Avg Reaction & Post Click / Avg Reach"
+                        }
+                    ],
+                    summary = [],
+                    data = [],
+                    likeCommentShareSummary = 0,
+                    reactionPostclickSummary = 0,
+                    reachSummary = 0,
+                    averageLikeCommentShare = 0,
+                    averageReactionPostclick = 0,
+                    averageReach = 0;
+                //get the summary of the posts data
+                summary = this._getPostsDataSummary();
+                likeCommentShareSummary = summary['like'] + summary['comments'] + summary['shares'];
+                reactionPostclickSummary = summary['like'] + summary['love'] + summary['haha'] + summary['wow'] + summary['sorry'] + summary['anger'] + summary['video play'] + summary['photo view'] + summary['link clicks'] + summary['other clicks'];
+                reachSummary = summary['post_impressions_unique'];
+                averageLikeCommentShare = Math.round(likeCommentShareSummary / dataSize);
+                averageReactionPostclick = Math.round(reactionPostclickSummary / dataSize);
+                averageReach = Math.round(reachSummary / dataSize);
+                //push in `data`
+                data.push(['Data', averageLikeCommentShare.toLocaleString(), averageReactionPostclick.toLocaleString(), averageReach.toLocaleString(), (parseFloat(averageLikeCommentShare / averageReach) * 100).toFixed(2) + '%', (parseFloat(averageReactionPostclick / averageReach) * 100).toFixed(2) + '%']);
+
                 return {
                     data: data,
                     columnTitle: columnTitle
