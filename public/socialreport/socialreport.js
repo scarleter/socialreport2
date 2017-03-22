@@ -1058,8 +1058,19 @@
             },
 
             //internal function to sort postsData
-            _sortPostsData: function () {
-                var originPostsData = this._getPostsDataIn2DArray();
+            _sortPostsData: function (Index) {
+                //`Index` is the reference for sorting
+                var index = index || 7,
+                    originPostsData = this._getPostsDataIn2DArray(),
+                    resultPostsData = [];
+                resultPostsData = originPostsData.sort(sortByIndex);
+                //a sort function for sorting
+                function sortByIndex(a, b) {
+                    var arrayB = b[index].replace(',', '');
+                    var arrayA = a[index].replace(',', '');
+                    return arrayB - arrayA;
+                };
+                return resultPostsData;
             },
 
             //internal function to get summary of postsData
