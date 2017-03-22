@@ -134,7 +134,60 @@
             success = options.success = function (resp) {
                 if (resp['data']) {
                     this.data = this.data.concat(resp['data']);
-                    if (resp['paging']) {
+                    if (resp['paging'] && resp['paging']['next']) {
+                        var nextUrl = resp['paging']['next'];
+                        SocialReport.DataInterface.ajax({}, {
+                            url: nextUrl,
+                            context: this,
+                            success: success,
+                            error: error
+                        });
+                    } else {
+                        callback(result.data);
+                    }
+                } else {
+                    callback(result.data);
+                }
+            };
+
+            SocialReport.DataInterface.ajax(data, options);
+        };
+
+        //temporary function to get facebook reach data before the sever php versin upgrade to 5.4 or above
+        DataInterface.getFacebookReach = function (Params, Callback) {
+
+            var params = Params || {},
+                data = {
+                    since: params.since || '',
+                    until: params.until || '',
+                    access_token: params.access_token || ''
+                },
+                options = {},
+                result = {
+                    data: []
+                },
+                error = '',
+                success = '',
+                callback = Callback || function (resp) {
+                    console.info(resp)
+                };
+
+            //if `data.since` or `data.until` or `data.access_token` or `params.pageid` is empty return `result`
+            if (!(data.since && data.until && data.access_token && params.pageid)) return result.data;
+            options = {
+                url: 'https://graph.facebook.com/v2.8/' + params.pageid + '/insights/page_consumptions,page_positive_feedback_by_type,page_fans',
+                context: result
+            };
+
+            //set the `options.error`
+            error = options.error = function (resp) {
+                console.info(resp);
+            };
+            //set the `options.success`
+            success = options.success = function (resp) {
+                if (resp['data']) {
+                    this.data = this.data.concat(resp['data']);
+                    if (resp['paging'] && resp['paging']['next']) {
                         var nextUrl = resp['paging']['next'];
                         SocialReport.DataInterface.ajax({}, {
                             url: nextUrl,
@@ -524,7 +577,7 @@
             //parse facebook data in json format for further use
             parseFacebookData: function () {
                 var resultObj = [],
-                    originObj = this.getData(),
+                    originObj = this.getData('postsData'),
                     size = this.getSize();
                 //loop to set data
                 for (var i = 0; i < size; i++) {
@@ -572,7 +625,7 @@
                                 obj['post_consumptions_by_type'] = consumptionsObj;
                                 for (var key in consumptionsObj) {
                                     //if `type` is video and `key` is photo view or `type` is not video and `key` is video play, skip it
-                                    if ((obj['type'] === 'video' && key === 'photo view')||(obj['type'] !== 'video' && key === 'video play')) {
+                                    if ((obj['type'] === 'video' && key === 'photo view') || (obj['type'] !== 'video' && key === 'video play')) {
                                         continue;
                                     }
                                     obj[key] = consumptionsObj[key];
@@ -590,7 +643,9 @@
                     }
                     resultObj[i] = obj;
                 }
-                this.setData(resultObj);
+                this.setData({
+                    postsData: resultObj
+                });
             },
 
             //get options
@@ -627,7 +682,10 @@
             },
 
             //get Data
-            getData: function () {
+            getData: function (Attr) {
+                if (!!(Attr && typeof Attr === 'string')) {
+                    return this.data[Attr];
+                }
                 return this.data;
             },
 
@@ -698,7 +756,7 @@
             //return `columnTitle` and `data`
             _getPostsDataInFacebook: function () {
                 //set the variable for looping
-                var originData = this.getData(),
+                var originData = this.getData('postsData'),
                     dataSize = this.getSize(),
                     columnTitle = [{
                             title: "Post ID"
@@ -804,7 +862,7 @@
             //get average posts data in facebook
             _getAveragePostsDataInFacebook: function () {
                 //set the variable for looping
-                var originData = this.getData(),
+                var originData = this.getData('postsData'),
                     dataSize = this.getSize(),
                     columnTitle = [
                         {
@@ -881,7 +939,7 @@
 
             //get data size
             getSize: function () {
-                var data = this.getData() || {},
+                var data = this.getData('postsData') || {},
                     type = (typeof data).toLowerCase();
                 type = type === 'object' ? (Toolbox.isArray(data) ? 'array' : 'object') : type;
 
@@ -967,23 +1025,33 @@
         //Facebook class contain function relative facebook
         var Facebook = SocialReport.Facebook = {
 
-            //get function posts data base on which to generate a Operation object
-            genPostsOperationObj: function (Params, Callback) {
-                //set facebook posts request params
-                var params = Params || {};
+            //get facebook operatioin object
+            genFacebookOperation: function (Params, Callback) {
+                //set facebook request params
+                var params = Params || {},
+                    data = {};
                 //if `params.since` or `params.until` or `params.pageid` or `params.access_token` is 0 console assert the msg and return
                 if (!(params.since && params.until && params.pageid && params.access_token)) {
-                    SocialReport.Toolbox.assert('Function SocialReport.Facebook.genPostsOperationObj: params since or until or pageid or access_token is undefined');
+                    SocialReport.Toolbox.assert('Function SocialReport.Facebook.genFacebookOperation: params since or until or pageid or access_token is undefined');
                     return;
                 }
-                //set facebook posts request callback
+                //callback for `getFacebookPosts`
                 function FBPostsCallback(resp) {
-                    var postsOperation = new SocialReport.Operation(resp, {
+                    //set `data.postsData`
+                    data.postsData = resp;
+                    //request to get facebook reach data
+                    SocialReport.DataInterface.getFacebookReach(params, FBReachCallback);
+                };
+                //callback for `getFacebookReach`
+                function FBReachCallback(resp) {
+                    data.reachData = resp;
+                    var facebookOperation = new SocialReport.Operation(data, {
                         dataOrigin: 'facebook',
                         seconds: parseInt(params.until - params.since)
                     });
-                    if (Callback) Callback.call(postsOperation);
+                    if (Callback) Callback.call(facebookOperation);
                 };
+                //request to get facebook posts data
                 SocialReport.DataInterface.getFacebookPosts(params, FBPostsCallback);
             }
         };

@@ -168,19 +168,19 @@
 
     //dateRange change will trigger this function
     function dateRangeCallback(start, end) {
-        //set paras for getting facebook posts data
-        var postsParams = {
+        //set paras for getting facebook data
+        var params = {
             since: start.unix(),
             until: end.unix(),
             pageid: '<?php echo $pageId;?>',
             access_token: '<?php echo $pageAccessToken;?>'
         };
-        //use asynchronous to get data and put the follow steps in the callback function such as `initPostsView`.
-        SocialReport.Facebook.genPostsOperationObj(postsParams, initPostsView);
+        //use asynchronous to get facebook data(posts and reach) and put the follow steps in the callback function such as `buildTable`.
+        SocialReport.Facebook.genFacebookOperation(params, buildTable);
     };
 
-    //initialize posts view after genPostsOperation
-    function initPostsView() {
+    //it is a callback function to build tables
+    function buildTable() {
         var facebookOperation = this;
 
         //build tables
