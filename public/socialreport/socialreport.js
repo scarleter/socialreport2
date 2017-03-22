@@ -759,6 +759,15 @@
                             case 'engagementrate':
                                 return this._getEngagementRateInFacebook();
                                 break;
+                            case 'toplinks':
+                                return this._getTopPostsDataInFacebookByType('link', 5);
+                                break;
+                            case 'topphotos':
+                                return this._getTopPostsDataInFacebookByType('photo', 5);
+                                break;
+                            case 'topvideos':
+                                return this._getTopPostsDataInFacebookByType('video', 5);
+                                break;
                             default:
                                 return this.getData();
                                 break;
@@ -1000,6 +1009,48 @@
                 //push in `data`
                 data.push(['Data', averageLikeCommentShare.toLocaleString(), averageReactionPostclick.toLocaleString(), averageReach.toLocaleString(), (parseFloat(averageLikeCommentShare / averageReach) * 100).toFixed(2) + '%', (parseFloat(averageReactionPostclick / averageReach) * 100).toFixed(2) + '%']);
 
+                return {
+                    data: data,
+                    columnTitle: columnTitle
+                };
+            },
+
+            //build facebook top postsdata in datatable format
+            //return `columnTitle` and `data`
+            _getTopPostsDataInFacebookByType: function (Type, Limit) {
+                //set the variable for looping
+                var sortedPostsData = this._sortPostsData(),
+                    dataSize = this.getSize(),
+                    columnTitle = [
+                        {
+                            title: "Post ID"
+                        },
+                        {
+                            title: "Permalink"
+                        },
+                        {
+                            title: "Post Message"
+                        },
+                        {
+                            title: "Type"
+                        },
+                        {
+                            title: "Posted"
+                        }
+                    ],
+                    data = [],
+                    limit = Limit || 5,
+                    type = Type || 'link';
+                for (var i = 0; i < dataSize; i++) {
+                    //if type suited
+                    if (sortedPostsData[i][3] === type) {
+                        data.push([sortedPostsData[i][0], sortedPostsData[i][1], sortedPostsData[i][2], sortedPostsData[i][3], sortedPostsData[i][4]]);
+                        //when data length reach limit,it should jump out the loop
+                        if (data.length >= limit) {
+                            break;
+                        }
+                    }
+                }
                 return {
                     data: data,
                     columnTitle: columnTitle

@@ -133,13 +133,13 @@
                     <!-- /.box-header -->
                     <div class="box-body">
                         <label>1. Top 5 Links</label>
-                        <table id="topThreeLinkDataTable" class="table table-striped table-bordered dt-responsive" cellspacing="0" width="100%"></table>
+                        <span id="topLinksDataTable"></span>
                         <br/><br/>
                         <label>2. Top 5 Photos</label>
-                        <table id="topThreePhotoDataTable" class="table table-striped table-bordered dt-responsive" cellspacing="0" width="100%"></table>
+                        <span id="topPhotosDataTable"></span>
                         <br/><br/>
                         <label>3. Top 5 Videos</label>
-                        <table id="topThreeVideoDataTable" class="table table-striped table-bordered dt-responsive" cellspacing="0" width="100%"></table>
+                        <span id="topVideosDataTable"></span>
                     </div>
                     <!-- /.box-body -->
                 </div>
@@ -188,6 +188,9 @@
         buildAveragePostsDataTable(facebookOperation);
         buildReachRateDataTable(facebookOperation);
         buildEngagementRateDataTable(facebookOperation);
+        buildTopLinksDataTable(facebookOperation);
+        buildTopPhotosDataTable(facebookOperation);
+        buildTopVideosDataTable(facebookOperation);
     };
 
     //build frequency table
@@ -337,6 +340,90 @@
         } else {
             //build datatable object
             troperlaicos.engagementRateDataTable = new SocialReport.DataTables('engagementRateDataTable', data['data'], tableAttrs);
+        }
+    };
+
+    //build TopLinksDataTable
+    function buildTopLinksDataTable(Operation) {
+        var facebookOperation = Operation,
+            //it returan an object include attribute of `data` and `columnTitle`
+            data = facebookOperation.getFormatDataFromTableType('toplinks'),
+            tableAttrs = {
+                paging: false,
+                lengthChange: false,
+                searching: false,
+                ordering: false,
+                info: false,
+                autoWidth: false,
+                columns: data['columnTitle'],
+                columnDefs: [{
+                    "className": "longnumber",
+                    "targets": [0, 1]
+                }]
+            };
+        //if table is exist
+        if (troperlaicos.topLinksDataTable) {
+            //use repaint
+            troperlaicos.topLinksDataTable.repaint(data['data'], tableAttrs);
+        } else {
+            //build datatable object
+            troperlaicos.topLinksDataTable = new SocialReport.DataTables('topLinksDataTable', data['data'], tableAttrs);
+        }
+    };
+    
+    //build TopPhotosDataTable
+    function buildTopPhotosDataTable(Operation) {
+        var facebookOperation = Operation,
+            //it returan an object include attribute of `data` and `columnTitle`
+            data = facebookOperation.getFormatDataFromTableType('topphotos'),
+            tableAttrs = {
+                paging: false,
+                lengthChange: false,
+                searching: false,
+                ordering: false,
+                info: false,
+                autoWidth: false,
+                columns: data['columnTitle'],
+                columnDefs: [{
+                    "className": "longnumber",
+                    "targets": [0, 1]
+                }]
+            };
+        //if table is exist
+        if (troperlaicos.topPhotosDataTable) {
+            //use repaint
+            troperlaicos.topPhotosDataTable.repaint(data['data'], tableAttrs);
+        } else {
+            //build datatable object
+            troperlaicos.topPhotosDataTable = new SocialReport.DataTables('topPhotosDataTable', data['data'], tableAttrs);
+        }
+    };
+    
+    //build TopVideosDataTable
+    function buildTopVideosDataTable(Operation) {
+        var facebookOperation = Operation,
+            //it returan an object include attribute of `data` and `columnTitle`
+            data = facebookOperation.getFormatDataFromTableType('topvideos'),
+            tableAttrs = {
+                paging: false,
+                lengthChange: false,
+                searching: false,
+                ordering: false,
+                info: false,
+                autoWidth: false,
+                columns: data['columnTitle'],
+                columnDefs: [{
+                    "className": "longnumber",
+                    "targets": [0, 1]
+                }]
+            };
+        //if table is exist
+        if (troperlaicos.topVideosDataTable) {
+            //use repaint
+            troperlaicos.topVideosDataTable.repaint(data['data'], tableAttrs);
+        } else {
+            //build datatable object
+            troperlaicos.topVideosDataTable = new SocialReport.DataTables('topVideosDataTable', data['data'], tableAttrs);
         }
     };
 
