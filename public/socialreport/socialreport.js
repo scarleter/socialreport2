@@ -1085,7 +1085,7 @@
                         totalImpressions = postsData[i]['post_impressions'];
                     //set data in `arr` in order
                     arr.push(postsData[i]['id']);
-                    arr.push(postsData[i]['permalink_url']);
+                    arr.push('<a href="' + postsData[i]['permalink_url'] + '" target="_blank">' + postsData[i]['permalink_url'] + '</a>');
                     arr.push('<div class="post_message">' + (postsData[i]['message']) + '</div>');
                     arr.push(postsData[i]['type']);
                     arr.push(postsData[i]['created_time']);
