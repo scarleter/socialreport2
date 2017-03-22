@@ -229,7 +229,10 @@
 </div>
 <!-- /.content-wrapper -->
 
-<script>
-
-
+<script type="text/javascript">
+    $(function() {
+        
+    });
+    
+    
 </script>

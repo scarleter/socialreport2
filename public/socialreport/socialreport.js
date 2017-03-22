@@ -442,27 +442,53 @@
         var Select = SocialReport.Select = function (Id, Options) {
             this.initialize(Id, Options);
         };
-        
+
         $.extend(Select.prototype, View.prototype, {
-            //set dateRangePicker
-            setDateRangePicker: function (Object) {
-                //set it if `Object` is create by DateRangePicker
-                if (Object && Object.constructor === SocialReport.DateRangePicker.constructor) {
-                    return this.dateRangePicker = Object;
+            //set selectOption
+            setSelectOption: function (Object) {
+                //make sure `Object` is object
+                if (Object && typeof Object === 'object') {
+                    return this.selectOpion = Object;
                 } else {
-                    Toolbox.assert('Function SocialReport.DataComparePanel.setDateRangePicker: `Object` is undefined or not create by SocialReport.DateRangePicker');
+                    Toolbox.assert('Function SocialReport.Select.setSelectOption: Object is undefined or not a object');
                     return false;
                 }
             },
 
-            //get dateRangePicker
-            getDateRangePicker: function () {
-                return this.dateRangePicker;
+            //get selectOption
+            getSelectOption: function () {
+                return this.selectOpion;
+            },
+
+            //render
+            render: function () {
+                var id = this.getId(),
+                    $obj = $('#' + id),
+                    template = this.getTemplate().join('').replace('%ID%', id),
+                    selectOpion = this.getSelectOption(),
+                    opionHtml = '';
+                //check if there is element obj whose id attribute is `id`
+                if ($obj.size() === 0) {
+                    Toolbox.assert('Function SocialReport.DateRangePicker.render: there is no element\'s id is ' + id);
+                    return false;
+                }
+                $obj.prop('outerHTML', template);
+                //get the new obj
+                $obj = $('#' + id);
+                //loop the selectOpion to render select
+                $.each(selectOpion, function (key, value) {
+                    opionHtml = opionHtml + '<option value="' + key + '">' + value + '</option>';
+                });
+                $obj.html(opionHtml);
             },
 
             //initialize function
             initialize: function (Id, Options) {
                 this.setId(Id);
+
+
+                this.setTemplate(['<select id="', '%ID%', '"></select>']);
+                this.render();
             }
         });
 
