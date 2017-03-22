@@ -105,9 +105,7 @@
                     </div>
                     <div class="box-body">
                         <div id="pageToWatchList" class="form-group">
-                            <select class="form-control">
-                        <option value="<?php echo $pageId;?>"><?php echo $websiteName;?></option>
-                    </select>
+                            <span id="mainPanel"></span>
                         </div>
 
                         <div class="form-group">
@@ -231,8 +229,19 @@
 
 <script type="text/javascript">
     $(function() {
-        
+        //set a gobal variable
+        window.troperlaicos = {};
+
+        troperlaicos.mainPanel = new SocialReport.Select('mainPanel', {
+            changeFunction: function(id) {
+                console.info(id);
+            },
+            option: {
+                'weekendweeklyjetso': '新假期JetSo',
+                '100most': '100毛',
+                'umagazinehk': 'U Magazine'
+            }
+        });
     });
-    
-    
+
 </script>

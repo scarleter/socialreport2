@@ -469,7 +469,7 @@
                     opionHtml = '';
                 //check if there is element obj whose id attribute is `id`
                 if ($obj.size() === 0) {
-                    Toolbox.assert('Function SocialReport.DateRangePicker.render: there is no element\'s id is ' + id);
+                    Toolbox.assert('Function SocialReport.Select.render: there is no element\'s id is ' + id);
                     return false;
                 }
                 $obj.prop('outerHTML', template);
@@ -482,13 +482,28 @@
                 $obj.html(opionHtml);
             },
 
+            //set change event
+            setChange: function (ChangeFunction) {
+                var id = this.getId(),
+                    $obj = $('#' + id);
+                $obj.change(function () {
+                    var currentValue = $(this).find('option:selected').val();
+                    if (typeof ChangeFunction === 'function') {
+                        ChangeFunction.call($(this), currentValue);
+                    }else{
+                        Toolbox.assert('Function SocialReport.Select.setChange: `ChangeFunction` is not a function');
+                        return false;
+                    }
+                });
+            },
+
             //initialize function
             initialize: function (Id, Options) {
                 this.setId(Id);
-
-
-                this.setTemplate(['<select id="', '%ID%', '"></select>']);
+                this.setSelectOption(Options.option);
+                this.setTemplate(['<select class="form-control" id="', '%ID%', '"></select>']);
                 this.render();
+                this.setChange(Options.changeFunction);
             }
         });
 
