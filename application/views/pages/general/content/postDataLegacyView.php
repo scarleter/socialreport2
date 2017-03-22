@@ -114,7 +114,7 @@
                         <span id="averagePostsDataTable"></span>
                         <br/><br/>
                         <label>3. Reach%</label>
-                        <table id="reachTable" class="table table-striped table-bordered dt-responsive" cellspacing="0" width="100%"></table>
+                        <span id="reachRateDataTable"></span>
                         <br/><br/>
                         <label>4. Enagement Rate</label>
                         <table id="enagementRateTable" class="table table-striped table-bordered dt-responsive" cellspacing="0" width="100%"></table>
@@ -182,11 +182,12 @@
     //it is a callback function to build tables
     function buildTable() {
         var facebookOperation = this;
-
+console.info(facebookOperation.getData('reachData'));
         //build tables
         buildFqyTable(facebookOperation);
         buildPostsDataTable(facebookOperation);
         buildAveragePostsDataTable(facebookOperation);
+        buildReachRateDataTable(facebookOperation);
 
     };
 
@@ -291,5 +292,29 @@
             troperlaicos.averagePostsDataTable = new SocialReport.DataTables('averagePostsDataTable', data['data'], tableAttrs);
         }
     };
+    
+    //build ReachRateDataTable
+    function buildReachRateDataTable(Operation){
+        var facebookOperation = Operation,
+            //it returan an object include attribute of `data` and `columnTitle`
+            data = facebookOperation.getFormatDataFromTableType('reachrate'),
+            tableAttrs = {
+                paging: false,
+                lengthChange: false,
+                searching: false,
+                ordering: false,
+                info: false,
+                autoWidth: false,
+                columns: data['columnTitle']
+            };
+        //if table is exist
+        if (troperlaicos.reachRateDataTable) {
+            //use repaint
+            troperlaicos.reachRateDataTable.repaint(data['data'], tableAttrs);
+        } else {
+            //build datatable object
+            troperlaicos.reachRateDataTable = new SocialReport.DataTables('reachRateDataTable', data['data'], tableAttrs);
+        }
+    }
 
 </script>

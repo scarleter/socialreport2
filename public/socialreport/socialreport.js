@@ -143,10 +143,10 @@
                             error: error
                         });
                     } else {
-                        callback(result.data);
+                        callback(this.data);
                     }
                 } else {
-                    callback(result.data);
+                    callback(this.data);
                 }
             };
 
@@ -175,7 +175,8 @@
             //if `data.since` or `data.until` or `data.access_token` or `params.pageid` is empty return `result`
             if (!(data.since && data.until && data.access_token && params.pageid)) return result.data;
             options = {
-                url: 'https://graph.facebook.com/v2.8/' + params.pageid + '/insights/page_consumptions,page_positive_feedback_by_type,page_fans',
+                //url: 'https://graph.facebook.com/v2.8/' + params.pageid + '/insights/page_consumptions,page_positive_feedback_by_type,page_fans',
+                url: 'https://graph.facebook.com/v2.8/' + params.pageid + '/insights/page_fans',
                 context: result
             };
 
@@ -196,10 +197,10 @@
                             error: error
                         });
                     } else {
-                        callback(result.data);
+                        callback(this.data);
                     }
                 } else {
-                    callback(result.data);
+                    callback(this.data);
                 }
             };
 
@@ -576,20 +577,22 @@
 
             //parse facebook data in json format for further use
             parseFacebookData: function () {
-                var resultObj = [],
-                    originObj = this.getData('postsData'),
+                var parsedPostsData = [],
+                    parsedReachData = [],
+                    postsData = this.getData('postsData'),
+                    reachData = this.getData('reachData'),
                     size = this.getSize();
-                //loop to set data
+                //loop to set postsData
                 for (var i = 0; i < size; i++) {
                     var obj = {};
-                    obj['comments'] = originObj[i]['comments'] ? originObj[i]['comments']['summary']['total_count'] : 0;
-                    obj['shares'] = originObj[i]['shares'] ? originObj[i]['shares']['count'] : 0;
-                    obj['created_time'] = Toolbox.formatTime(originObj[i]['created_time']) || '';
-                    obj['id'] = originObj[i]['id'] || '';
-                    obj['message'] = originObj[i]['message'] || '';
-                    obj['permalink_url'] = originObj[i]['permalink_url'] || '';
-                    obj['type'] = originObj[i]['type'] || '';
-                    obj['insights'] = originObj[i]['insights']['data'] || '';
+                    obj['comments'] = postsData[i]['comments'] ? postsData[i]['comments']['summary']['total_count'] : 0;
+                    obj['shares'] = postsData[i]['shares'] ? postsData[i]['shares']['count'] : 0;
+                    obj['created_time'] = Toolbox.formatTime(postsData[i]['created_time']) || '';
+                    obj['id'] = postsData[i]['id'] || '';
+                    obj['message'] = postsData[i]['message'] || '';
+                    obj['permalink_url'] = postsData[i]['permalink_url'] || '';
+                    obj['type'] = postsData[i]['type'] || '';
+                    obj['insights'] = postsData[i]['insights']['data'] || '';
                     //loop to set insights object data
                     for (var j = 0; j < obj['insights'].length; j++) {
                         switch (obj['insights'][j]['name']) {
@@ -641,10 +644,22 @@
                                 break;
                         };
                     }
-                    resultObj[i] = obj;
+                    parsedPostsData[i] = obj;
                 }
+                //loop to set reachData
+                $.each(reachData, function (key, value) {
+                    switch (value['name']) {
+                        case 'page_fans':
+                            parsedReachData['page_fans'] = value['values'];
+                            break;
+                        default:
+                            break;
+                    }
+                });
+
                 this.setData({
-                    postsData: resultObj
+                    postsData: parsedPostsData,
+                    reachData: parsedReachData
                 });
             },
 
@@ -738,6 +753,9 @@
                             case 'averagepostsdata':
                                 return this._getAveragePostsDataInFacebook();
                                 break;
+                            case 'reachrate':
+                                return this._getReachRateInFacebook();
+                                break;
                             default:
                                 return this.getData();
                                 break;
@@ -752,7 +770,7 @@
                 }
             },
 
-            //get postsdata in facebook
+            //build facebook postsdata in datatable format
             //return `columnTitle` and `data`
             _getPostsDataInFacebook: function () {
                 //set the variable for looping
@@ -859,7 +877,8 @@
                 };
             },
 
-            //get average posts data in facebook
+            //build facebook average posts data in datatable format
+            //return `columnTitle` and `data`
             _getAveragePostsDataInFacebook: function () {
                 //set the variable for looping
                 var originData = this.getData('postsData'),
@@ -880,20 +899,8 @@
                     ],
                     summary = [],
                     data = [];
-                //loop to get the summary of the posts data
-                for (var i = 0; i < dataSize; i++) {
-                    $.each(originData[i], function (key, value) {
-                        //make sure `value` is integer
-                        if (!isNaN(value)) {
-                            //if summary[key] is not exist 
-                            if (typeof summary[key] === 'undefined') {
-                                //init it 0
-                                summary[key] = 0;
-                            }
-                            summary[key] = summary[key] + parseInt(value);
-                        }
-                    });
-                }
+                //get the summary of the posts data
+                summary = this._getPostsDataSummary();
                 //calculate some variable
                 var paidReach = parseInt(summary['post_impressions_paid_unique']),
                     totalReach = parseInt(summary['post_impressions_unique']),
@@ -935,6 +942,78 @@
                     data: data,
                     columnTitle: columnTitle
                 };
+            },
+
+            //build facebook reachrate data in datatable format
+            //return `columnTitle` and `data`
+            _getReachRateInFacebook: function () {
+                //set the variable for looping
+                var postsData = this.getData('postsData'),
+                    reachData = this.getData('reachData'),
+                    dataSize = this.getSize(),
+                    columnTitle = [
+                        {
+                            title: ""
+                        },
+                        {
+                            title: "Total Reach"
+                        },
+                        {
+                            title: "Avg Reach"
+                        },
+                        {
+                            title: "Avg Page Fans Like"
+                        },
+                        {
+                            title: "Reach % (Avg Reach/ Avg Fans Like)"
+                        }
+                    ],
+                    summary = [],
+                    data = [],
+                    totalReach = 0,
+                    averageTotalReach = 0,
+                    fanLikeSummary = 0,
+                    averageFanLikeSummary = 0,
+                    reachRate = 0;
+                //get the summary of the posts data
+                summary = this._getPostsDataSummary();
+                totalReach = parseInt(summary['post_impressions_unique']);
+                averageTotalReach = Math.round(totalReach / dataSize);
+                //get fans likes summary
+                $.each(reachData['page_fans'], function (ken, value) {
+                    fanLikeSummary = fanLikeSummary + value['value'];
+                });
+                averageFanLikeSummary = Math.round(fanLikeSummary / this.getDayRange());
+                reachRate = (parseFloat(averageTotalReach / averageFanLikeSummary) * 100).toFixed(2) + '%';
+                //push in `data`
+                data.push(['Data', totalReach.toLocaleString(), averageTotalReach.toLocaleString(), averageFanLikeSummary.toLocaleString(), reachRate]);
+                console.info(data);
+                return {
+                    data: data,
+                    columnTitle: columnTitle
+                };
+            },
+
+            //internal function to get summary of postsData
+            _getPostsDataSummary: function () {
+                var originData = this.getData('postsData'),
+                    dataSize = this.getSize(),
+                    summary = [];
+                //loop to get the summary of the posts data
+                for (var i = 0; i < dataSize; i++) {
+                    $.each(originData[i], function (key, value) {
+                        //make sure `value` is integer
+                        if (!isNaN(value)) {
+                            //if summary[key] is not exist 
+                            if (typeof summary[key] === 'undefined') {
+                                //init it 0
+                                summary[key] = 0;
+                            }
+                            summary[key] = summary[key] + parseInt(value);
+                        }
+                    });
+                }
+                return summary;
             },
 
             //get data size
