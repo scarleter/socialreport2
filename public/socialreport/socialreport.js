@@ -380,7 +380,7 @@
             },
 
             //set daterangerpicker
-            setDateRangePikcer: function () {
+            setDateRangePicker: function () {
                 var _this = this,
                     id = this.getId(),
                     $obj = $('#' + id),
@@ -429,7 +429,72 @@
                 this.setCallback(Options.callback || '');
                 this.setTemplate(['<button type="button" class="btn btn-default pull-right" id="', '%ID%', '"><span><i class="fa fa-calendar"></i> Date range picker</span><i class="fa fa-caret-down"></i></button>']);
                 this.render();
-                this.setDateRangePikcer();
+                this.setDateRangePicker();
+            }
+        });
+
+
+        //SocialReport.Select
+        //-------------------
+
+        //Select is inherited from View
+        //just wrap select component
+        var Select = SocialReport.Select = function (Id, Options) {
+            this.initialize(Id, Options);
+        };
+        
+        $.extend(Select.prototype, View.prototype, {
+            //set dateRangePicker
+            setDateRangePicker: function (Object) {
+                //set it if `Object` is create by DateRangePicker
+                if (Object && Object.constructor === SocialReport.DateRangePicker.constructor) {
+                    return this.dateRangePicker = Object;
+                } else {
+                    Toolbox.assert('Function SocialReport.DataComparePanel.setDateRangePicker: `Object` is undefined or not create by SocialReport.DateRangePicker');
+                    return false;
+                }
+            },
+
+            //get dateRangePicker
+            getDateRangePicker: function () {
+                return this.dateRangePicker;
+            },
+
+            //initialize function
+            initialize: function (Id, Options) {
+                this.setId(Id);
+            }
+        });
+
+        //SocialReport.DataComparePanel
+        //-----------------------------
+
+        //DataComparePanel contains a DateRangePicker object and a Select object
+        //just make DateRangePicker and Select become one class
+        var DataComparePanel = SocialReport.DataComparePanel = function (Id, Options) {
+            this.initialize(Id, Options);
+        };
+
+        $.extend(DataComparePanel.prototype, View.prototype, {
+            //set dateRangePicker
+            setDateRangePicker: function (Object) {
+                //set it if `Object` is create by DateRangePicker
+                if (Object && Object.constructor === SocialReport.DateRangePicker.constructor) {
+                    return this.dateRangePicker = Object;
+                } else {
+                    Toolbox.assert('Function SocialReport.DataComparePanel.setDateRangePicker: `Object` is undefined or not create by SocialReport.DateRangePicker');
+                    return false;
+                }
+            },
+
+            //get dateRangePicker
+            getDateRangePicker: function () {
+                return this.dateRangePicker;
+            },
+
+            //initialize function
+            initialize: function (Id, Options) {
+                this.setId(Id);
             }
         });
 
