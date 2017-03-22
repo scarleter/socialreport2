@@ -490,11 +490,26 @@
                     var currentValue = $(this).find('option:selected').val();
                     if (typeof ChangeFunction === 'function') {
                         ChangeFunction.call($(this), currentValue);
-                    }else{
+                    } else {
                         Toolbox.assert('Function SocialReport.Select.setChange: `ChangeFunction` is not a function');
                         return false;
                     }
                 });
+            },
+
+            //set currentValue
+            setCurrentValue: function (CurrentValue) {
+                if (CurrentValue && typeof CurrentValue === 'string') {
+                    return this.currentValue = CurrentValue;
+                } else {
+                    Toolbox.assert('Function SocialReport.Select.setCurrentValue: `CurrentValue` is not a string');
+                    return false;
+                }
+            },
+
+            //get currentValue
+            getCurrentValue: function () {
+                return this.currentValue;
             },
 
             //initialize function
@@ -517,7 +532,23 @@
         };
 
         $.extend(DataComparePanel.prototype, View.prototype, {
-            //set dateRangePicker
+            //set Select
+            setSelect: function (Object) {
+                //set it if `Object` is create by Select
+                if (Object && Object.constructor === SocialReport.Select.constructor) {
+                    return this.select = Object;
+                } else {
+                    Toolbox.assert('Function SocialReport.DataComparePanel.setSelect: `Object` is undefined or not create by SocialReport.Select');
+                    return false;
+                }
+            },
+
+            //get Select
+            getSelect: function () {
+                return this.select;
+            },
+
+            //set DateRangePicker
             setDateRangePicker: function (Object) {
                 //set it if `Object` is create by DateRangePicker
                 if (Object && Object.constructor === SocialReport.DateRangePicker.constructor) {
@@ -528,14 +559,56 @@
                 }
             },
 
-            //get dateRangePicker
+            //get DateRangePicker
             getDateRangePicker: function () {
                 return this.dateRangePicker;
+            },
+
+            //get Select Change event
+            //just wrap the true `ChangeFunction`,make it become Select Change event
+            _getSelectChange: function (ChangeFunction) {
+                if (ChangeFunction && typeof ChangeFunction === 'function') {
+                    var _this = this;
+                    return function (currentValue) {
+                        var dateRangePicker = _this.getDateRangePicker(),
+                            start = dateRangePicker.getStart(),
+                            end = dateRangePicker.getEnd();
+                        ChangeFunction.call(_this, currentValue, start, end);
+                    };
+                } else {
+                    Toolbox.assert('Function SocialReport.DataComparePanel.getSelectChange: `ChangeFunction` is undefined or not function');
+                }
+            },
+
+            //get DateRangePicker Change event
+            //just wrap the true `ChangeFunction`,make it become DateRangePicker Change event
+            _getDateRangePickerChange: function (ChangeFunction) {
+                if (ChangeFunction && typeof ChangeFunction === 'function') {
+                    var _this = this;
+                    return function (start, end) {
+                        var select = _this.getSelect(),
+                            currentValue = select.getCurrentValue();
+                        ChangeFunction.call(_this, currentValue, start, end);
+                    };
+                } else {
+                    Toolbox.assert('Function SocialReport.DataComparePanel.getDateRangePickerChange: `ChangeFunction` is undefined or not function');
+                }
             },
 
             //initialize function
             initialize: function (Id, Options) {
                 this.setId(Id);
+                this.setTemplate(['<div id="', '%ID%', '><div class="form-group"><span id="', 'Select"></span></div><div class="form-group"><span id="', 'DateRangePicker"></span></div></div>']);
+
+                var select = new Select(Id + 'Select', {
+                        changeFunction: this._getSelectChange(Options.changeFunction),
+                        option: Options.option
+                    }),
+                    dateRangePicker = new DateRangePicker(Id + 'DateRangePicker', {
+                        callback: this._getDateRangePickerChange(Options.changeFunction)
+                    });
+                this.setSelect(select);
+                this.setDateRangePicker(dateRangePicker);
             }
         });
 
