@@ -777,9 +777,7 @@
             //return `columnTitle` and `data`
             _getPostsDataInFacebook: function () {
                 //set the variable for looping
-                var originData = this.getData('postsData'),
-                    dataSize = this.getSize(),
-                    columnTitle = [{
+                var columnTitle = [{
                             title: "Post ID"
                         },
                         {
@@ -832,48 +830,8 @@
                         }
                     ],
                     data = [];
-                //loop to set a two dimension array to get datatable data
-                for (var i = 0; i < dataSize; i++) {
-                    //some middle variable
-                    var arr = [],
-                        type = originData[i]['type'],
-                        like = originData[i]['like'] || 0,
-                        love = originData[i]['love'] || 0,
-                        haha = originData[i]['haha'] || 0,
-                        wow = originData[i]['wow'] || 0,
-                        sorry = originData[i]['sorry'] || 0,
-                        anger = originData[i]['anger'] || 0,
-                        reactionsTotal = like + love + haha + wow + sorry + anger,
-                        vieworplay = ((type === 'video') ? originData[i]['video play'] : originData[i]['photo view']) || 0,
-                        linkClick = originData[i]['link clicks'] || 0,
-                        otherClick = originData[i]['other clicks'] || 0,
-                        postsClickTotal = vieworplay + linkClick + otherClick,
-                        paidReached = originData[i]['post_impressions_paid_unique'],
-                        totalReached = originData[i]['post_impressions_unique'],
-                        paidImpressions = originData[i]['post_impressions_paid'],
-                        totalImpressions = originData[i]['post_impressions'];
-                    //set data in `arr` in order
-                    arr.push(originData[i]['id']);
-                    arr.push(originData[i]['permalink_url']);
-                    arr.push('<div class="post_message">' + (originData[i]['message']) + '</div>');
-                    arr.push(originData[i]['type']);
-                    arr.push(originData[i]['created_time']);
-                    arr.push((totalReached - paidReached).toLocaleString());
-                    arr.push(paidReached.toLocaleString());
-                    arr.push(totalReached.toLocaleString());
-                    arr.push(originData[i]['like'].toLocaleString());
-                    arr.push(originData[i]['shares'].toLocaleString());
-                    arr.push(originData[i]['comments'].toLocaleString());
-                    arr.push(originData[i]['post_video_views'].toLocaleString());
-                    arr.push('<p><label>' + reactionsTotal.toLocaleString() + '</label></p>' + '<p><i class="fa fb_icon fb_like" title="like"></i><span> ' + like.toLocaleString() + '</span></p> ' + '<p><i class="fa fb_icon fb_love" title="love"></i><span> ' + love.toLocaleString() + '</span></p>' + '<p><i class="fa fb_icon fb_haha" title="haha"></i><span> ' + haha.toLocaleString() + '</span></p>' + '<p><i class="fa fb_icon fb_wow" title="wow"></i><span> ' + wow.toLocaleString() + '</span></p>' + '<p><i class="fa fb_icon fb_sad" title="sad"></i><span> ' + sorry.toLocaleString() + '</span></p>' + '<p><i class="fa fb_icon fb_anger" title="anger"></i><span> ' + anger.toLocaleString() + '</span></p>');
-
-                    arr.push('<p><label>' + postsClickTotal.toLocaleString() + '</label></p>' + '<p><label>' + ((type === 'video') ? 'Clicks to Play:' : 'Photo Views:') + '</label><span> ' + vieworplay.toLocaleString() + '</span></p>' + '<p><label>Link Clicks:</label><span> ' + linkClick.toLocaleString() + '</span></p>' + '<p><label>Other Clicks:</label><span> ' + otherClick.toLocaleString() + '</span></p>');
-                    arr.push((totalImpressions - paidImpressions).toLocaleString());
-                    arr.push(paidImpressions.toLocaleString());
-                    arr.push(totalImpressions.toLocaleString());
-                    //push in data array
-                    data.push(arr);
-                };
+                //get postsdata in 2d array
+                data = this._getPostsDataIn2DArray();
                 return {
                     data: data,
                     columnTitle: columnTitle
@@ -1046,6 +1004,62 @@
                     data: data,
                     columnTitle: columnTitle
                 };
+            },
+
+            //internal function to get postsData in two dimension array format
+            _getPostsDataIn2DArray: function () {
+                //set the variable for looping
+                var postsData = this.getData('postsData'),
+                    dataSize = this.getSize(),
+                    data = [];
+                //loop to set a two dimension array to get datatable data
+                for (var i = 0; i < dataSize; i++) {
+                    //some middle variable
+                    var arr = [],
+                        type = postsData[i]['type'],
+                        like = postsData[i]['like'] || 0,
+                        love = postsData[i]['love'] || 0,
+                        haha = postsData[i]['haha'] || 0,
+                        wow = postsData[i]['wow'] || 0,
+                        sorry = postsData[i]['sorry'] || 0,
+                        anger = postsData[i]['anger'] || 0,
+                        reactionsTotal = like + love + haha + wow + sorry + anger,
+                        vieworplay = ((type === 'video') ? postsData[i]['video play'] : postsData[i]['photo view']) || 0,
+                        linkClick = postsData[i]['link clicks'] || 0,
+                        otherClick = postsData[i]['other clicks'] || 0,
+                        postsClickTotal = vieworplay + linkClick + otherClick,
+                        paidReached = postsData[i]['post_impressions_paid_unique'],
+                        totalReached = postsData[i]['post_impressions_unique'],
+                        paidImpressions = postsData[i]['post_impressions_paid'],
+                        totalImpressions = postsData[i]['post_impressions'];
+                    //set data in `arr` in order
+                    arr.push(postsData[i]['id']);
+                    arr.push(postsData[i]['permalink_url']);
+                    arr.push('<div class="post_message">' + (postsData[i]['message']) + '</div>');
+                    arr.push(postsData[i]['type']);
+                    arr.push(postsData[i]['created_time']);
+                    arr.push((totalReached - paidReached).toLocaleString());
+                    arr.push(paidReached.toLocaleString());
+                    arr.push(totalReached.toLocaleString());
+                    arr.push(postsData[i]['like'].toLocaleString());
+                    arr.push(postsData[i]['shares'].toLocaleString());
+                    arr.push(postsData[i]['comments'].toLocaleString());
+                    arr.push(postsData[i]['post_video_views'].toLocaleString());
+                    arr.push('<p><label>' + reactionsTotal.toLocaleString() + '</label></p>' + '<p><i class="fa fb_icon fb_like" title="like"></i><span> ' + like.toLocaleString() + '</span></p> ' + '<p><i class="fa fb_icon fb_love" title="love"></i><span> ' + love.toLocaleString() + '</span></p>' + '<p><i class="fa fb_icon fb_haha" title="haha"></i><span> ' + haha.toLocaleString() + '</span></p>' + '<p><i class="fa fb_icon fb_wow" title="wow"></i><span> ' + wow.toLocaleString() + '</span></p>' + '<p><i class="fa fb_icon fb_sad" title="sad"></i><span> ' + sorry.toLocaleString() + '</span></p>' + '<p><i class="fa fb_icon fb_anger" title="anger"></i><span> ' + anger.toLocaleString() + '</span></p>');
+
+                    arr.push('<p><label>' + postsClickTotal.toLocaleString() + '</label></p>' + '<p><label>' + ((type === 'video') ? 'Clicks to Play:' : 'Photo Views:') + '</label><span> ' + vieworplay.toLocaleString() + '</span></p>' + '<p><label>Link Clicks:</label><span> ' + linkClick.toLocaleString() + '</span></p>' + '<p><label>Other Clicks:</label><span> ' + otherClick.toLocaleString() + '</span></p>');
+                    arr.push((totalImpressions - paidImpressions).toLocaleString());
+                    arr.push(paidImpressions.toLocaleString());
+                    arr.push(totalImpressions.toLocaleString());
+                    //push in data array
+                    data.push(arr);
+                };
+                return data;
+            },
+
+            //internal function to sort postsData
+            _sortPostsData: function () {
+                var originPostsData = this._getPostsDataIn2DArray();
             },
 
             //internal function to get summary of postsData
