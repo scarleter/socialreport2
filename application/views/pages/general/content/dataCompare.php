@@ -104,21 +104,7 @@
                         </div>
                     </div>
                     <div class="box-body">
-                        <div id="pageToWatchList" class="form-group">
-                            <span id="mainPanel"></span>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Date range:</label>
-                            <div class="input-group">
-                                <button type="button" class="btn btn-default pull-right" id="customizedaterange-btn">
-                        <span>
-                          <i class="fa fa-calendar"></i> Date range picker
-                        </span>
-                        <i class="fa fa-caret-down"></i>
-                        </button>
-                            </div>
-                        </div>
+                        <span id="mainPanel"></span>
                     </div>
                 </div>
             </div>
@@ -232,9 +218,12 @@
         //set a gobal variable
         window.troperlaicos = {};
 
-        troperlaicos.mainPanel = new SocialReport.Select('mainPanel', {
-            changeFunction: function(id) {
-                console.info(id);
+        troperlaicos.mainPanel = new SocialReport.DataComparePanel('mainPanel', {
+            changeCallback: function(currentValue, start, end) {
+                console.info(this);
+                console.info(currentValue);
+                console.info(start);
+                console.info(end);
             },
             option: {
                 'weekendweeklyjetso': '新假期JetSo',

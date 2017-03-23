@@ -161,7 +161,7 @@
         window.troperlaicos = {};
 
         troperlaicos.dateRange = new SocialReport.DateRangePicker('dateRange', {
-            callback: dateRangeCallback
+            changeCallback: dateRangeCallback
         });
 
     });

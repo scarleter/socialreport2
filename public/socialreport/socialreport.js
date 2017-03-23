@@ -116,7 +116,7 @@
                 error = '',
                 success = '',
                 callback = Callback || function (resp) {
-                    console.info(resp)
+                    console.info(resp);
                 };
 
             //if `data.since` or `data.until` or `data.access_token` or `params.pageid` is empty return `result`
@@ -346,19 +346,19 @@
                 return this.end;
             },
 
-            //set callback function
-            setCallback: function (Callback) {
-                if (Toolbox.isFunction(Callback)) {
-                    this.callback = Callback;
+            //set change callback function
+            setChangeCallback: function (ChangeCallback) {
+                if (Toolbox.isFunction(ChangeCallback)) {
+                    this.changeCallback = ChangeCallback;
                 } else {
-                    Toolbox.assert('Function SocialReport.DateRangePicker.setCallback: Callback is not a function');
+                    Toolbox.assert('Function SocialReport.DateRangePicker.setChangeCallback: ChangeCallback is not a function');
                     return false;
                 }
             },
 
-            //get callback function
-            getCallback: function () {
-                return this.callback;
+            //get change callback function
+            getChangeCallback: function () {
+                return this.changeCallback;
             },
 
             //get range in day
@@ -386,6 +386,7 @@
                     $obj = $('#' + id),
                     start = this.getStart(),
                     end = this.getEnd(),
+                    changeCallback = this.getChangeCallback(),
                     cb = function (start, end) { //`start` and `end` is millisecond,you need to change it to unix stamp when you commuicate with server
                         //set current `start` and `end`
                         _this.setStart(start);
@@ -393,7 +394,7 @@
                         //change the content of the daterangepicker
                         $obj.find('span').html(_this.getDateRangeInText());
                         //call user's callback function
-                        _this.callback.call(_this, moment(start), moment(end));
+                        changeCallback.call(_this, moment(start), moment(end));
                     };
                 //initialize daterangepicker
                 $obj.daterangepicker({
@@ -426,7 +427,7 @@
                 this.setId(Id);
                 this.setStart(Options.start || moment().subtract(6, 'days').hours(0).minutes(0).seconds(0));
                 this.setEnd(Options.end || moment().hours(23).minutes(59).seconds(59));
-                this.setCallback(Options.callback || '');
+                this.setChangeCallback(Options.changeCallback || '');
                 this.setTemplate(['<button type="button" class="btn btn-default pull-right" id="', '%ID%', '"><span><i class="fa fa-calendar"></i> Date range picker</span><i class="fa fa-caret-down"></i></button>']);
                 this.render();
                 this.setDateRangePicker();
@@ -482,19 +483,36 @@
                 $obj.html(opionHtml);
             },
 
-            //set change event
-            setChange: function (ChangeFunction) {
+            //bind select change event
+            _bindChangeEvent: function () {
                 var id = this.getId(),
-                    $obj = $('#' + id);
+                    $obj = $('#' + id),
+                    changeCallback = this.getChangeCallback();
                 $obj.change(function () {
                     var currentValue = $(this).find('option:selected').val();
-                    if (typeof ChangeFunction === 'function') {
-                        ChangeFunction.call($(this), currentValue);
+                    if (Toolbox.isFunction(changeCallback)) {
+                        changeCallback.call($(this), currentValue);
                     } else {
-                        Toolbox.assert('Function SocialReport.Select.setChange: `ChangeFunction` is not a function');
+                        Toolbox.assert('Function SocialReport.Select._bindChangeEvent: `changeCallback` is not a function');
                         return false;
                     }
                 });
+            },
+
+            //set change callback function
+            setChangeCallback: function (ChangeCallback) {
+                if (Toolbox.isFunction(ChangeCallback)) {
+                    this.changeCallback = ChangeCallback;
+                    this._bindChangeEvent();
+                } else {
+                    Toolbox.assert('Function SocialReport.Select.setChangeCallback: ChangeCallback is not a function');
+                    return false;
+                }
+            },
+
+            //get change callback function
+            getChangeCallback: function () {
+                return this.changeCallback;
             },
 
             //set currentValue
@@ -518,7 +536,7 @@
                 this.setSelectOption(Options.option);
                 this.setTemplate(['<select class="form-control" id="', '%ID%', '"></select>']);
                 this.render();
-                this.setChange(Options.changeFunction);
+                this.setChangeCallback(Options.changeCallback);
             }
         });
 
@@ -565,50 +583,66 @@
             },
 
             //get Select Change event
-            //just wrap the true `ChangeFunction`,make it become Select Change event
-            _getSelectChange: function (ChangeFunction) {
-                if (ChangeFunction && typeof ChangeFunction === 'function') {
+            //just wrap the true `ChangeCallback`,make it become Select Change event
+            _getSelectChange: function (ChangeCallback) {
+                if (Toolbox.isFunction(ChangeCallback)) {
                     var _this = this;
                     return function (currentValue) {
                         var dateRangePicker = _this.getDateRangePicker(),
                             start = dateRangePicker.getStart(),
                             end = dateRangePicker.getEnd();
-                        ChangeFunction.call(_this, currentValue, start, end);
+                        ChangeCallback.call(_this, currentValue, start, end);
                     };
                 } else {
-                    Toolbox.assert('Function SocialReport.DataComparePanel.getSelectChange: `ChangeFunction` is undefined or not function');
+                    Toolbox.assert('Function SocialReport.DataComparePanel.getSelectChange: `ChangeCallback` is undefined or not function');
                 }
             },
 
             //get DateRangePicker Change event
-            //just wrap the true `ChangeFunction`,make it become DateRangePicker Change event
-            _getDateRangePickerChange: function (ChangeFunction) {
-                if (ChangeFunction && typeof ChangeFunction === 'function') {
+            //just wrap the true `ChangeCallback`,make it become DateRangePicker Change event
+            _getDateRangePickerChange: function (ChangeCallback) {
+                if (Toolbox.isFunction(ChangeCallback)) {
                     var _this = this;
                     return function (start, end) {
                         var select = _this.getSelect(),
                             currentValue = select.getCurrentValue();
-                        ChangeFunction.call(_this, currentValue, start, end);
+                        ChangeCallback.call(_this, currentValue, start, end);
                     };
                 } else {
-                    Toolbox.assert('Function SocialReport.DataComparePanel.getDateRangePickerChange: `ChangeFunction` is undefined or not function');
+                    Toolbox.assert('Function SocialReport.DataComparePanel.getDateRangePickerChange: `ChangeCallback` is undefined or not function');
                 }
+            },
+
+            //render
+            render: function () {
+                var id = this.getId(),
+                    $obj = $('#' + id),
+                    template = this.getTemplate().join('').replace(/%ID%/g, id);
+                //check if there is element obj whose id attribute is `id`
+                if ($obj.size() === 0) {
+                    Toolbox.assert('Function SocialReport.DataComparePanel.render: there is no element\'s id is ' + id);
+                    return false;
+                }
+                $obj.prop('outerHTML', template);
             },
 
             //initialize function
             initialize: function (Id, Options) {
                 this.setId(Id);
-                this.setTemplate(['<div id="', '%ID%', '><div class="form-group"><span id="', 'Select"></span></div><div class="form-group"><span id="', 'DateRangePicker"></span></div></div>']);
-
+                this.setTemplate(['<div id="', '%ID%', '"><div class="form-group"><span id="', '%ID%Select"></span></div><div class="form-group"><label>Date range:</label><div class="input-group"><span id="', '%ID%DateRangePicker"></span></div></div></div>']);
+                this.render();
+                //create new select object and dateRangePicker object for the DataComparePanel as internal members
                 var select = new Select(Id + 'Select', {
-                        changeFunction: this._getSelectChange(Options.changeFunction),
-                        option: Options.option
+                        option: Options.option,
+                        changeCallback: Options.changeCallback
                     }),
                     dateRangePicker = new DateRangePicker(Id + 'DateRangePicker', {
-                        callback: this._getDateRangePickerChange(Options.changeFunction)
+                        changeCallback: Options.changeCallback
                     });
                 this.setSelect(select);
                 this.setDateRangePicker(dateRangePicker);
+                select.setChangeCallback(this._getSelectChange(Options.changeCallback));
+                dateRangePicker.setChangeCallback(this._getDateRangePickerChange(Options.changeCallback));
             }
         });
 
