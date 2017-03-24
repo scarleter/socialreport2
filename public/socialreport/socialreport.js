@@ -296,15 +296,10 @@
         };
 
         $.extend(DateRangePicker.prototype, View.prototype, {
-            //check if the Object is constructor by moment
-            _isMomentObj: function (Obj) {
-                var obj = Obj || {};
-                return obj.constructor === moment().constructor;
-            },
 
             //set start time in `Moment` object
             setStart: function (Moment) {
-                if (this._isMomentObj(Moment)) {
+                if (Toolbox.isMoment(Moment)) {
                     return this.start = Moment;
                 } else {
                     Toolbox.assert('Function SocialReport.DateRangePicker.setStart: `Moment` is undefined or is invalid (need to be constructor by moment');
@@ -325,7 +320,7 @@
 
             //set end time in `Moment` object
             setEnd: function (Moment) {
-                if (this._isMomentObj(Moment)) {
+                if (Toolbox.isMoment(Moment)) {
                     return this.end = Moment;
                 } else {
                     Toolbox.assert('Function SocialReport.DateRangePicker.setEnd: `Moment` is undefined or is invalid (need to be constructor by moment');
@@ -397,7 +392,6 @@
                     $obj = $('#' + id),
                     start = this.getStart(),
                     end = this.getEnd(),
-                    changeCallback = this.getChangeHandler(),
                     handler = this._genDateRangePickerHandler();
                 //initialize daterangepicker
                 $obj.daterangepicker({
@@ -463,10 +457,10 @@
             //set selectOption
             setSelectOption: function (Object) {
                 //make sure `Object` is object
-                if (Object && typeof Object === 'object') {
+                if (Toolbox.isObject(Object)) {
                     return this.selectOpion = Object;
                 } else {
-                    Toolbox.assert('Function SocialReport.Select.setSelectOption: Object is undefined or not a object');
+                    Toolbox.assert('Function SocialReport.Select.setSelectOption: `Object` is undefined or not a object');
                     return false;
                 }
             },
@@ -502,37 +496,37 @@
             _bindChangeEvent: function () {
                 var id = this.getId(),
                     $obj = $('#' + id),
-                    changeCallback = this.getChangeCallback();
+                    changeHandler = this.getChangeHandler();
                 $obj.change(function () {
                     var currentValue = $(this).find('option:selected').val();
-                    if (Toolbox.isFunction(changeCallback)) {
-                        changeCallback.call($(this), currentValue);
+                    if (Toolbox.isFunction(changeHandler)) {
+                        changeHandler.call($(this), currentValue);
                     } else {
-                        Toolbox.assert('Function SocialReport.Select._bindChangeEvent: `changeCallback` is not a function');
+                        Toolbox.assert('Function SocialReport.Select._bindChangeEvent: `changeHandler` is not a function');
                         return false;
                     }
                 });
             },
 
-            //set change callback function
-            setChangeCallback: function (ChangeCallback) {
-                if (Toolbox.isFunction(ChangeCallback)) {
-                    this.changeCallback = ChangeCallback;
+            //set user customized change handler function
+            setChangeHandler: function (ChangeHandler) {
+                if (Toolbox.isFunction(ChangeHandler)) {
+                    this.changeHandler = ChangeHandler;
                     this._bindChangeEvent();
                 } else {
-                    Toolbox.assert('Function SocialReport.Select.setChangeCallback: ChangeCallback is not a function');
+                    Toolbox.assert('Function SocialReport.Select.setChangeHandler: `ChangeHandler` is not a function');
                     return false;
                 }
             },
 
-            //get change callback function
-            getChangeCallback: function () {
-                return this.changeCallback;
+            //get user customized change handler function
+            getChangeHandler: function () {
+                return this.changeHandler;
             },
 
             //set currentValue
             setCurrentValue: function (CurrentValue) {
-                if (CurrentValue && typeof CurrentValue === 'string') {
+                if (Toolbox.isString(CurrentValue)) {
                     return this.currentValue = CurrentValue;
                 } else {
                     Toolbox.assert('Function SocialReport.Select.setCurrentValue: `CurrentValue` is not a string');
@@ -551,7 +545,7 @@
                 this.setSelectOption(Options.option);
                 this.setTemplate(['<select class="form-control" id="', '%ID%', '"></select>']);
                 this.render();
-                this.setChangeCallback(Options.changeCallback);
+                this.setChangeHandler(Options.changeHandler);
             }
         });
 
@@ -1510,6 +1504,23 @@
                 return typeof obj === 'function';
             },
 
+            //check if it is a moment object
+            isMoment: function (Obj) {
+                var obj = Obj || {};
+                return obj instanceof moment;
+            },
+
+            //check if it is a Object
+            isObject: function (Obj) {
+                var obj = Obj || {};
+                return obj instanceof Object;
+            },
+
+            //check if it is a string object
+            isString: function (Str) {
+                var str = Str || {};
+                return typeof str === 'string';
+            },
         };
 
 
