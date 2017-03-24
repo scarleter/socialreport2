@@ -75,21 +75,7 @@
                         </div>
                     </div>
                     <div class="box-body">
-                        <div class="form-group">
-                            <input type="text" class="form-control" value="<?php echo $websiteName;?>" disabled="">
-                        </div>
-
-                        <div class="form-group">
-                            <label>Date range:</label>
-                            <div class="input-group">
-                                <button type="button" class="btn btn-default pull-right" id="etdaterange-btn">
-                        <span>
-                          <i class="fa fa-calendar"></i> Date range picker
-                        </span>
-                        <i class="fa fa-caret-down"></i>
-                        </button>
-                            </div>
-                        </div>
+                        <span id="websitePanel"></span>
                     </div>
                 </div>
             </div>
@@ -104,7 +90,7 @@
                         </div>
                     </div>
                     <div class="box-body">
-                        <span id="mainPanel"></span>
+                        <span id="competitorPanel"></span>
                     </div>
                 </div>
             </div>
@@ -218,9 +204,16 @@
         //set a gobal variable
         window.troperlaicos = {};
 
-        troperlaicos.mainPanel = new SocialReport.DataComparePanel('mainPanel', {
+        troperlaicos.websitePanel = new SocialReport.DataComparePanel('websitePanel', {
             changeHandler: function(currentValue, start, end) {
-                console.info(this+' '+currentValue+' '+start+' '+end);
+                console.info(this + ' ' + currentValue + ' ' + start + ' ' + end);
+            },
+            websiteName: 'websiteName'
+        });
+        
+        troperlaicos.competitorPanel = new SocialReport.DataComparePanel('competitorPanel', {
+            changeHandler: function(currentValue, start, end) {
+                console.info(this + ' ' + currentValue + ' ' + start + ' ' + end);
             },
             option: {
                 'weekendweeklyjetso': '新假期JetSo',
