@@ -299,7 +299,7 @@
 
             //set start time in `Moment` object
             setStart: function (Moment) {
-                if (Toolbox.isMoment(Moment)) {
+                if (Toolbox.isInstance(Moment, moment)) {
                     return this.start = Moment;
                 } else {
                     Toolbox.assert('Function SocialReport.DateRangePicker.setStart: `Moment` is undefined or is invalid (need to be constructor by moment');
@@ -320,7 +320,7 @@
 
             //set end time in `Moment` object
             setEnd: function (Moment) {
-                if (Toolbox.isMoment(Moment)) {
+                if (Toolbox.isInstance(Moment, moment)) {
                     return this.end = Moment;
                 } else {
                     Toolbox.assert('Function SocialReport.DateRangePicker.setEnd: `Moment` is undefined or is invalid (need to be constructor by moment');
@@ -455,12 +455,12 @@
 
         $.extend(Select.prototype, View.prototype, {
             //set selectOption
-            setSelectOption: function (Object) {
-                //make sure `Object` is object
-                if (Toolbox.isObject(Object)) {
-                    return this.selectOpion = Object;
+            setSelectOption: function (Obj) {
+                //make sure `Obj` is object
+                if (Toolbox.isInstance(Obj, Object)) {
+                    return this.selectOpion = Obj;
                 } else {
-                    Toolbox.assert('Function SocialReport.Select.setSelectOption: `Object` is undefined or not a object');
+                    Toolbox.assert('Function SocialReport.Select.setSelectOption: `Obj` is undefined or not a object');
                     return false;
                 }
             },
@@ -490,17 +490,20 @@
                     opionHtml = opionHtml + '<option value="' + key + '">' + value + '</option>';
                 });
                 $obj.html(opionHtml);
+                this.setCurrentValue($obj.find('option:first').val());
             },
 
             //bind select change event
             _bindChangeEvent: function () {
-                var id = this.getId(),
+                var _this = this,
+                    id = this.getId(),
                     $obj = $('#' + id),
                     changeHandler = this.getChangeHandler();
                 $obj.change(function () {
-                    var currentValue = $(this).find('option:selected').val();
+                    var currentValue = $obj.find('option:selected').val();
+                    _this.setCurrentValue(currentValue);
                     if (Toolbox.isFunction(changeHandler)) {
-                        changeHandler.call($(this), currentValue);
+                        changeHandler.call(_this, currentValue);
                     } else {
                         Toolbox.assert('Function SocialReport.Select._bindChangeEvent: `changeHandler` is not a function');
                         return false;
@@ -560,12 +563,12 @@
 
         $.extend(DataComparePanel.prototype, View.prototype, {
             //set Select
-            setSelect: function (Object) {
-                //set it if `Object` is create by Select
-                if (Object && Object instanceof SocialReport.Select) {
-                    return this.select = Object;
+            setSelect: function (Obj) {
+                //set it if `Obj` is create by Select
+                if (Toolbox.isInstance(Obj, SocialReport.Select)) {
+                    return this.select = Obj;
                 } else {
-                    Toolbox.assert('Function SocialReport.DataComparePanel.setSelect: `Object` is undefined or not create by SocialReport.Select');
+                    Toolbox.assert('Function SocialReport.DataComparePanel.setSelect: `Obj` is undefined or not create by SocialReport.Select');
                     return false;
                 }
             },
@@ -576,12 +579,12 @@
             },
 
             //set DateRangePicker
-            setDateRangePicker: function (Object) {
-                //set it if `Object` is create by DateRangePicker
-                if (Object && Object instanceof SocialReport.DateRangePicker) {
-                    return this.dateRangePicker = Object;
+            setDateRangePicker: function (Obj) {
+                //set it if `Obj` is create by DateRangePicker
+                if (Toolbox.isInstance(Obj, SocialReport.DateRangePicker)) {
+                    return this.dateRangePicker = Obj;
                 } else {
-                    Toolbox.assert('Function SocialReport.DataComparePanel.setDateRangePicker: `Object` is undefined or not create by SocialReport.DateRangePicker');
+                    Toolbox.assert('Function SocialReport.DataComparePanel.setDateRangePicker: `Obj` is undefined or not create by SocialReport.DateRangePicker');
                     return false;
                 }
             },
@@ -606,7 +609,6 @@
             //set start
             setStart: function (Start) {
                 var dateRangePickerObj = this.getDateRangePicker();
-                console.info(dateRangePickerObj);
                 return dateRangePickerObj.setStart(Start);
             },
 
@@ -628,32 +630,32 @@
                 return dateRangePickerObj.getEnd();
             },
 
-            //set change callback function
-            setChangeCallback: function (ChangeCallback) {
-                if (Toolbox.isFunction(ChangeCallback)) {
-                    this.changeCallback = ChangeCallback;
+            //set user customized change handler function
+            setChangeHandler: function (ChangeHandler) {
+                if (Toolbox.isFunction(ChangeHandler)) {
+                    this.changeHandler = ChangeHandler;
                 } else {
-                    Toolbox.assert('Function SocialReport.DataComparePanel.setChangeCallback: ChangeCallback is not a function');
+                    Toolbox.assert('Function SocialReport.DataComparePanel.setChangeHandler: `ChangeHandler` is not a function');
                     return false;
                 }
             },
 
-            //get change callback function
-            getChangeCallback: function () {
-                return this.changeCallback;
+            //get user customized change handler function
+            getChangeHandler: function () {
+                return this.changeHandler;
             },
 
-            //trigger DataComparePanel class change event
+            //trigger DataComparePanel change event
             triggerChange: function () {
                 var currentValue = this.getCurrentValue(),
                     start = this.getStart(),
                     end = this.getEnd(),
-                    changeCallback = this.getChangeCallback();
-                changeCallback.call(this, currentValue, start, end);
+                    changeHandler = this.getChangeHandler();
+                changeHandler.call(this, currentValue, start, end);
             },
 
-            //Select change event callback
-            _selectChangeCallback: function () {
+            //generate Select change event handler
+            _genSelectChangeHandler: function () {
                 //save DataComparePanel object
                 var _this = this;
                 return function (CurrentValue) {
@@ -661,22 +663,22 @@
                         _this.setCurrentValue(CurrentValue);
                         _this.triggerChange();
                     } else {
-                        Toolbox.assert('Function SocialReport.DataComparePanel._selectChangeCallback: `CurrentValue` is undefined');
+                        Toolbox.assert('Function SocialReport.DataComparePanel._genSelectChangeHandler: `CurrentValue` is undefined');
                     }
                 };
             },
 
-            //DateRangePicker change event callback
-            _dateRangePickerChangeCallback: function () {
+            //generate DateRangePicker change event handler
+            _genDateRangePickerChangeHandler: function () {
                 //save DataComparePanel object
                 var _this = this;
                 return function (Start, End) {
-                    if (Start.constructor === moment().constructor && End.constructor === moment().constructor) {
+                    if (Toolbox.isInstance(Start, moment) && Toolbox.isInstance(End, moment)) {
                         _this.setStart(Start);
                         _this.setEnd(End);
                         _this.triggerChange();
                     } else {
-                        Toolbox.assert('Function SocialReport.DataComparePanel._dateRangePickerChangeCallback: `Start` or `End` is undefined or is invalid (need to be constructor by moment"');
+                        Toolbox.assert('Function SocialReport.DataComparePanel._genDateRangePickerChangeHandler: `Start` or `End` is undefined or is invalid (need to be constructor by moment"');
                     }
                 };
 
@@ -699,16 +701,18 @@
             initialize: function (Id, Options) {
                 this.setId(Id);
                 this.setTemplate(['<div id="', '%ID%', '"><div class="form-group"><span id="', '%ID%Select"></span></div><div class="form-group"><label>Date range:</label><div class="input-group"><span id="', '%ID%DateRangePicker"></span></div></div></div>']);
-                this.setChangeCallback(Options.changeCallback);
+                this.setChangeHandler(Options.changeHandler);
                 this.render();
-                //create new select object and dateRangePicker object for the DataComparePanel as internal members
+                //create new Select object and DateRangePicker object for the DataComparePanel as internal members
                 this.setSelect(new Select(Id + 'Select', {
                     option: Options.option,
-                    changeCallback: this._selectChangeCallback()
+                    changeHandler: this._genSelectChangeHandler()
                 }));
                 this.setDateRangePicker(new DateRangePicker(Id + 'DateRangePicker', {
-                    changeCallback: this._dateRangePickerChangeCallback()
+                    changeHandler: this._genDateRangePickerChangeHandler()
                 }));
+                //DateRangePicker would trigger change event in the first time,need to trigger manually 
+                this.getDateRangePicker().triggerChangeEvent();
             }
         });
 
@@ -1504,12 +1508,6 @@
                 return typeof obj === 'function';
             },
 
-            //check if it is a moment object
-            isMoment: function (Obj) {
-                var obj = Obj || {};
-                return obj instanceof moment;
-            },
-
             //check if it is a Object
             isObject: function (Obj) {
                 var obj = Obj || {};
@@ -1520,6 +1518,14 @@
             isString: function (Str) {
                 var str = Str || {};
                 return typeof str === 'string';
+            },
+
+            //check if `Instance` is instance of `Obj`
+            //if `Obj` is undefined then check if `Instance` is instance of `Object`
+            isInstance: function (Instance, Obj) {
+                var instance = Instance || undefined,
+                    obj = Obj || Object;
+                return instance instanceof obj;
             },
         };
 
