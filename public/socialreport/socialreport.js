@@ -2,226 +2,384 @@
 
 //It is dependent on jQuery,moment,DataTables(https://datatables.net/),DateRangePicker(http://www.daterangepicker.com/),layer(http://www.layui.com/doc/modules/layer.html).
 //It has some subclassess: Data, vVew, Operation, Toolbox, Facebook
+var jQuery = jQuery,
+    moment = moment,
+    layer = layer;
 
-;
 (function ($, window, moment, layer) {
-    window.SocialReport = function () {
-        var SocialReport = {};
+    "use strict";
+    window.SocialReport = (function () {
+        var SocialReport = {},
 
-        //variable for layer plugin ajax loading layer
-        var ajaxLoadingLayer = '';
+            //variable for layer plugin ajax loading layer
+            ajaxLoadingLayer = '',
 
+            //class Toolbox
+            //-------------
 
-        //SocialReport.DataInterface
-        //--------------------------
+            //class to deal with some calculation
+            Toolbox = SocialReport.Toolbox = {
 
-        //DataInterface class is designed to get the facebook and google data by ajax.
-        var DataInterface = SocialReport.DataInterface = {};
-
-        //url for get data from server
-        DataInterface.url = '';
-
-        //wrap ajax
-        DataInterface.ajax = function (Data, Options) {
-            //set `success` function
-            var success = function (resp) {
-                //close ajax loading layer
-                layer.close(ajaxLoadingLayer);
-                //if `Options.success` exists call it
-                if (Options.success) {
-                    //if `Options.context` exists use function.prototype.call to call `Options.success`
-                    if (Options.context) {
-                        Options.success.call(Options.context, resp);
-                    } else {
-                        Options.success(resp);
-                    }
-                }
-            };
-
-            //set `error` function
-            var error = function (resp) {
-                //close ajax loading layer
-                layer.close(ajaxLoadingLayer);
-                //if `Options.error` exists call it
-                if (Options.error) {
-                    //if `Options.context` exists use function.prototype.call to call `Options.error`
-                    if (Options.context) {
-                        Options.error.call(Options.context, resp);
-                    } else {
-                        Options.error(resp);
-                    }
-                }
-            };
-
-            //if has ajax loading layer then close it
-            if (ajaxLoadingLayer) {
-                layer.close(ajaxLoadingLayer);
-            }
-            //set a new one ajax loading layer
-            ajaxLoadingLayer = layer.load(2, {
-                shade: [0.1, '#000']
-            });
-
-            $.ajax({
-                url: Options.url,
-                type: Options.type || 'GET',
-                data: Data,
-                dataType: Options.datatype || 'json',
-                success: success,
-                error: error
-            });
-        };
-
-        //get data from server by ajax.
-        DataInterface.get = function (Data, Options) {
-            DataInterface.ajax(Data, Options || '');
-        };
-
-        //post data to server by ajax.
-        DataInterface.post = function (Data, Options) {
-            DataInterface.ajax(Data, Options || '');
-        };
-
-        //update the whole data to server.
-        DataInterface.put = function (Data, Options) {
-            //use DataInterface.post for now, do not figure out the best way to simulate RESTful api.
-            DataInterface.post(Data, Options);
-        };
-
-        //update the property of data to server.
-        DataInterface.patch = function (Data, Options) {
-            //use DataInterface.post for now, do not figure out the best way to simulate RESTful api.
-            DataInterface.post(Data, Options);
-        };
-
-        //delete data from server by ajax simulate RESTful api.
-        DataInterface.delete = function (data, Options) {
-            //use DataInterface.post for now, do not figure out the best way to simulate RESTful api.
-            DataInterface.post(data, Options);
-        };
-
-        //temporary function to get facebook posts data before the sever php versin upgrade to 5.4 or above
-        DataInterface.getFacebookPosts = function (Params, Callback) {
-
-            var params = Params || {},
-                data = {
-                    since: params.since || '',
-                    until: params.until || '',
-                    access_token: params.access_token || ''
+                //convert seconds to day
+                secToDay: function (Seconds) {
+                    var seconds = parseInt(Seconds, 0) || 0;
+                    return Math.ceil(seconds / (60 * 60 * 24));
                 },
-                options = {},
-                result = {
-                    data: []
+
+                //format time
+                formatTime: function (Time) {
+                    var time = Time || '';
+                    time = new Date(new Date(time).getTime()); //UTC base on created_time: XXX-XX-XXTXX:XX:XX+0000(GMT) 
+                    time = time.getFullYear() + "-" + ("0" + (time.getMonth() + 1)).slice(-2) + "-" + ("0" + time.getDate()).slice(-2) + " " + ("0" + time.getHours()).slice(-2) + ":" + ("0" + time.getMinutes()).slice(-2) + ":" + ("0" + time.getSeconds()).slice(-2);
+                    return time;
                 },
-                error = '',
-                success = '',
-                callback = Callback || function (resp) {
-                    console.info(resp);
-                };
 
-            //if `data.since` or `data.until` or `data.access_token` or `params.pageid` is empty return `result`
-            if (!(data.since && data.until && data.access_token && params.pageid)) return result.data;
-            options = {
-                url: 'https://graph.facebook.com/v2.8/' + params.pageid + '/posts?fields=id,permalink_url,message,type,created_time,insights.metric(post_impressions_organic,post_impressions_by_story_type,post_impressions_paid,post_impressions,post_impressions_unique,post_impressions_paid_unique,post_reactions_by_type_total,post_consumptions_by_type,post_video_views),shares,comments.limit(0).summary(1)',
-                context: result
-            };
+                //assert function
+                assert: function (Msg) {
+                    var msg = Msg || '';
+                    window.console.warn(msg);
+                },
 
-            //set the `options.error`
-            error = options.error = function (resp) {
-                console.info(resp);
-            };
-            //set the `options.success`
-            success = options.success = function (resp) {
-                if (resp['data']) {
-                    this.data = this.data.concat(resp['data']);
-                    if (resp['paging'] && resp['paging']['next']) {
-                        var nextUrl = resp['paging']['next'];
-                        SocialReport.DataInterface.ajax({}, {
-                            url: nextUrl,
-                            context: this,
-                            success: success,
-                            error: error
+                //check if the Object is Array
+                isArray: function (Obj) {
+                    var obj = Obj || {};
+                    return Object.prototype.toString.call(obj) === '[object Array]';
+                },
+
+                //check if it is a function
+                isFunction: function (Obj) {
+                    var obj = Obj || {};
+                    return typeof obj === 'function';
+                },
+
+                //check if it is a Object
+                isObject: function (Obj) {
+                    var obj = Obj || {};
+                    return obj instanceof Object;
+                },
+
+                //check if it is a string object
+                isString: function (Str) {
+                    var str = Str || {};
+                    return typeof str === 'string';
+                },
+
+                //check if `Instance` is instance of `Obj`
+                //if `Obj` is undefined then check if `Instance` is instance of `Object`
+                isInstance: function (Instance, Obj) {
+                    var instance = Instance || undefined,
+                        obj = Obj || Object;
+                    return instance instanceof obj;
+                }
+            },
+
+
+            //SocialReport.DataInterface
+            //--------------------------
+
+            //DataInterface class is designed to get the facebook and google data by ajax.
+            DataInterface = SocialReport.DataInterface = {
+                //url for get data from server
+                url: '',
+
+                //wrap ajax
+                ajax: function (Data, Options) {
+                    //set `success` function
+                    var success = function (resp) {
+                            //close ajax loading layer
+                            layer.close(ajaxLoadingLayer);
+                            //if `Options.success` exists call it
+                            if (Options.success) {
+                                //if `Options.context` exists use function.prototype.call to call `Options.success`
+                                if (Options.context) {
+                                    Options.success.call(Options.context, resp);
+                                } else {
+                                    Options.success(resp);
+                                }
+                            }
+                        },
+
+                        //set `error` function
+                        error = function (resp) {
+                            //close ajax loading layer
+                            layer.close(ajaxLoadingLayer);
+                            //if `Options.error` exists call it
+                            if (Options.error) {
+                                //if `Options.context` exists use function.prototype.call to call `Options.error`
+                                if (Options.context) {
+                                    Options.error.call(Options.context, resp);
+                                } else {
+                                    Options.error(resp);
+                                }
+                            }
+                        };
+
+                    //if has ajax loading layer then close it
+                    if (ajaxLoadingLayer) {
+                        layer.close(ajaxLoadingLayer);
+                    }
+                    //set a new one ajax loading layer
+                    ajaxLoadingLayer = layer.load(2, {
+                        shade: [0.1, '#000']
+                    });
+
+                    $.ajax({
+                        url: Options.url,
+                        type: Options.type || 'GET',
+                        data: Data,
+                        dataType: Options.datatype || 'json',
+                        success: success,
+                        error: error
+                    });
+                },
+
+                //get data from server by ajax.
+                get: function (Data, Options) {
+                    DataInterface.ajax(Data, Options || '');
+                },
+
+                //post data to server by ajax.
+                post: function (Data, Options) {
+                    DataInterface.ajax(Data, Options || '');
+                },
+
+                //update the whole data to server.
+                put: function (Data, Options) {
+                    //use DataInterface.post for now, do not figure out the best way to simulate RESTful api.
+                    DataInterface.post(Data, Options);
+                },
+
+                //update the property of data to server.
+                patch: function (Data, Options) {
+                    //use DataInterface.post for now, do not figure out the best way to simulate RESTful api.
+                    DataInterface.post(Data, Options);
+                },
+
+                //delete data from server by ajax simulate RESTful api.
+                destroy: function (Data, Options) {
+                    //use DataInterface.post for now, do not figure out the best way to simulate RESTful api.
+                    DataInterface.post(Data, Options);
+                },
+
+                //temporary function to get facebook posts data before the sever php versin upgrade to 5.4 or above
+                getFacebookPosts: function (Params, Callback) {
+
+                    var params = Params || {},
+                        data = {
+                            since: params.since || '',
+                            until: params.until || '',
+                            access_token: params.access_token || ''
+                        },
+                        options = {},
+                        result = {
+                            data: []
+                        },
+                        error = '',
+                        success = '',
+                        callback = (Toolbox.isFunction(Callback) && Callback) || Toolbox.assert('Function DataInterface.getFacebookPosts: `Callback` is undefined');
+
+                    //if `data.since` or `data.until` or `data.access_token` or `params.pageid` is empty return `result`
+                    if (!(data.since && data.until && data.access_token && params.pageid)) {
+                        return result.data;
+                    }
+                    options = {
+                        url: 'https://graph.facebook.com/v2.8/' + params.pageid + '/posts?fields=id,permalink_url,message,type,created_time,insights.metric(post_impressions_organic,post_impressions_by_story_type,post_impressions_paid,post_impressions,post_impressions_unique,post_impressions_paid_unique,post_reactions_by_type_total,post_consumptions_by_type,post_video_views),shares,comments.limit(0).summary(1)',
+                        context: result
+                    };
+
+                    //set the `options.error`
+                    error = options.error = function (resp) {
+                        Toolbox.assert('Function DataInterface.getFacebookPosts go to error branch: msg is ' + resp);
+                    };
+                    //set the `options.success`
+                    success = options.success = function (resp) {
+                        if (resp.data) {
+                            this.data = this.data.concat(resp.data);
+                            if (resp.paging && resp.paging.next) {
+                                var nextUrl = resp.paging.next;
+                                SocialReport.DataInterface.ajax({}, {
+                                    url: nextUrl,
+                                    context: this,
+                                    success: success,
+                                    error: error
+                                });
+                            } else {
+                                callback(this.data);
+                            }
+                        } else {
+                            callback(this.data);
+                        }
+                    };
+
+                    SocialReport.DataInterface.ajax(data, options);
+                },
+
+                //temporary function to get facebook reach data before the sever php versin upgrade to 5.4 or above
+                getFacebookReach: function (Params, Callback) {
+
+                    var params = Params || {},
+                        data = {
+                            since: params.since || '',
+                            until: params.until || '',
+                            access_token: params.access_token || ''
+                        },
+                        options = {},
+                        result = {
+                            data: []
+                        },
+                        error = '',
+                        success = '',
+                        callback = (Toolbox.isFunction(Callback) && Callback) || Toolbox.assert('Function DataInterface.getFacebookReach: `Callback` is undefined');
+
+                    //if `data.since` or `data.until` or `data.access_token` or `params.pageid` is empty return `result`
+                    if (!(data.since && data.until && data.access_token && params.pageid)) {
+                        return result.data;
+                    }
+                    options = {
+                        //url: 'https://graph.facebook.com/v2.8/' + params.pageid + '/insights/page_consumptions,page_positive_feedback_by_type,page_fans',
+                        url: 'https://graph.facebook.com/v2.8/' + params.pageid + '/insights/page_fans',
+                        context: result
+                    };
+
+                    //set the `options.error`
+                    error = options.error = function (resp) {
+                        Toolbox.assert('Function DataInterface.getFacebookReach go to error branch: msg is ' + resp);
+                    };
+                    //set the `options.success`
+                    success = options.success = function (resp) {
+                        if (resp.data) {
+                            this.data = this.data.concat(resp.data);
+                            if (resp.paging && resp.paging.next) {
+                                var nextUrl = resp.paging.next;
+                                SocialReport.DataInterface.ajax({}, {
+                                    url: nextUrl,
+                                    context: this,
+                                    success: success,
+                                    error: error
+                                });
+                            } else {
+                                callback(this.data);
+                            }
+                        } else {
+                            callback(this.data);
+                        }
+                    };
+
+                    SocialReport.DataInterface.ajax(data, options);
+                }
+            },
+
+
+            //SocialReport.View
+            //-----------------
+
+            //View class is an Abstract Data Type
+            View = SocialReport.View = function () {
+
+            },
+
+
+            //SocialReport.DateRangePicker
+            //----------------------------
+
+            //DateRangePicker is inherited from View
+            //It a dateRangePicker ui component (http://www.daterangepicker.com/)
+            DateRangePicker = SocialReport.DateRangePicker = function (Id, Options) {
+                this.initialize(Id, Options);
+            },
+
+
+            //SocialReport.Select
+            //-------------------
+
+            //Select is inherited from View
+            //just wrap select component
+            Select = SocialReport.Select = function (Id, Options) {
+                this.initialize(Id, Options);
+            },
+
+
+            //SocialReport.DataComparePanel
+            //-----------------------------
+
+            //DataComparePanel contains a DateRangePicker object and a Select object
+            //just make DateRangePicker and Select become one class
+            DataComparePanel = SocialReport.DataComparePanel = function (Id, Options) {
+                this.initialize(Id, Options);
+            },
+
+
+            //SocialReport.DataTables
+            //-----------------------
+
+            //DataTables is inherited from View
+            //It is a DataTables ui component (https://datatables.net/)
+            //temporary add `Options` for further useage
+            DataTables = SocialReport.DataTables = function (Id, TableData, TableAttrs, Options) {
+                this.initialize(Id, TableData, TableAttrs, Options);
+            },
+
+
+            //SocialReport.Operation
+            //----------------------
+
+            //Operatioin is a Abstract Data Type which define a pile of functions to help calculate the date from the Datainterface class before render by view class
+            Operation = SocialReport.Operation = function (Data, Options) {
+                this.setData(Data);
+                this.setOptions(Options);
+                this.setDayRange(Toolbox.secToDay(this.getOptions('seconds')) || 0);
+                this.setDataOrigin(this.getOptions('dataOrigin').toLowerCase() || 'facebook');
+                var parseFun = this.getOptions('parse') || this.parse;
+                parseFun.call(this);
+            },
+            
+            
+            //class Facebook
+            //--------------
+
+            //Facebook class contain function relative facebook
+            Facebook = SocialReport.Facebook = {
+
+                //get facebook operatioin object
+                genFacebookOperation: function (Params, Callback) {
+                    //set facebook request params
+                    var params = Params || {},
+                        data = {};
+                    //if `params.since` or `params.until` or `params.pageid` or `params.access_token` is 0 console assert the msg and return
+                    if (!(params.since && params.until && params.pageid && params.access_token)) {
+                        SocialReport.Toolbox.assert('Function SocialReport.Facebook.genFacebookOperation: params since or until or pageid or access_token is undefined');
+                        return;
+                    }
+                    //callback for `getFacebookReach`
+                    function FBReachCallback(resp) {
+                        data.reachData = resp;
+                        var facebookOperation = new SocialReport.Operation(data, {
+                            dataOrigin: 'facebook',
+                            seconds: parseInt(params.until - params.since, 0)
                         });
-                    } else {
-                        callback(this.data);
+                        if (Callback) {
+                            Callback.call(facebookOperation);
+                        }
                     }
-                } else {
-                    callback(this.data);
+                    //callback for `getFacebookPosts`
+                    function FBPostsCallback(resp) {
+                        //set `data.postsData`
+                        data.postsData = resp;
+                        //request to get facebook reach data
+                        SocialReport.DataInterface.getFacebookReach(params, FBReachCallback);
+                    }
+                    //request to get facebook posts data
+                    SocialReport.DataInterface.getFacebookPosts(params, FBPostsCallback);
                 }
             };
-
-            SocialReport.DataInterface.ajax(data, options);
-        };
-
-        //temporary function to get facebook reach data before the sever php versin upgrade to 5.4 or above
-        DataInterface.getFacebookReach = function (Params, Callback) {
-
-            var params = Params || {},
-                data = {
-                    since: params.since || '',
-                    until: params.until || '',
-                    access_token: params.access_token || ''
-                },
-                options = {},
-                result = {
-                    data: []
-                },
-                error = '',
-                success = '',
-                callback = Callback || function (resp) {
-                    console.info(resp)
-                };
-
-            //if `data.since` or `data.until` or `data.access_token` or `params.pageid` is empty return `result`
-            if (!(data.since && data.until && data.access_token && params.pageid)) return result.data;
-            options = {
-                //url: 'https://graph.facebook.com/v2.8/' + params.pageid + '/insights/page_consumptions,page_positive_feedback_by_type,page_fans',
-                url: 'https://graph.facebook.com/v2.8/' + params.pageid + '/insights/page_fans',
-                context: result
-            };
-
-            //set the `options.error`
-            error = options.error = function (resp) {
-                console.info(resp);
-            };
-            //set the `options.success`
-            success = options.success = function (resp) {
-                if (resp['data']) {
-                    this.data = this.data.concat(resp['data']);
-                    if (resp['paging'] && resp['paging']['next']) {
-                        var nextUrl = resp['paging']['next'];
-                        SocialReport.DataInterface.ajax({}, {
-                            url: nextUrl,
-                            context: this,
-                            success: success,
-                            error: error
-                        });
-                    } else {
-                        callback(this.data);
-                    }
-                } else {
-                    callback(this.data);
-                }
-            };
-
-            SocialReport.DataInterface.ajax(data, options);
-        };
-
-
-        //SocialReport.View
-        //-----------------
-
-        //View class is an Abstract Data Type
-        var View = SocialReport.View = function () {
-
-        };
 
         $.extend(View.prototype, {
             //set `id`
             setId: function (Id) {
                 //if `Id` is not undefined and not in de existInIdList then set to `this.id`
-                if (Id && !this._existInIdList(Id)) {
+                if (Id && !this.existInIdList(Id)) {
                     this.id = Id;
+                    this.insertInIdList();
                 } else {
                     Toolbox.assert('Function SocialReport.View.setId: `id` is empty or alreay in the `idList` object');
                     return;
@@ -234,34 +392,37 @@
             },
 
             //object for saving used id
-            _idList: {},
+            idList: {},
 
             //internal function check `id` exist in `idList`
-            _existInIdList: function () {
+            existInIdList: function () {
                 var id = this.getId();
-                return !!this._idList[id];
+                return !!this.idList[id];
             },
 
             //insert `id` in `idList`
-            _insertInIdList: function () {
+            insertInIdList: function () {
                 var id = this.getId();
-                return this._idList[id] = true;
+                this.idList[id] = true;
+                return this.idList[id];
             },
 
             //delete `id` in `idList`
-            _deleteInIdList: function () {
+            deleteInIdList: function () {
                 var id = this.getId();
-                return !(this._idList[id] = false);
+                this.idList[id] = false;
+                return !this.idList[id];
             },
 
             //template
-            _templateInArray: [],
+            templateInArray: [],
 
             //set template
             setTemplate: function (Template) {
                 var template = Template || '';
                 if (Toolbox.isArray(template)) {
-                    return this._templateInArray = template;
+                    this.templateInArray = template;
+                    return this.templateInArray;
                 } else {
                     Toolbox.assert('Function SocialReport.View.setTemplate: `template` is empty or not a array');
                     return false;
@@ -270,7 +431,7 @@
 
             //get template
             getTemplate: function () {
-                return this._templateInArray;
+                return this.templateInArray;
             },
 
 
@@ -286,21 +447,13 @@
         });
 
 
-        //SocialReport.DateRangePicker
-        //----------------------------
-
-        //DateRangePicker is inherited from View
-        //It a dateRangePicker ui component (http://www.daterangepicker.com/)
-        var DateRangePicker = SocialReport.DateRangePicker = function (Id, Options) {
-            this.initialize(Id, Options);
-        };
-
         $.extend(DateRangePicker.prototype, View.prototype, {
 
             //set start time in `Moment` object
             setStart: function (Moment) {
                 if (Toolbox.isInstance(Moment, moment)) {
-                    return this.start = Moment;
+                    this.start = Moment;
+                    return this.start;
                 } else {
                     Toolbox.assert('Function SocialReport.DateRangePicker.setStart: `Moment` is undefined or is invalid (need to be constructor by moment');
                     return false;
@@ -321,7 +474,8 @@
             //set end time in `Moment` object
             setEnd: function (Moment) {
                 if (Toolbox.isInstance(Moment, moment)) {
-                    return this.end = Moment;
+                    this.end = Moment;
+                    return this.end;
                 } else {
                     Toolbox.assert('Function SocialReport.DateRangePicker.setEnd: `Moment` is undefined or is invalid (need to be constructor by moment');
                     return false;
@@ -355,20 +509,20 @@
             },
 
             //wrap user's change handler to generate dateRangePicker change handler
-            _genDateRangePickerHandler: function () {
-                var _this = this,
+            genDateRangePickerHandler: function () {
+                var context = this,
                     id = this.getId(),
                     $obj = $('#' + id),
                     changeHandler = this.getChangeHandler();
 
                 return function (Start, End) {
                     //set current `start` and `end`
-                    _this.setStart(Start);
-                    _this.setEnd(End);
+                    context.setStart(Start);
+                    context.setEnd(End);
                     //change the content of the daterangepicker
-                    $obj.find('span').html(_this.getDateRangeInText());
+                    $obj.find('span').html(context.getDateRangeInText());
                     //call user's change handler function
-                    changeHandler.call(_this, _this.getStart(), _this.getEnd());
+                    changeHandler.call(context, context.getStart(), context.getEnd());
                 };
             },
 
@@ -387,34 +541,32 @@
 
             //set daterangerpicker
             setDateRangePicker: function () {
-                var _this = this,
+                var context = this,
                     id = this.getId(),
                     $obj = $('#' + id),
                     start = this.getStart(),
                     end = this.getEnd(),
-                    handler = this._genDateRangePickerHandler();
+                    handler = this.genDateRangePickerHandler();
                 //initialize daterangepicker
                 $obj.daterangepicker({
-                        alwaysShowCalendars: true,
-                        opens: 'right',
-                        ranges: {
-                            'Today': [moment().hours(0).minutes(0).seconds(0), moment().hours(23).minutes(59).seconds(59)],
-                            'Yesterday': [moment().subtract(1, 'days').hours(0).minutes(0).seconds(0), moment().subtract(1, 'days').hours(23).minutes(59).seconds(59)],
-                            'Last 7 Days': [moment().subtract(6, 'days').hours(0).minutes(0).seconds(0), moment().hours(23).minutes(59).seconds(59)],
-                            'Last 30 Days': [moment().subtract(29, 'days').hours(0).minutes(0).seconds(0), moment().hours(23).minutes(59).seconds(59)],
-                            'This Month': [moment().startOf('month').hours(0).minutes(0).seconds(0), moment().endOf('month').hours(23).minutes(59).seconds(59)],
-                            'Last Month': [moment().subtract(1, 'month').startOf('month').hours(0).minutes(0).seconds(0), moment().subtract(1, 'month').endOf('month').hours(23).minutes(59).seconds(59)]
-                        },
-                        startDate: start,
-                        endDate: end
+                    alwaysShowCalendars: true,
+                    opens: 'right',
+                    ranges: {
+                        'Today': [moment().hours(0).minutes(0).seconds(0), moment().hours(23).minutes(59).seconds(59)],
+                        'Yesterday': [moment().subtract(1, 'days').hours(0).minutes(0).seconds(0), moment().subtract(1, 'days').hours(23).minutes(59).seconds(59)],
+                        'Last 7 Days': [moment().subtract(6, 'days').hours(0).minutes(0).seconds(0), moment().hours(23).minutes(59).seconds(59)],
+                        'Last 30 Days': [moment().subtract(29, 'days').hours(0).minutes(0).seconds(0), moment().hours(23).minutes(59).seconds(59)],
+                        'This Month': [moment().startOf('month').hours(0).minutes(0).seconds(0), moment().endOf('month').hours(23).minutes(59).seconds(59)],
+                        'Last Month': [moment().subtract(1, 'month').startOf('month').hours(0).minutes(0).seconds(0), moment().subtract(1, 'month').endOf('month').hours(23).minutes(59).seconds(59)]
                     },
-                    handler
-                );
+                    startDate: start,
+                    endDate: end
+                }, handler);
             },
 
             //trigger dateRangepicker change event
             triggerChangeEvent: function () {
-                var handler = this._genDateRangePickerHandler(),
+                var handler = this.genDateRangePickerHandler(),
                     start = this.getStart(),
                     end = this.getEnd();
                 handler(start, end);
@@ -444,21 +596,13 @@
         });
 
 
-        //SocialReport.Select
-        //-------------------
-
-        //Select is inherited from View
-        //just wrap select component
-        var Select = SocialReport.Select = function (Id, Options) {
-            this.initialize(Id, Options);
-        };
-
         $.extend(Select.prototype, View.prototype, {
             //set selectOption
             setSelectOption: function (Obj) {
                 //make sure `Obj` is object
                 if (Toolbox.isInstance(Obj, Object)) {
-                    return this.selectOpion = Obj;
+                    this.selectOpion = Obj;
+                    return this.selectOpion;
                 } else {
                     Toolbox.assert('Function SocialReport.Select.setSelectOption: `Obj` is undefined or not a object');
                     return false;
@@ -494,18 +638,18 @@
             },
 
             //bind select change event
-            _bindChangeEvent: function () {
-                var _this = this,
+            bindChangeEvent: function () {
+                var context = this,
                     id = this.getId(),
                     $obj = $('#' + id),
                     changeHandler = this.getChangeHandler();
                 $obj.change(function () {
                     var currentValue = $obj.find('option:selected').val();
-                    _this.setCurrentValue(currentValue);
+                    context.setCurrentValue(currentValue);
                     if (Toolbox.isFunction(changeHandler)) {
-                        changeHandler.call(_this, currentValue);
+                        changeHandler.call(context, currentValue);
                     } else {
-                        Toolbox.assert('Function SocialReport.Select._bindChangeEvent: `changeHandler` is not a function');
+                        Toolbox.assert('Function SocialReport.Select.bindChangeEvent: `changeHandler` is not a function');
                         return false;
                     }
                 });
@@ -515,7 +659,7 @@
             setChangeHandler: function (ChangeHandler) {
                 if (Toolbox.isFunction(ChangeHandler)) {
                     this.changeHandler = ChangeHandler;
-                    this._bindChangeEvent();
+                    this.bindChangeEvent();
                 } else {
                     Toolbox.assert('Function SocialReport.Select.setChangeHandler: `ChangeHandler` is not a function');
                     return false;
@@ -530,7 +674,8 @@
             //set currentValue
             setCurrentValue: function (CurrentValue) {
                 if (Toolbox.isString(CurrentValue)) {
-                    return this.currentValue = CurrentValue;
+                    this.currentValue = CurrentValue;
+                    return this.currentValue;
                 } else {
                     Toolbox.assert('Function SocialReport.Select.setCurrentValue: `CurrentValue` is not a string');
                     return false;
@@ -552,21 +697,14 @@
             }
         });
 
-        //SocialReport.DataComparePanel
-        //-----------------------------
-
-        //DataComparePanel contains a DateRangePicker object and a Select object
-        //just make DateRangePicker and Select become one class
-        var DataComparePanel = SocialReport.DataComparePanel = function (Id, Options) {
-            this.initialize(Id, Options);
-        };
 
         $.extend(DataComparePanel.prototype, View.prototype, {
             //set Select
             setSelect: function (Obj) {
                 //set it if `Obj` is create by Select
                 if (Toolbox.isInstance(Obj, SocialReport.Select)) {
-                    return this.select = Obj;
+                    this.select = Obj;
+                    return this.select;
                 } else {
                     Toolbox.assert('Function SocialReport.DataComparePanel.setSelect: `Obj` is undefined or not create by SocialReport.Select');
                     return false;
@@ -582,7 +720,8 @@
             setDateRangePicker: function (Obj) {
                 //set it if `Obj` is create by DateRangePicker
                 if (Toolbox.isInstance(Obj, SocialReport.DateRangePicker)) {
-                    return this.dateRangePicker = Obj;
+                    this.dateRangePicker = Obj;
+                    return this.dateRangePicker;
                 } else {
                     Toolbox.assert('Function SocialReport.DataComparePanel.setDateRangePicker: `Obj` is undefined or not create by SocialReport.DateRangePicker');
                     return false;
@@ -655,30 +794,30 @@
             },
 
             //generate Select change event handler
-            _genSelectChangeHandler: function () {
+            genSelectChangeHandler: function () {
                 //save DataComparePanel object
-                var _this = this;
+                var context = this;
                 return function (CurrentValue) {
                     if (CurrentValue) {
-                        _this.setCurrentValue(CurrentValue);
-                        _this.triggerChange();
+                        context.setCurrentValue(CurrentValue);
+                        context.triggerChange();
                     } else {
-                        Toolbox.assert('Function SocialReport.DataComparePanel._genSelectChangeHandler: `CurrentValue` is undefined');
+                        Toolbox.assert('Function SocialReport.DataComparePanel.genSelectChangeHandler: `CurrentValue` is undefined');
                     }
                 };
             },
 
             //generate DateRangePicker change event handler
-            _genDateRangePickerChangeHandler: function () {
+            genDateRangePickerChangeHandler: function () {
                 //save DataComparePanel object
-                var _this = this;
+                var context = this;
                 return function (Start, End) {
                     if (Toolbox.isInstance(Start, moment) && Toolbox.isInstance(End, moment)) {
-                        _this.setStart(Start);
-                        _this.setEnd(End);
-                        _this.triggerChange();
+                        context.setStart(Start);
+                        context.setEnd(End);
+                        context.triggerChange();
                     } else {
-                        Toolbox.assert('Function SocialReport.DataComparePanel._genDateRangePickerChangeHandler: `Start` or `End` is undefined or is invalid (need to be constructor by moment"');
+                        Toolbox.assert('Function SocialReport.DataComparePanel.genDateRangePickerChangeHandler: `Start` or `End` is undefined or is invalid (need to be constructor by moment"');
                     }
                 };
 
@@ -702,14 +841,15 @@
                 this.setId(Id);
                 this.setTemplate(['<div id="', '%ID%', '"><div class="form-group"><span id="', '%ID%Select"></span></div><div class="form-group"><label>Date range:</label><div class="input-group"><span id="', '%ID%DateRangePicker"></span></div></div></div>']);
                 this.setChangeHandler(Options.changeHandler);
+                //need to reander before set Select and DateRangePicker
                 this.render();
                 //create new Select object and DateRangePicker object for the DataComparePanel as internal members
                 this.setSelect(new Select(Id + 'Select', {
                     option: Options.option,
-                    changeHandler: this._genSelectChangeHandler()
+                    changeHandler: this.genSelectChangeHandler()
                 }));
                 this.setDateRangePicker(new DateRangePicker(Id + 'DateRangePicker', {
-                    changeHandler: this._genDateRangePickerChangeHandler()
+                    changeHandler: this.genDateRangePickerChangeHandler()
                 }));
                 //DateRangePicker would trigger change event in the first time,need to trigger manually 
                 this.getDateRangePicker().triggerChangeEvent();
@@ -717,21 +857,11 @@
         });
 
 
-        //SocialReport.DataTables
-        //-----------------------
-
-        //DataTables is inherited from View
-        //It is a DataTables ui component (https://datatables.net/)
-        //temporary add `Options` for further useage
-        var DataTables = SocialReport.DataTables = function (Id, TableData, TableAttrs, Options) {
-            this.initialize(Id, TableData, TableAttrs, Options);
-        };
-
         $.extend(DataTables.prototype, View.prototype, {
             //set dataTableObj which can use DataTable api
-            _setDataTableObj: function (Obj) {
+            setDataTableObj: function (Obj) {
                 if (!Obj || typeof (Obj) !== 'object') {
-                    Toolbox.assert('Function SocialReport.DataTables._setDataTableObj: Obj can not be undefined and should be an object');
+                    Toolbox.assert('Function SocialReport.DataTables.setDataTableObj: Obj can not be undefined and should be an object');
                     return false;
                 } else {
                     this.dataTableObj = Obj;
@@ -739,7 +869,7 @@
             },
 
             //get dataTableObj
-            _getDataTableObj: function () {
+            getDataTableObj: function () {
                 return this.dataTableObj;
             },
 
@@ -764,7 +894,8 @@
                     Toolbox.assert('Function SocialReport.DataTables.setTableAttrs: Attrs can not be undefined.');
                     return false;
                 } else {
-                    return this.tableAttrs = Attrs;
+                    this.tableAttrs = Attrs;
+                    return this.tableAttrs;
                 }
             },
 
@@ -795,12 +926,12 @@
                     }),
                     dataTableObj = $obj.DataTable(tableAttrs);
                 //save dataTable obj for further use
-                this._setDataTableObj(dataTableObj);
+                this.setDataTableObj(dataTableObj);
             },
 
             //destory the datatable
             destoryDataTables: function () {
-                var dataTableObj = this._getDataTableObj();
+                var dataTableObj = this.getDataTableObj();
                 if (dataTableObj) {
                     dataTableObj.destroy();
                 }
@@ -828,33 +959,18 @@
         });
 
 
-        //SocialReport.Operation
-        //----------------------
-
-        //Operatioin is a Abstract Data Type which define a pile of functions to help calculate the date from the Datainterface class before render by view class
-        var Operation = SocialReport.Operation = function (Data, Options) {
-            this.setData(Data);
-            this.setOptions(Options);
-            this.setDayRange(Toolbox.secToDay(this.getOptions('seconds')) || 0);
-            this.setDataOrigin(this.getOptions('dataOrigin').toLowerCase() || 'facebook');
-            var parseFun = this.getOptions('parse');
-            parseFun && parseFun.call(this) || this.parse();
-        };
-
         $.extend(Operation.prototype, {
             //parse Data
             parse: function () {
                 var dataOrigin = this.getOptions('dataOrigin') || '';
                 switch (dataOrigin.toLowerCase()) {
-                    case 'facebook':
-                        return this.parseFacebookData();
-                        break;
-                    case 'google':
-                        return this.parseGoogleData();
-                        break;
-                    default:
-                        return false;
-                        break;
+                case 'facebook':
+                    return this.parseFacebookData();
+                case 'google':
+                    return this.parseGoogleData();
+                default:
+                    Toolbox.assert('Function Operation.prototype.parse: go to the default branch.');
+                    return false;
                 }
             },
 
@@ -864,79 +980,86 @@
                     parsedReachData = [],
                     postsData = this.getData('postsData'),
                     reachData = this.getData('reachData'),
-                    size = this.getSize();
+                    size = this.getSize(),
+                    postIndex = 0,
+                    insightIndex = 0,
+                    postObj = {},
+                    reactionsObj = {},
+                    consumptionsObj = {},
+                    reactionsKey = '',
+                    consumptionskey = '';
                 //loop to set postsData
-                for (var i = 0; i < size; i++) {
-                    var obj = {};
-                    obj['comments'] = postsData[i]['comments'] ? postsData[i]['comments']['summary']['total_count'] : 0;
-                    obj['shares'] = postsData[i]['shares'] ? postsData[i]['shares']['count'] : 0;
-                    obj['created_time'] = Toolbox.formatTime(postsData[i]['created_time']) || '';
-                    obj['id'] = postsData[i]['id'] || '';
-                    obj['message'] = postsData[i]['message'] || '';
-                    obj['permalink_url'] = postsData[i]['permalink_url'] || '';
-                    obj['type'] = postsData[i]['type'] || '';
-                    obj['insights'] = postsData[i]['insights']['data'] || '';
+                for (postIndex = 0; postIndex < size; postIndex += 1) {
+                    postObj = {};
+                    postObj.comments = postsData[postIndex].comments ? postsData[postIndex].comments.summary.total_count : 0;
+                    postObj.shares = postsData[postIndex].shares ? postsData[postIndex].shares.count : 0;
+                    postObj.created_time = Toolbox.formatTime(postsData[postIndex].created_time) || '';
+                    postObj.id = postsData[postIndex].id || '';
+                    postObj.message = postsData[postIndex].message || '';
+                    postObj.permalink_url = postsData[postIndex].permalink_url || '';
+                    postObj.type = postsData[postIndex].type || '';
+                    postObj.insights = postsData[postIndex].insights.data || '';
                     //loop to set insights object data
-                    for (var j = 0; j < obj['insights'].length; j++) {
-                        switch (obj['insights'][j]['name']) {
-                            case 'post_impressions_organic':
-                                obj['post_impressions_organic'] = obj['insights'][j]['values']['0']['value'];
-                                break;
-                            case 'post_impressions_by_story_type':
-                                obj['post_impressions_by_story_type'] = obj['insights'][j]['values']['0']['value']['other'];
-                                break;
-                            case 'post_impressions_paid':
-                                obj['post_impressions_paid'] = obj['insights'][j]['values']['0']['value'];
-                                break;
-                            case 'post_impressions':
-                                obj['post_impressions'] = obj['insights'][j]['values']['0']['value'];
-                                break;
-                            case 'post_impressions_unique':
-                                obj['post_impressions_unique'] = obj['insights'][j]['values']['0']['value'];
-                                break;
-                            case 'post_impressions_paid_unique':
-                                obj['post_impressions_paid_unique'] = obj['insights'][j]['values']['0']['value'];
-                                break;
-                            case 'post_reactions_by_type_total':
-                                //`reactionsObj` has different types of reactions need to break it down
-                                var reactionsObj = obj['insights'][j]['values']['0']['value'];
-                                obj['post_reactions_by_type_total'] = reactionsObj;
-                                for (var key in reactionsObj) {
-                                    obj[key] = reactionsObj[key];
+                    for (insightIndex = 0; insightIndex < postObj.insights.length; insightIndex += 1) {
+                        switch (postObj.insights[insightIndex].name) {
+                        case 'post_impressions_organic':
+                            postObj.post_impressions_organic = postObj.insights[insightIndex].values['0'].value;
+                            break;
+                        case 'post_impressions_by_story_type':
+                            postObj.post_impressions_by_story_type = postObj.insights[insightIndex].values['0'].value.other;
+                            break;
+                        case 'post_impressions_paid':
+                            postObj.post_impressions_paid = postObj.insights[insightIndex].values['0'].value;
+                            break;
+                        case 'post_impressions':
+                            postObj.post_impressions = postObj.insights[insightIndex].values['0'].value;
+                            break;
+                        case 'post_impressions_unique':
+                            postObj.post_impressions_unique = postObj.insights[insightIndex].values['0'].value;
+                            break;
+                        case 'post_impressions_paid_unique':
+                            postObj.post_impressions_paid_unique = postObj.insights[insightIndex].values['0'].value;
+                            break;
+                        case 'post_reactions_by_type_total':
+                            //`reactionsObj` has different types of reactions need to break it down
+                            reactionsObj = postObj.insights[insightIndex].values['0'].value;
+                            postObj.post_reactions_by_type_total = reactionsObj;
+                            for (reactionsKey in reactionsObj) {
+                                if (reactionsObj.hasOwnProperty(reactionsKey)) {
+                                    postObj[reactionsKey] = reactionsObj[reactionsKey];
                                 }
-                                break;
-                            case 'post_consumptions_by_type':
-                                //`consumptionsObj` has different types of consumptions need to break it down
-                                var consumptionsObj = obj['insights'][j]['values']['0']['value'];
-                                obj['post_consumptions_by_type'] = consumptionsObj;
-                                for (var key in consumptionsObj) {
-                                    //if `type` is video and `key` is photo view or `type` is not video and `key` is video play, skip it
-                                    if ((obj['type'] === 'video' && key === 'photo view') || (obj['type'] !== 'video' && key === 'video play')) {
-                                        continue;
+                            }
+                            break;
+                        case 'post_consumptions_by_type':
+                            //`consumptionsObj` has different types of consumptions need to break it down
+                            consumptionsObj = postObj.insights[insightIndex].values['0'].value;
+                            postObj.post_consumptions_by_type = consumptionsObj;
+                            for (consumptionskey in consumptionsObj) {
+                                if (consumptionsObj.hasOwnProperty(consumptionskey)) {
+                                    //make sure `type` is video and `consumptionskey` is photo view or `type` is not video and `consumptionskey` is video play not true
+                                    if (!(postObj.type === 'video' && consumptionskey === 'photo view') && !(postObj.type !== 'video' && consumptionskey === 'video play')) {
+                                        postObj[consumptionskey] = consumptionsObj[consumptionskey];
                                     }
-                                    obj[key] = consumptionsObj[key];
-                                };
-                                break;
-                            case 'post_video_views':
-                                obj['post_video_views'] = obj['insights'][j]['values']['0']['value'];
-                                break;
-                            case 'post_video_views':
-                                obj['post_video_views'] = obj['insights'][j]['values']['0']['value'];
-                                break;
-                            default:
-                                break;
-                        };
-                    }
-                    parsedPostsData[i] = obj;
-                }
-                //loop to set reachData
-                $.each(reachData, function (key, value) {
-                    switch (value['name']) {
-                        case 'page_fans':
-                            parsedReachData['page_fans'] = value['values'];
+                                }
+                            }
+                            break;
+                        case 'post_video_views':
+                            postObj.post_video_views = postObj.insights[insightIndex].values['0'].value;
                             break;
                         default:
                             break;
+                        }
+                    }
+                    parsedPostsData[postIndex] = postObj;
+                }
+                //loop to set reachData
+                $.each(reachData, function (key, value) {
+                    switch (value.name) {
+                    case 'page_fans':
+                        parsedReachData.page_fans = value.values;
+                        break;
+                    default:
+                        break;
                     }
                 });
 
@@ -975,7 +1098,8 @@
                     Toolbox.assert('Function SocialReport.Operation.setDataOrigin: DataOrigin is undefined.');
                     return false;
                 } else {
-                    return this.dataOrigin = DataOrigin;
+                    this.dataOrigin = DataOrigin;
+                    return this.dataOrigin;
                 }
             },
 
@@ -993,7 +1117,8 @@
                     Toolbox.assert('Function SocialReport.Operation.setData: Data is undefined.');
                     return false;
                 } else {
-                    return this.data = Data;
+                    this.data = Data;
+                    return this.data;
                 }
             },
 
@@ -1008,14 +1133,15 @@
                     Toolbox.assert('Function SocialReport.Operation.setDayRange: DayRange is undefined.');
                     return false;
                 } else {
-                    return this.dayRange = DayRange;
+                    this.dayRange = DayRange;
+                    return this.dayRange;
                 }
             },
 
             //calculate frequency
             frequency: function () {
-                var dateRange = parseInt(this.getDayRange()),
-                    size = parseInt(this.getSize());
+                var dateRange = parseInt(this.getDayRange(), 0),
+                    size = parseInt(this.getSize(), 0);
                 if (dateRange) {
                     return parseFloat(size / dateRange).toFixed(2);
                 } else {
@@ -1028,102 +1154,93 @@
                 var dataOrigin = this.getOptions('dataOrigin') || '',
                     tableType = TableType.toLowerCase() || '';
                 switch (dataOrigin.toLowerCase()) {
-                    case 'facebook':
-                        switch (tableType) {
-                            case 'postsdata':
-                                return this._getPostsDataInFacebook();
-                                break;
-                            case 'averagepostsdata':
-                                return this._getAveragePostsDataInFacebook();
-                                break;
-                            case 'reachrate':
-                                return this._getReachRateInFacebook();
-                                break;
-                            case 'engagementrate':
-                                return this._getEngagementRateInFacebook();
-                                break;
-                            case 'toplinks':
-                                return this._getTopPostsDataInFacebookByType('link', 5);
-                                break;
-                            case 'topphotos':
-                                return this._getTopPostsDataInFacebookByType('photo', 5);
-                                break;
-                            case 'topvideos':
-                                return this._getTopPostsDataInFacebookByType('video', 5);
-                                break;
-                            default:
-                                return this.getData();
-                                break;
-                        };
-                        break;
-                    case 'google':
-                        //return this._formatDataInGoogle();
-                        break;
+                case 'facebook':
+                    switch (tableType) {
+                    case 'postsdata':
+                        return this.getPostsDataInFacebook();
+                    case 'averagepostsdata':
+                        return this.getAveragePostsDataInFacebook();
+                    case 'reachrate':
+                        return this.getReachRateInFacebook();
+                    case 'engagementrate':
+                        return this.getEngagementRateInFacebook();
+                    case 'toplinks':
+                        return this.getTopPostsDataInFacebookByType('link', 5);
+                    case 'topphotos':
+                        return this.getTopPostsDataInFacebookByType('photo', 5);
+                    case 'topvideos':
+                        return this.getTopPostsDataInFacebookByType('video', 5);
                     default:
+                        Toolbox.assert('Function SocialReport.Operation.getFormatDataFromTableType: go into the default branch');
                         return this.getData();
-                        break;
+                    }
+                case 'google':
+                    //return this._formatDataInGoogle();
+                    break;
+                default:
+                    return this.getData();
                 }
             },
 
             //build facebook postsdata in datatable format
             //return `columnTitle` and `data`
-            _getPostsDataInFacebook: function () {
+            getPostsDataInFacebook: function () {
                 //set the variable for looping
-                var columnTitle = [{
-                            title: "Post ID"
-                        },
-                        {
-                            title: "Permalink"
-                        },
-                        {
-                            title: "Post Message"
-                        },
-                        {
-                            title: "Type"
-                        },
-                        {
-                            title: "Posted"
-                        },
-                        {
-                            title: "Organic Reached(a)"
-                        },
-                        {
-                            title: "Paid Reached(b)"
-                        },
-                        {
-                            title: "Total Reached(c)"
-                        },
-                        {
-                            title: "Like(d)"
-                        },
-                        {
-                            title: "Share(e)"
-                        },
-                        {
-                            title: "Comment(f)"
-                        },
-                        {
-                            title: "Video Views(h)"
-                        },
-                        {
-                            title: "Reactions(i)"
-                        },
-                        {
-                            title: "Post Clicks(j)"
-                        },
-                        {
-                            title: "Lifetime Post <br/>Organic Impressions(k)"
-                        },
-                        {
-                            title: "Lifetime Post <br/>Paid Impressions(l)"
-                        },
-                        {
-                            title: "Lifetime Post <br/>Total Impressions(g)"
-                        }
-                    ],
+                var columnTitle = [
+                    {
+                        title: "Post ID"
+                    },
+                    {
+                        title: "Permalink"
+                    },
+                    {
+                        title: "Post Message"
+                    },
+                    {
+                        title: "Type"
+                    },
+                    {
+                        title: "Posted"
+                    },
+                    {
+                        title: "Organic Reached(a)"
+                    },
+                    {
+                        title: "Paid Reached(b)"
+                    },
+                    {
+                        title: "Total Reached(c)"
+                    },
+                    {
+                        title: "Like(d)"
+                    },
+                    {
+                        title: "Share(e)"
+                    },
+                    {
+                        title: "Comment(f)"
+                    },
+                    {
+                        title: "Video Views(h)"
+                    },
+                    {
+                        title: "Reactions(i)"
+                    },
+                    {
+                        title: "Post Clicks(j)"
+                    },
+                    {
+                        title: "Lifetime Post <br/>Organic Impressions(k)"
+                    },
+                    {
+                        title: "Lifetime Post <br/>Paid Impressions(l)"
+                    },
+                    {
+                        title: "Lifetime Post <br/>Total Impressions(g)"
+                    }],
                     data = [];
                 //get postsdata in 2d array
-                data = this._getPostsDataIn2DArray();
+                data = this.getPostsDataIn2DArray();
                 return {
                     data: data,
                     columnTitle: columnTitle
@@ -1132,7 +1249,7 @@
 
             //build facebook average posts data in datatable format
             //return `columnTitle` and `data`
-            _getAveragePostsDataInFacebook: function () {
+            getAveragePostsDataInFacebook: function () {
                 //set the variable for looping
                 var originData = this.getData('postsData'),
                     dataSize = this.getSize(),
@@ -1150,32 +1267,31 @@
                             title: "Average"
                         }
                     ],
-                    summary = [],
-                    data = [];
-                //get the summary of the posts data
-                summary = this._getPostsDataSummary();
-                //calculate some variable
-                var paidReach = parseInt(summary['post_impressions_paid_unique']),
-                    totalReach = parseInt(summary['post_impressions_unique']),
+                    //get the summary of the posts data
+                    summary = this.getPostsDataSummary(),
+                    data = [],
+                    //calculate some variable
+                    paidReach = parseInt(summary.post_impressions_paid_unique, 0),
+                    totalReach = parseInt(summary.post_impressions_unique, 0),
                     organicReach = totalReach - paidReach,
-                    like = parseInt(summary['like']),
-                    share = parseInt(summary['shares']),
-                    comment = parseInt(summary['comments']),
-                    videoPlay = parseInt(summary['post_video_views']),
-                    haha = parseInt(summary['haha']),
-                    wow = parseInt(summary['wow']),
-                    love = parseInt(summary['love']),
-                    sorry = parseInt(summary['sorry']),
-                    anger = parseInt(summary['anger']),
+                    like = parseInt(summary.like, 0),
+                    share = parseInt(summary.shares, 0),
+                    comment = parseInt(summary.comments, 0),
+                    videoPlay = parseInt(summary.post_video_views, 0),
+                    haha = parseInt(summary.haha, 0),
+                    wow = parseInt(summary.wow, 0),
+                    love = parseInt(summary.love, 0),
+                    sorry = parseInt(summary.sorry, 0),
+                    anger = parseInt(summary.anger, 0),
                     reaction = (like + love + wow + haha + sorry + anger).toLocaleString() + '&nbsp;&nbsp;(<i class="fa fb_icon fb_like" title="like"></i><span> ' + like.toLocaleString() + '</span> ' + '&nbsp;&nbsp;<i class="fa fb_icon fb_love" title="love"></i><span> ' + love.toLocaleString() + '</span>' + '&nbsp;&nbsp;<i class="fa fb_icon fb_haha" title="haha"></i><span> ' + haha.toLocaleString() + '</span>' + '&nbsp;&nbsp;<i class="fa fb_icon fb_wow" title="wow"></i><span> ' + wow.toLocaleString() + '</span>' + '&nbsp;&nbsp;<i class="fa fb_icon fb_sad" title="sad"></i><span> ' + sorry.toLocaleString() + '</span>' + '&nbsp;&nbsp;<i class="fa fb_icon fb_anger" title="anger"></i><span> ' + anger.toLocaleString() + '</span>)',
                     averageReaction = Math.round((like + love + wow + haha + sorry + anger) / dataSize).toLocaleString() + '&nbsp;&nbsp;(<i class="fa fb_icon fb_like" title="like"></i><span> ' + Math.round(like / dataSize).toLocaleString() + '</span> ' + '&nbsp;&nbsp;<i class="fa fb_icon fb_love" title="love"></i><span> ' + Math.round(love / dataSize).toLocaleString() + '</span>' + '&nbsp;&nbsp;<i class="fa fb_icon fb_haha" title="haha"></i><span> ' + Math.round(haha / dataSize).toLocaleString() + '</span>' + '&nbsp;&nbsp;<i class="fa fb_icon fb_wow" title="wow"></i><span> ' + Math.round(wow / dataSize).toLocaleString() + '</span>' + '&nbsp;&nbsp;<i class="fa fb_icon fb_sad" title="sad"></i><span> ' + Math.round(sorry / dataSize).toLocaleString() + '</span>' + '&nbsp;&nbsp;<i class="fa fb_icon fb_anger" title="anger"></i><span> ' + Math.round(anger / dataSize).toLocaleString() + '</span>)',
-                    vieworplays = parseInt(summary['video play']) + parseInt(summary['photo view']),
-                    linkclick = parseInt(summary['link clicks']),
-                    otherclick = parseInt(summary['other clicks']),
+                    vieworplays = parseInt(summary['video play'], 0) + parseInt(summary['photo view'], 0),
+                    linkclick = parseInt(summary['link clicks'], 0),
+                    otherclick = parseInt(summary['other clicks'], 0),
                     postclick = (vieworplays + linkclick + otherclick).toLocaleString() + '&nbsp;&nbsp;(<label>Photo Views & Clicks to Play:</label><span> ' + vieworplays.toLocaleString() + '</span>' + '&nbsp;&nbsp;<label>Link Clicks:</label><span> ' + linkclick.toLocaleString() + '</span>' + '&nbsp;&nbsp;<label>Other Clicks:</label><span> ' + otherclick.toLocaleString() + '</span>)',
                     averagePostclick = Math.round((vieworplays + linkclick + otherclick) / dataSize).toLocaleString() + '&nbsp;&nbsp;(<label>Photo Views & Clicks to Play:</label><span> ' + Math.round(vieworplays / dataSize).toLocaleString() + '</span>' + '&nbsp;&nbsp;<label>Link Clicks:</label><span> ' + Math.round(linkclick / dataSize).toLocaleString() + '</span>' + '&nbsp;&nbsp;<label>Other Clicks:</label><span> ' + Math.round(otherclick / dataSize).toLocaleString() + '</span>)',
-                    paidImpression = parseInt(summary['post_impressions_paid']),
-                    totalImpression = parseInt(summary['post_impressions']),
+                    paidImpression = parseInt(summary.post_impressions_paid, 0),
+                    totalImpression = parseInt(summary.post_impressions, 0),
                     organicImpression = totalImpression - paidImpression;
                 //build the result into data array
                 data.push(['Organic Reach(a)', organicReach.toLocaleString(), dataSize.toLocaleString(), Math.round(organicReach / dataSize).toLocaleString()]);
@@ -1199,7 +1315,7 @@
 
             //build facebook reachrate data in datatable format
             //return `columnTitle` and `data`
-            _getReachRateInFacebook: function () {
+            getReachRateInFacebook: function () {
                 //set the variable for looping
                 var postsData = this.getData('postsData'),
                     reachData = this.getData('reachData'),
@@ -1229,12 +1345,12 @@
                     averageFanLikeSummary = 0,
                     reachRate = 0;
                 //get the summary of the posts data
-                summary = this._getPostsDataSummary();
-                totalReach = parseInt(summary['post_impressions_unique']);
+                summary = this.getPostsDataSummary();
+                totalReach = parseInt(summary.post_impressions_unique, 0);
                 averageTotalReach = Math.round(totalReach / dataSize);
                 //get fans likes summary
-                $.each(reachData['page_fans'], function (ken, value) {
-                    fanLikeSummary = fanLikeSummary + value['value'];
+                $.each(reachData.page_fans, function (ken, value) {
+                    fanLikeSummary = fanLikeSummary + value.value;
                 });
                 averageFanLikeSummary = Math.round(fanLikeSummary / this.getDayRange());
                 reachRate = (parseFloat(averageTotalReach / averageFanLikeSummary) * 100).toFixed(2) + '%';
@@ -1249,7 +1365,7 @@
 
             //build facebook engagementrate data in datatable format
             //return `columnTitle` and `data`
-            _getEngagementRateInFacebook: function () {
+            getEngagementRateInFacebook: function () {
                 //set the variable for looping
                 var postsData = this.getData('postsData'),
                     dataSize = this.getSize(),
@@ -1282,10 +1398,10 @@
                     averageReactionPostclick = 0,
                     averageReach = 0;
                 //get the summary of the posts data
-                summary = this._getPostsDataSummary();
-                likeCommentShareSummary = summary['like'] + summary['comments'] + summary['shares'];
-                reactionPostclickSummary = summary['like'] + summary['love'] + summary['haha'] + summary['wow'] + summary['sorry'] + summary['anger'] + summary['video play'] + summary['photo view'] + summary['link clicks'] + summary['other clicks'];
-                reachSummary = summary['post_impressions_unique'];
+                summary = this.getPostsDataSummary();
+                likeCommentShareSummary = summary.like + summary.comments + summary.shares;
+                reactionPostclickSummary = summary.like + summary.love + summary.haha + summary.wow + summary.sorry + summary.anger + summary['video play'] + summary['photo view'] + summary['link clicks'] + summary['other clicks'];
+                reachSummary = summary.post_impressions_unique;
                 averageLikeCommentShare = Math.round(likeCommentShareSummary / dataSize);
                 averageReactionPostclick = Math.round(reactionPostclickSummary / dataSize);
                 averageReach = Math.round(reachSummary / dataSize);
@@ -1300,9 +1416,9 @@
 
             //build facebook top postsdata in datatable format
             //return `columnTitle` and `data`
-            _getTopPostsDataInFacebookByType: function (Type, Limit) {
+            getTopPostsDataInFacebookByType: function (Type, Limit) {
                 //set the variable for looping
-                var sortedPostsData = this._sortPostsData(),
+                var sortedPostsData = this.sortPostsData(),
                     dataSize = this.getSize(),
                     columnTitle = [
                         {
@@ -1323,11 +1439,12 @@
                     ],
                     data = [],
                     limit = Limit || 5,
-                    type = Type || 'link';
-                for (var i = 0; i < dataSize; i++) {
+                    type = Type || 'link',
+                    postIndex = 0;
+                for (postIndex = 0; postIndex < dataSize; postIndex += 1) {
                     //if type suited
-                    if (sortedPostsData[i][3] === type) {
-                        data.push([sortedPostsData[i][0], sortedPostsData[i][1], sortedPostsData[i][2], sortedPostsData[i][3], sortedPostsData[i][4]]);
+                    if (sortedPostsData[postIndex][3] === type) {
+                        data.push([sortedPostsData[postIndex][0], sortedPostsData[postIndex][1], sortedPostsData[postIndex][2], sortedPostsData[postIndex][3], sortedPostsData[postIndex][4]]);
                         //when data length reach limit,it should jump out the loop
                         if (data.length >= limit) {
                             break;
@@ -1341,90 +1458,112 @@
             },
 
             //internal function to get postsData in two dimension array format
-            _getPostsDataIn2DArray: function () {
+            getPostsDataIn2DArray: function () {
                 //set the variable for looping
                 var postsData = this.getData('postsData'),
                     dataSize = this.getSize(),
-                    data = [];
+                    data = [],
+                    postIndex = 0,
+                    postArr = [],
+                    type,
+                    like,
+                    love,
+                    haha,
+                    wow,
+                    sorry,
+                    anger,
+                    reactionsTotal,
+                    vieworplay,
+                    linkClick,
+                    otherClick,
+                    postsClickTotal,
+                    paidReached,
+                    totalReached,
+                    paidImpressions,
+                    totalImpressions;
                 //loop to set a two dimension array to get datatable data
-                for (var i = 0; i < dataSize; i++) {
+                for (postIndex = 0; postIndex < dataSize; postIndex += 1) {
                     //some middle variable
-                    var arr = [],
-                        type = postsData[i]['type'],
-                        like = postsData[i]['like'] || 0,
-                        love = postsData[i]['love'] || 0,
-                        haha = postsData[i]['haha'] || 0,
-                        wow = postsData[i]['wow'] || 0,
-                        sorry = postsData[i]['sorry'] || 0,
-                        anger = postsData[i]['anger'] || 0,
-                        reactionsTotal = like + love + haha + wow + sorry + anger,
-                        vieworplay = ((type === 'video') ? postsData[i]['video play'] : postsData[i]['photo view']) || 0,
-                        linkClick = postsData[i]['link clicks'] || 0,
-                        otherClick = postsData[i]['other clicks'] || 0,
-                        postsClickTotal = vieworplay + linkClick + otherClick,
-                        paidReached = postsData[i]['post_impressions_paid_unique'],
-                        totalReached = postsData[i]['post_impressions_unique'],
-                        paidImpressions = postsData[i]['post_impressions_paid'],
-                        totalImpressions = postsData[i]['post_impressions'];
-                    //set data in `arr` in order
-                    arr.push(postsData[i]['id']);
-                    arr.push('<a href="' + postsData[i]['permalink_url'] + '" target="_blank">' + postsData[i]['permalink_url'] + '</a>');
-                    arr.push('<div class="post_message">' + (postsData[i]['message']) + '</div>');
-                    arr.push(postsData[i]['type']);
-                    arr.push(postsData[i]['created_time']);
-                    arr.push((totalReached - paidReached).toLocaleString());
-                    arr.push(paidReached.toLocaleString());
-                    arr.push(totalReached.toLocaleString());
-                    arr.push(postsData[i]['like'].toLocaleString());
-                    arr.push(postsData[i]['shares'].toLocaleString());
-                    arr.push(postsData[i]['comments'].toLocaleString());
-                    arr.push(postsData[i]['post_video_views'].toLocaleString());
-                    arr.push('<p><label>' + reactionsTotal.toLocaleString() + '</label></p>' + '<p><i class="fa fb_icon fb_like" title="like"></i><span> ' + like.toLocaleString() + '</span></p> ' + '<p><i class="fa fb_icon fb_love" title="love"></i><span> ' + love.toLocaleString() + '</span></p>' + '<p><i class="fa fb_icon fb_haha" title="haha"></i><span> ' + haha.toLocaleString() + '</span></p>' + '<p><i class="fa fb_icon fb_wow" title="wow"></i><span> ' + wow.toLocaleString() + '</span></p>' + '<p><i class="fa fb_icon fb_sad" title="sad"></i><span> ' + sorry.toLocaleString() + '</span></p>' + '<p><i class="fa fb_icon fb_anger" title="anger"></i><span> ' + anger.toLocaleString() + '</span></p>');
+                    postArr = [];
+                    type = postsData[postIndex].type;
+                    like = postsData[postIndex].like || 0;
+                    love = postsData[postIndex].love || 0;
+                    haha = postsData[postIndex].haha || 0;
+                    wow = postsData[postIndex].wow || 0;
+                    sorry = postsData[postIndex].sorry || 0;
+                    anger = postsData[postIndex].anger || 0;
+                    reactionsTotal = like + love + haha + wow + sorry + anger;
+                    vieworplay = ((type === 'video') ? postsData[postIndex]['video play'] : postsData[postIndex]['photo view']) || 0;
+                    linkClick = postsData[postIndex]['link clicks'] || 0;
+                    otherClick = postsData[postIndex]['other clicks'] || 0;
+                    postsClickTotal = vieworplay + linkClick + otherClick;
+                    paidReached = postsData[postIndex].post_impressions_paid_unique;
+                    totalReached = postsData[postIndex].post_impressions_unique;
+                    paidImpressions = postsData[postIndex].post_impressions_paid;
+                    totalImpressions = postsData[postIndex].post_impressions;
+                    //set data in `postArr` in order
+                    postArr.push(postsData[postIndex].id);
+                    postArr.push('<a href="' + postsData[postIndex].permalink_url + '" target="_blank">' + postsData[postIndex].permalink_url + '</a>');
+                    postArr.push('<div class="post_message">' + (postsData[postIndex].message) + '</div>');
+                    postArr.push(postsData[postIndex].type);
+                    postArr.push(postsData[postIndex].created_time);
+                    postArr.push((totalReached - paidReached).toLocaleString());
+                    postArr.push(paidReached.toLocaleString());
+                    postArr.push(totalReached.toLocaleString());
+                    postArr.push(postsData[postIndex].like.toLocaleString());
+                    postArr.push(postsData[postIndex].shares.toLocaleString());
+                    postArr.push(postsData[postIndex].comments.toLocaleString());
+                    postArr.push(postsData[postIndex].post_video_views.toLocaleString());
+                    postArr.push('<p><label>' + reactionsTotal.toLocaleString() + '</label></p>' + '<p><i class="fa fb_icon fb_like" title="like"></i><span> ' + like.toLocaleString() + '</span></p> ' + '<p><i class="fa fb_icon fb_love" title="love"></i><span> ' + love.toLocaleString() + '</span></p>' + '<p><i class="fa fb_icon fb_haha" title="haha"></i><span> ' + haha.toLocaleString() + '</span></p>' + '<p><i class="fa fb_icon fb_wow" title="wow"></i><span> ' + wow.toLocaleString() + '</span></p>' + '<p><i class="fa fb_icon fb_sad" title="sad"></i><span> ' + sorry.toLocaleString() + '</span></p>' + '<p><i class="fa fb_icon fb_anger" title="anger"></i><span> ' + anger.toLocaleString() + '</span></p>');
 
-                    arr.push('<p><label>' + postsClickTotal.toLocaleString() + '</label></p>' + '<p><label>' + ((type === 'video') ? 'Clicks to Play:' : 'Photo Views:') + '</label><span> ' + vieworplay.toLocaleString() + '</span></p>' + '<p><label>Link Clicks:</label><span> ' + linkClick.toLocaleString() + '</span></p>' + '<p><label>Other Clicks:</label><span> ' + otherClick.toLocaleString() + '</span></p>');
-                    arr.push((totalImpressions - paidImpressions).toLocaleString());
-                    arr.push(paidImpressions.toLocaleString());
-                    arr.push(totalImpressions.toLocaleString());
+                    postArr.push('<p><label>' + postsClickTotal.toLocaleString() + '</label></p>' + '<p><label>' + ((type === 'video') ? 'Clicks to Play:' : 'Photo Views:') + '</label><span> ' + vieworplay.toLocaleString() + '</span></p>' + '<p><label>Link Clicks:</label><span> ' + linkClick.toLocaleString() + '</span></p>' + '<p><label>Other Clicks:</label><span> ' + otherClick.toLocaleString() + '</span></p>');
+                    postArr.push((totalImpressions - paidImpressions).toLocaleString());
+                    postArr.push(paidImpressions.toLocaleString());
+                    postArr.push(totalImpressions.toLocaleString());
                     //push in data array
-                    data.push(arr);
-                };
+                    data.push(postArr);
+                }
                 return data;
             },
 
             //internal function to sort postsData
-            _sortPostsData: function (Index) {
+            sortPostsData: function (Index) {
                 //`Index` is the reference for sorting
-                var index = index || 7,
-                    originPostsData = this._getPostsDataIn2DArray(),
+                var index = Index || 7,
+                    originPostsData = this.getPostsDataIn2DArray(),
                     resultPostsData = [];
-                resultPostsData = originPostsData.sort(sortByIndex);
                 //a sort function for sorting
                 function sortByIndex(a, b) {
-                    var arrayB = b[index].replace(',', '');
-                    var arrayA = a[index].replace(',', '');
+                    var arrayB = b[index].replace(',', ''),
+                        arrayA = a[index].replace(',', '');
                     return arrayB - arrayA;
-                };
+                }
+                resultPostsData = originPostsData.sort(sortByIndex);
                 return resultPostsData;
             },
 
             //internal function to get summary of postsData
-            _getPostsDataSummary: function () {
+            getPostsDataSummary: function () {
                 var originData = this.getData('postsData'),
                     dataSize = this.getSize(),
-                    summary = [];
+                    summary = [],
+                    postIndex = 0,
+                    postKey;
                 //loop to get the summary of the posts data
-                for (var i = 0; i < dataSize; i++) {
-                    $.each(originData[i], function (key, value) {
-                        //make sure `value` is integer
-                        if (!isNaN(value)) {
-                            //if summary[key] is not exist 
-                            if (typeof summary[key] === 'undefined') {
-                                //init it 0
-                                summary[key] = 0;
+                for (postIndex = 0; postIndex < dataSize; postIndex += 1) {
+                    for (postKey in originData[postIndex]) {
+                        if (originData[postIndex].hasOwnProperty(postKey)) {
+                            //make sure `value` is integer
+                            if (!isNaN(originData[postIndex][postKey])) {
+                                //if summary[postKey] is not exist 
+                                if (typeof summary[postKey] === 'undefined') {
+                                    //init it 0
+                                    summary[postKey] = 0;
+                                }
+                                summary[postKey] = summary[postKey] + parseInt(originData[postIndex][postKey], 0);
                             }
-                            summary[key] = summary[key] + parseInt(value);
                         }
-                    });
+                    }
                 }
                 return summary;
             },
@@ -1436,140 +1575,39 @@
                 type = type === 'object' ? (Toolbox.isArray(data) ? 'array' : 'object') : type;
 
                 switch (type) {
-                    case 'string':
-                        return data.length;
-                        break;
-                    case 'array':
-                        return data.length;
-                        break;
-                    case 'object':
-                        return this._getObjectSize(data);
-                        break;
-                    default:
-                        return 0;
-                };
-
+                case 'string':
+                    return data.length;
+                case 'array':
+                    return data.length;
+                case 'object':
+                    return this.getObjectSize(data);
+                default:
+                    return 0;
+                }
             },
 
             //internal function which is to get the Object size
-            _getObjectSize: function (Obj) {
+            getObjectSize: function (Obj) {
                 var size = 0,
-                    obj = Obj || {};
+                    obj = Obj || {},
+                    key;
                 //Object.keys could not support under IE9
                 if (!!Object.keys) {
                     size = Object.keys(obj).length;
                 } else {
-                    for (var i in obj) {
-                        if (obj.hasOwnProperty(i)) {
-                            size++;
+                    for (key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                            size += 1;
                         }
                     }
                 }
                 return size;
-            },
+            }
         });
 
 
-        //class Toolbox
-        //-------------
-
-        //class to deal with some calculation
-        var Toolbox = SocialReport.Toolbox = {
-
-            //convert seconds to day
-            secToDay: function (Seconds) {
-                var seconds = parseInt(Seconds) || 0;
-                return Math.ceil(seconds / (60 * 60 * 24));
-            },
-
-            //format time
-            formatTime: function (Time) {
-                var time = Time || '';
-                time = new Date(new Date(time).getTime()); //UTC base on created_time: XXX-XX-XXTXX:XX:XX+0000(GMT) 
-                time = time.getFullYear() + "-" + ("0" + (time.getMonth() + 1)).slice(-2) + "-" + ("0" + time.getDate()).slice(-2) + " " + ("0" + time.getHours()).slice(-2) + ":" + ("0" + time.getMinutes()).slice(-2) + ":" + ("0" + time.getSeconds()).slice(-2);
-                return time;
-            },
-
-            //assert function
-            assert: function (Msg) {
-                var msg = Msg || '';
-                console.warn(msg);
-            },
-
-            //check if the Object is Array
-            isArray: function (Obj) {
-                var obj = Obj || {};
-                return Object.prototype.toString.call(obj) === '[object Array]';
-            },
-
-            //check if it is a function
-            isFunction: function (Obj) {
-                var obj = Obj || {};
-                return typeof obj === 'function';
-            },
-
-            //check if it is a Object
-            isObject: function (Obj) {
-                var obj = Obj || {};
-                return obj instanceof Object;
-            },
-
-            //check if it is a string object
-            isString: function (Str) {
-                var str = Str || {};
-                return typeof str === 'string';
-            },
-
-            //check if `Instance` is instance of `Obj`
-            //if `Obj` is undefined then check if `Instance` is instance of `Object`
-            isInstance: function (Instance, Obj) {
-                var instance = Instance || undefined,
-                    obj = Obj || Object;
-                return instance instanceof obj;
-            },
-        };
-
-
-        //class Facebook
-        //--------------
-
-        //Facebook class contain function relative facebook
-        var Facebook = SocialReport.Facebook = {
-
-            //get facebook operatioin object
-            genFacebookOperation: function (Params, Callback) {
-                //set facebook request params
-                var params = Params || {},
-                    data = {};
-                //if `params.since` or `params.until` or `params.pageid` or `params.access_token` is 0 console assert the msg and return
-                if (!(params.since && params.until && params.pageid && params.access_token)) {
-                    SocialReport.Toolbox.assert('Function SocialReport.Facebook.genFacebookOperation: params since or until or pageid or access_token is undefined');
-                    return;
-                }
-                //callback for `getFacebookPosts`
-                function FBPostsCallback(resp) {
-                    //set `data.postsData`
-                    data.postsData = resp;
-                    //request to get facebook reach data
-                    SocialReport.DataInterface.getFacebookReach(params, FBReachCallback);
-                };
-                //callback for `getFacebookReach`
-                function FBReachCallback(resp) {
-                    data.reachData = resp;
-                    var facebookOperation = new SocialReport.Operation(data, {
-                        dataOrigin: 'facebook',
-                        seconds: parseInt(params.until - params.since)
-                    });
-                    if (Callback) Callback.call(facebookOperation);
-                };
-                //request to get facebook posts data
-                SocialReport.DataInterface.getFacebookPosts(params, FBPostsCallback);
-            }
-        };
-
-
         return SocialReport;
-    }();
+    }());
 
 
-})($, window, moment, layer);
+}(jQuery, window, moment, layer));

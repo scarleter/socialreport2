@@ -220,10 +220,7 @@
 
         troperlaicos.mainPanel = new SocialReport.DataComparePanel('mainPanel', {
             changeHandler: function(currentValue, start, end) {
-                console.info(this);
-                console.info(currentValue);
-                console.info(start);
-                console.info(end);
+                console.info(this+' '+currentValue+' '+start+' '+end);
             },
             option: {
                 'weekendweeklyjetso': '新假期JetSo',
