@@ -219,7 +219,7 @@
         window.troperlaicos = {};
 
         troperlaicos.mainPanel = new SocialReport.DataComparePanel('mainPanel', {
-            changeCallback: function(currentValue, start, end) {
+            changeHandler: function(currentValue, start, end) {
                 console.info(this);
                 console.info(currentValue);
                 console.info(start);

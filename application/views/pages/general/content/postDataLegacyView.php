@@ -159,10 +159,10 @@
     $(function() {
         //set a gobal variable
         window.troperlaicos = {};
-
-        troperlaicos.dateRange = new SocialReport.DateRangePicker('dateRange', {
-            changeCallback: dateRangeCallback
-        });
+        //by default dateRangePicker not run in the first time ,you need to trigger it's trigger change event
+        troperlaicos.dateRange = (new SocialReport.DateRangePicker('dateRange', {
+            changeHandler: dateRangeCallback
+        })).triggerChangeEvent();
 
     });
 
