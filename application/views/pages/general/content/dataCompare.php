@@ -203,20 +203,16 @@
     $(function() {
         //set a gobal variable
         window.troperlaicos = {};
-
+        //website setting panel,can choose dateRange to get different data
         troperlaicos.websitePanel = new SocialReport.DataComparePanel('websitePanel', {
-            changeHandler: function(currentValue, start, end) {
-                console.info(this + ' ' + currentValue + ' ' + start + ' ' + end);
-            },
+            changeHandler: websitePanelChangeHandler,
             option: {
                 '<?php echo $pageId;?>': '<?php echo $websiteName;?>'
             }
         });
-        
+        //competitor setting panel,change competitor and dateRnage to get different data
         troperlaicos.competitorPanel = new SocialReport.DataComparePanel('competitorPanel', {
-            changeHandler: function(currentValue, start, end) {
-                console.info(this + ' ' + currentValue + ' ' + start + ' ' + end);
-            },
+            changeHandler: competitorPanelChangeHandler,
             option: {
                 'weekendweeklyjetso': '新假期JetSo',
                 '100most': '100毛',
@@ -224,5 +220,15 @@
             }
         });
     });
+
+    //websitePanel change will trigger this handler
+    function websitePanelChangeHandler(currentValue, start, end) {
+        console.info(this + ' ' + currentValue + ' ' + start + ' ' + end);
+    };
+
+    //competitorPanel change will trigger this handler
+    function competitorPanelChangeHandler(currentValue, start, endcurrentValue, start, end) {
+        console.info(this + ' ' + currentValue + ' ' + start + ' ' + end);
+    };
 
 </script>

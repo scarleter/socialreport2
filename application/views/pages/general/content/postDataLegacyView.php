@@ -161,13 +161,13 @@
         window.troperlaicos = {};
         //by default dateRangePicker not run in the first time ,you need to trigger it's trigger change event
         troperlaicos.dateRange = (new SocialReport.DateRangePicker('dateRange', {
-            changeHandler: dateRangeCallback
+            changeHandler: dateRangeChangeHandler
         })).triggerChangeEvent();
 
     });
 
     //dateRange change will trigger this function
-    function dateRangeCallback(start, end) {
+    function dateRangeChangeHandler(start, end) {
         //set paras for getting facebook data
         var params = {
             since: start.unix(),

@@ -1,12 +1,13 @@
 //SocialReport.js
 
-//It is dependent on jQuery,moment,DataTables(https://datatables.net/),DateRangePicker(http://www.daterangepicker.com/),layer(http://www.layui.com/doc/modules/layer.html).
+//It is dependent on jQuery,moment,DataTables(https://datatables.net/),DateRangePicker(http://www.daterangepicker.com/),layer(http://www.layui.com/doc/modules/layer.html),ChartJs(http://www.chartjs.org/).
 //It has some subclassess: Data, vVew, Operation, Toolbox, Facebook
 var jQuery = jQuery,
     moment = moment,
-    layer = layer;
+    layer = layer,
+    Chart = Chart;
 
-(function ($, window, moment, layer) {
+(function ($, window, moment, layer, Chart) {
     "use strict";
     window.SocialReport = (function () {
         var SocialReport = {},
@@ -318,6 +319,18 @@ var jQuery = jQuery,
             DataTables = SocialReport.DataTables = function (Id, TableData, TableAttrs, Options) {
                 this.initialize(Id, TableData, TableAttrs, Options);
             },
+            
+            
+            //SocialReport.LineChart
+            //-----------------------
+
+            //LineChart is inherited from View
+            //It is a LineChart ui component (http://www.chartjs.org/docs/#line-chart)
+            //`LineChartData` is an object contain three attributes: labelsArr, websiteDataArr and competitorDataArr
+            //`LineChartOptions` is an object to edit LineChart default LineChartOptions
+            LineChart = SocialReport.LineChart = function (Id, LineChartData, LineChartOptions, Options) {
+                this.initialize(Id, LineChartData, LineChartOptions, Options);
+            },
 
 
             //SocialReport.Operation
@@ -373,6 +386,7 @@ var jQuery = jQuery,
                 }
             };
 
+        //extend View class prototype object
         $.extend(View.prototype, {
             //set `id`
             setId: function (Id) {
@@ -446,7 +460,7 @@ var jQuery = jQuery,
             }
         });
 
-
+        //extend DateRangePicker class prototype object
         $.extend(DateRangePicker.prototype, View.prototype, {
 
             //set start time in `Moment` object
@@ -595,7 +609,7 @@ var jQuery = jQuery,
             }
         });
 
-
+        //extend Select class Prototype object
         $.extend(Select.prototype, View.prototype, {
             //set selectOption
             setSelectOption: function (Obj) {
@@ -697,7 +711,7 @@ var jQuery = jQuery,
             }
         });
 
-
+        //extend DataComparePanel class prototype object
         $.extend(DataComparePanel.prototype, View.prototype, {
             //set Select
             setSelect: function (Obj) {
@@ -856,7 +870,7 @@ var jQuery = jQuery,
             }
         });
 
-
+        //extend DataTables class prototype object
         $.extend(DataTables.prototype, View.prototype, {
             //set dataTableObj which can use DataTable api
             setDataTableObj: function (Obj) {
@@ -957,8 +971,233 @@ var jQuery = jQuery,
                 this.setDataTables();
             }
         });
+        
+        $.extend(LineChart.prototype, View.prototype, {
+            //define a variable saving LineChartOptions
+            lineChartOptions: {
+                //Boolean - If we should show the scale at all
+                showScale: true,
+                //Boolean - Whether grid lines are shown across the chart
+                scaleShowGridLines: false,
+                //String - Colour of the grid lines
+                scaleGridLineColor: "rgba(0,0,0,.05)",
+                //Number - Width of the grid lines
+                scaleGridLineWidth: 1,
+                //Boolean - Whether to show horizontal lines (except X axis)
+                scaleShowHorizontalLines: true,
+                //Boolean - Whether to show vertical lines (except Y axis)
+                scaleShowVerticalLines: true,
+                //Boolean - Whether the line is curved between points
+                bezierCurve: true,
+                //Number - Tension of the bezier curve between points
+                bezierCurveTension: 0.3,
+                //Boolean - Whether to show a dot for each point
+                pointDot: true,
+                //Number - Radius of each point dot in pixels
+                pointDotRadius: 4,
+                //Number - Pixel width of point dot stroke
+                pointDotStrokeWidth: 1,
+                //Number - amount extra to add to the radius to cater for hit detection outside the drawn point
+                pointHitDetectionRadius: 20,
+                //Boolean - Whether to show a stroke for datasets
+                datasetStroke: true,
+                //Number - Pixel width of dataset stroke
+                datasetStrokeWidth: 2,
+                //Boolean - Whether to fill the dataset with a color
+                datasetFill: true,
+                //String - A legend template
+                legendTemplate: "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<datasets.length; i++){%><li><span style=\"background-color:<%=datasets[i].lineColor%>\"></span><%if(datasets[i].label){%><%=datasets[i].label%><%}%></li><%}%></ul>",
+                //Boolean - whether to maintain the starting aspect ratio or not when responsive, if set to false, will take up entire container
+                maintainAspectRatio: true,
+                //Boolean - whether to make the chart responsive to window resizing
+                responsive: true
+            },
+                 
+            //set LineChartOptions
+            setLineChartOptions: function (Attr) {
+                //make sure `Attr` is an object
+                if (Toolbox.isObject(Attr)) {
+                    var key,
+                        lineChartOptions = this.getLineChartOptions();
+                    for (key in Attr) {
+                        //make sure not create new attribute in origin lineChartOptions
+                        if (Attr.hasOwnProperty(key) && lineChartOptions.hasOwnProperty(key)) {
+                            lineChartOptions[key] = Attr[key];
+                        }
+                    }
+                    this.lineChartOptions = lineChartOptions;
+                } else {
+                    Toolbox.assert('Function SocialReport.LineChart.setLineChartOptions: `Attr` is undefine or not an Object');
+                }
+            },
+            
+            //get LineChartOptions
+            getLineChartOptions: function () {
+                return this.lineChartOptions;
+            },
+            
+            //set LineChart obj which can use ChartJs(http://www.chartjs.org/) api to paint line
+            setLineChartObj: function (Obj) {
+                if (Toolbox.isInstance(Obj, Object)) {
+                    this.LineChartObj = Obj;
+                } else {
+                    Toolbox.assert('Function SocialReport.LineChart.setLineChartObj: Obj can not be undefined and should be an object');
+                }
+            },
+            
+            //get LineChart obj
+            getLineChartObj: function () {
+                return this.LineChartObj;
+            },
+            
+            //set labelArr
+            setLabelArr: function (Arr) {
+                //make sure `Arr` is an array
+                if (Toolbox.isArray(Arr)) {
+                    this.labelArr = Arr;
+                } else {
+                    Toolbox.assert('Function SocialReport.LineChart.setLabelArr: `Arr` is undefine or not an array');
+                }
+            },
 
+            //get labelArr
+            getLabelArr: function () {
+                return this.labelArr;
+            },
+            
+            //set website data
+            setWebsiteDataArr: function (Arr) {
+                //make sure `Arr` is an array
+                if (Toolbox.isArray(Arr)) {
+                    this.websiteDataArr = Arr;
+                } else {
+                    Toolbox.assert('Function SocialReport.LineChart.setWebsiteDataArr: `Arr` is undefine or not an array');
+                }
+            },
+            
+            //get website data
+            getWebsiteDataArr: function () {
+                return this.websiteDataArr;
+            },
+            
+            //set competitor data
+            setCompetitorDataArr: function (Arr) {
+                //make sure `Arr` is an array
+                if (Toolbox.isArray(Arr)) {
+                    this.competitorDataArr = Arr;
+                } else {
+                    Toolbox.assert('Function SocialReport.LineChart.setCompetitorDataArr: `Arr` is undefine or not an array');
+                }
+            },
+            
+            //get competitor data
+            getCompetitorDataArr: function () {
+                return this.competitorDataArr;
+            },
+            
+            //wrap data for CharJs to paint
+            setChartData: function () {
+                var labelArr = this.getLabelArr(),
+                    websiteDataArr = this.getWebsiteDataArr(),
+                    competitorDataArr = this.getcompetitorDataArr(),
+                    chartData = {
+                        labels: labelArr,
+                        datasets: [
+                            {
+                                label: '',
+                                fillColor: "rgba(60,141,188,0.9)",
+                                strokeColor: "rgba(60,141,188,0.8)",
+                                pointColor: "#3b8bba",
+                                pointStrokeColor: "rgba(60,141,188,1)",
+                                pointHighlightFill: "#fff",
+                                pointHighlightStroke: "rgba(60,141,188,1)",
+                                data: websiteDataArr
+                            },
+                            {
+                                label: '',
+                                fillColor: "rgba(210, 214, 222, 1)",
+                                strokeColor: "rgba(210, 214, 222, 1)",
+                                pointColor: "rgba(210, 214, 222, 1)",
+                                pointStrokeColor: "#c1c7d1",
+                                pointHighlightFill: "#fff",
+                                pointHighlightStroke: "rgba(220,220,220,1)",
+                                data: competitorDataArr
+                            }
+                        ]
+                    };
+                this.chartData = chartData;
+                return this;
+            },
+            
+            //get data for CharJs to paint
+            getChartData: function () {
+                return this.chartData;
+            },
+            
+            //render the dom
+            render: function () {
+                var id = this.getId(),
+                    $obj = $('#' + id),
+                    template = this.getTemplate().join('').replace('%ID%', id);
+                //check if there is element obj whose id attribute is `id`
+                if ($obj.size() === 0) {
+                    Toolbox.assert('Function SocialReport.LineChart.render: there is no element\'s id is ' + id);
+                    return false;
+                }
+                $obj.prop('outerHTML', template);
+                return this;
+            },
+            
+            //set LineChart
+            setLineChart: function () {
+                var id = this.getId(),
+                    $obj = $('#' + id),
+                    lineChartCanvas = $obj.get(0).getContext("2d"),
+                    lineChartObj = new Chart(lineChartCanvas),
+                    chartData = this.getChartData(),
+                    lineChartOptions = this.getLineChartOptions();
+                //use ChartJs api to paint line
+                lineChartObj.Line(chartData, lineChartOptions);
+                this.setLineChartObj(lineChartObj);
+                return this;
+            },
+            
+            //destory the lineChart
+            destoryLineChart: function () {
+                var lineChartObj = this.getLineChartObj();
+                if (lineChartObj) {
+                    lineChartObj.destroy();
+                }
+            },
 
+            //repaint the lineChart
+            repaint: function (LineChartData, LineChartOptions, Options) {
+                //set LineChartData
+                this.setLabelArr(LineChartData && LineChartData.labelArr);
+                this.setWebsiteDataArr(LineChartData && LineChartData.websiteArr);
+                this.setCompetitorDataArr(LineChartData && LineChartData.competitorArr);
+                if (LineChartOptions) {
+                    this.setLineChartOptions(LineChartOptions);
+                }
+                this.destoryDataTables();
+                this.setLineChart();
+            },
+            
+            //initialize
+            initialize: function (Id, LineChartData, LineChartOptions, Options) {
+                this.setId(Id);
+                //set LineChartData
+                this.setLabelArr(LineChartData && LineChartData.labelArr);
+                this.setWebsiteDataArr(LineChartData && LineChartData.websiteArr);
+                this.setCompetitorDataArr(LineChartData && LineChartData.competitorArr);
+                this.setLineChartOptions(LineChartOptions);
+                this.setTemplate(['<div class="chart"><canvas id="', '%ID%', '" style="height:300px"></canvas></div>']);
+                this.render();
+                this.setLineChart();
+            }
+        });
+
+        //extend Operation class prototype object
         $.extend(Operation.prototype, {
             //parse Data
             parse: function () {
@@ -1610,4 +1849,4 @@ var jQuery = jQuery,
     }());
 
 
-}(jQuery, window, moment, layer));
+}(jQuery, window, moment, layer, Chart));
