@@ -208,7 +208,9 @@
             changeHandler: function(currentValue, start, end) {
                 console.info(this + ' ' + currentValue + ' ' + start + ' ' + end);
             },
-            websiteName: 'websiteName'
+            option: {
+                '<?php echo $pageId;?>': '<?php echo $websiteName;?>'
+            }
         });
         
         troperlaicos.competitorPanel = new SocialReport.DataComparePanel('competitorPanel', {

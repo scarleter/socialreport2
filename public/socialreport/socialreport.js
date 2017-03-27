@@ -839,26 +839,15 @@ var jQuery = jQuery,
             //initialize function
             initialize: function (Id, Options) {
                 this.setId(Id);
-                //if `Options.websiteName` is undefined, we render select, otherwise we render a disabled input just show the websiteName
-                if (!Options.websiteName) {
-                    this.setTemplate(['<div id="', '%ID%', '"><div class="form-group"><span id="', '%ID%Select"></span></div><div class="form-group"><label>Date range:</label><div class="input-group"><span id="', '%ID%DateRangePicker"></span></div></div></div>']);
-                } else {
-                    this.setTemplate(['<div id="', '%ID%', '"><div class="form-group"><input type="text" class="form-control" value="' + Options.websiteName + '" disabled=""></div><div class="form-group"><label>Date range:</label><div class="input-group"><span id="', '%ID%DateRangePicker"></span></div></div></div>']);
-                }
-                
+                this.setTemplate(['<div id="', '%ID%', '"><div class="form-group"><span id="', '%ID%Select"></span></div><div class="form-group"><label>Date range:</label><div class="input-group"><span id="', '%ID%DateRangePicker"></span></div></div></div>']);
                 this.setChangeHandler(Options.changeHandler);
                 //need to reander before set Select and DateRangePicker
                 this.render();
-                
-                //create new Select object as internal members
-                //only when `Options.websiteName` is undefined, we render create Select class
-                if (!Options.websiteName) {
-                    this.setSelect(new Select(Id + 'Select', {
-                        option: Options.option,
-                        changeHandler: this.genSelectChangeHandler()
-                    }));
-                }
-                //create new DateRangePicker object as internal members
+                //create new Select object and DateRangePicker object for the DataComparePanel as internal members
+                this.setSelect(new Select(Id + 'Select', {
+                    option: Options.option,
+                    changeHandler: this.genSelectChangeHandler()
+                }));
                 this.setDateRangePicker(new DateRangePicker(Id + 'DateRangePicker', {
                     changeHandler: this.genDateRangePickerChangeHandler()
                 }));
