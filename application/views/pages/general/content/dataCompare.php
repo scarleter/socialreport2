@@ -110,9 +110,7 @@
                         </div>
                     </div>
                     <div class="box-body">
-                        <div class="chart">
-                            <canvas id="lineChart_nop" style="height:300px"></canvas>
-                        </div>
+                        <span id="postSizeLineChart"></span>
                     </div>
                     <!-- /.box-body -->
                 </div>
@@ -224,11 +222,29 @@
     //websitePanel change will trigger this handler
     function websitePanelChangeHandler(currentValue, start, end) {
         console.info(this + ' ' + currentValue + ' ' + start + ' ' + end);
+        troperlaicos.postSizeLineChart = new SocialReport.LineChart('postSizeLineChart', {
+            labelArr: [1, 2, 3],
+            websiteDataArr: [
+                2,
+                1,
+                2
+            ],
+            competitorDataArr: [
+                5,
+                8,
+                9
+            ]
+        });
     };
 
     //competitorPanel change will trigger this handler
     function competitorPanelChangeHandler(currentValue, start, endcurrentValue, start, end) {
         console.info(this + ' ' + currentValue + ' ' + start + ' ' + end);
     };
+
+    //build lineChart
+    //    function buildLineChart(){
+    //        
+    //    };
 
 </script>

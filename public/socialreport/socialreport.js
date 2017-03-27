@@ -1004,7 +1004,7 @@ var jQuery = jQuery,
                 //Number - Pixel width of dataset stroke
                 datasetStrokeWidth: 2,
                 //Boolean - Whether to fill the dataset with a color
-                datasetFill: true,
+                datasetFill: false,
                 //String - A legend template
                 legendTemplate: "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<datasets.length; i++){%><li><span style=\"background-color:<%=datasets[i].lineColor%>\"></span><%if(datasets[i].label){%><%=datasets[i].label%><%}%></li><%}%></ul>",
                 //Boolean - whether to maintain the starting aspect ratio or not when responsive, if set to false, will take up entire container
@@ -1099,7 +1099,7 @@ var jQuery = jQuery,
             setChartData: function () {
                 var labelArr = this.getLabelArr(),
                     websiteDataArr = this.getWebsiteDataArr(),
-                    competitorDataArr = this.getcompetitorDataArr(),
+                    competitorDataArr = this.getCompetitorDataArr(),
                     chartData = {
                         labels: labelArr,
                         datasets: [
@@ -1188,8 +1188,10 @@ var jQuery = jQuery,
                 this.setId(Id);
                 //set LineChartData
                 this.setLabelArr(LineChartData && LineChartData.labelArr);
-                this.setWebsiteDataArr(LineChartData && LineChartData.websiteArr);
-                this.setCompetitorDataArr(LineChartData && LineChartData.competitorArr);
+                this.setWebsiteDataArr(LineChartData && LineChartData.websiteDataArr);
+                this.setCompetitorDataArr(LineChartData && LineChartData.competitorDataArr);
+                this.setChartData();
+                //set LineChart Options
                 this.setLineChartOptions(LineChartOptions);
                 this.setTemplate(['<div class="chart"><canvas id="', '%ID%', '" style="height:300px"></canvas></div>']);
                 this.render();
