@@ -55,7 +55,7 @@ var jQuery = jQuery,
 
                 //check if it is a Object
                 isObject: function (Obj) {
-                    var obj = Obj || {};
+                    var obj = Obj;
                     return obj instanceof Object;
                 },
 
@@ -972,6 +972,7 @@ var jQuery = jQuery,
             }
         });
         
+        //extend LineChart class prototype object
         $.extend(LineChart.prototype, View.prototype, {
             //define a variable saving LineChartOptions
             lineChartOptions: {
@@ -1026,8 +1027,6 @@ var jQuery = jQuery,
                         }
                     }
                     this.lineChartOptions = lineChartOptions;
-                } else {
-                    Toolbox.assert('Function SocialReport.LineChart.setLineChartOptions: `Attr` is undefine or not an Object');
                 }
             },
             
@@ -1050,56 +1049,58 @@ var jQuery = jQuery,
                 return this.LineChartObj;
             },
             
-            //set labelArr
-            setLabelArr: function (Arr) {
-                //make sure `Arr` is an array
-                if (Toolbox.isArray(Arr)) {
-                    this.labelArr = Arr;
+            //set LineChartData contain: labelArr, websiteDataArr and competitorDataArr
+            setLineChartData: function (LineChartData) {
+                //initialize lineChartData
+                this.lineChartData = this.lineChartData || {};
+                //make sure `LineChartData` is object
+                if (Toolbox.isObject(LineChartData)) {
+                    //make sure `LineChartData.labelArr` is an array
+                    if (Toolbox.isArray(LineChartData.labelArr)) {
+                        this.lineChartData.labelArr = LineChartData.labelArr;
+                    } else {
+                        this.lineChartData.labelArr = this.lineChartData.labelArr || [];
+                        Toolbox.assert('Function SocialReport.LineChart.setLineChartData: `LineChartData.labelArr` is undefined or not an array');
+                    }
+                    //make sure `LineChartData.websiteDataArr` is an array
+                    if (Toolbox.isArray(LineChartData.websiteDataArr)) {
+                        this.lineChartData.websiteDataArr = LineChartData.websiteDataArr;
+                    } else {
+                        this.lineChartData.websiteDataArr = this.lineChartData.websiteDataArr || [];
+                        Toolbox.assert('Function SocialReport.LineChart.setLineChartData: `LineChartData.websiteDataArr` is undefined or not an array');
+                    }
+                    //make sure `LineChartData.competitorDataArr` is an array
+                    if (Toolbox.isArray(LineChartData.competitorDataArr)) {
+                        this.lineChartData.competitorDataArr = LineChartData.competitorDataArr;
+                    } else {
+                        this.lineChartData.competitorDataArr = this.lineChartData.competitorDataArr || [];
+                        Toolbox.assert('Function SocialReport.LineChart.setLineChartData: `LineChartData.competitorDataArr` is undefined or not an array');
+                    }
                 } else {
-                    Toolbox.assert('Function SocialReport.LineChart.setLabelArr: `Arr` is undefine or not an array');
+                    Toolbox.assert('Function SocialReport.LineChart.setLineChartData: `LineChartData` is undefined or not an object');
                 }
-            },
-
-            //get labelArr
-            getLabelArr: function () {
-                return this.labelArr;
+                return this;
             },
             
-            //set website data
-            setWebsiteDataArr: function (Arr) {
-                //make sure `Arr` is an array
-                if (Toolbox.isArray(Arr)) {
-                    this.websiteDataArr = Arr;
+            //get LineChartData
+            //if `Attr` is string return lineChartData[Attr], else return the whole data
+            getLineChartData: function (Attr) {
+                //check if `Attr` is string
+                if (Toolbox.isString(Attr)) {
+                    return this.lineChartData[Attr];
                 } else {
-                    Toolbox.assert('Function SocialReport.LineChart.setWebsiteDataArr: `Arr` is undefine or not an array');
+                    return this.lineChartData;
                 }
-            },
-            
-            //get website data
-            getWebsiteDataArr: function () {
-                return this.websiteDataArr;
-            },
-            
-            //set competitor data
-            setCompetitorDataArr: function (Arr) {
-                //make sure `Arr` is an array
-                if (Toolbox.isArray(Arr)) {
-                    this.competitorDataArr = Arr;
-                } else {
-                    Toolbox.assert('Function SocialReport.LineChart.setCompetitorDataArr: `Arr` is undefine or not an array');
-                }
-            },
-            
-            //get competitor data
-            getCompetitorDataArr: function () {
-                return this.competitorDataArr;
             },
             
             //wrap data for CharJs to paint
             setChartData: function () {
-                var labelArr = this.getLabelArr(),
-                    websiteDataArr = this.getWebsiteDataArr(),
-                    competitorDataArr = this.getCompetitorDataArr(),
+                var labelArr = this.getLineChartData('labelArr'),
+                    websiteDataArr = this.getLineChartData('websiteDataArr'),
+                    competitorDataArr = this.getLineChartData('competitorDataArr'),
+                    chartData;
+                //if `labelArr`, `websiteDataArr` and `competitorDataArr` is not empty we set chartData
+                if (labelArr && labelArr.length && websiteDataArr && websiteDataArr.length && competitorDataArr && competitorDataArr.length) {
                     chartData = {
                         labels: labelArr,
                         datasets: [
@@ -1125,6 +1126,9 @@ var jQuery = jQuery,
                             }
                         ]
                     };
+                } else {
+                    Toolbox.assert('Function SocialReport.LineChart.setChartData: `labelArr` or `websiteDataArr` or `competitorDataArr` is empty');
+                }
                 this.chartData = chartData;
                 return this;
             },
@@ -1156,9 +1160,12 @@ var jQuery = jQuery,
                     lineChartObj = new Chart(lineChartCanvas),
                     chartData = this.getChartData(),
                     lineChartOptions = this.getLineChartOptions();
-                //use ChartJs api to paint line
-                lineChartObj.Line(chartData, lineChartOptions);
-                this.setLineChartObj(lineChartObj);
+                //make sure chartData is not empty
+                if (chartData) {
+                    //use ChartJs api to paint line
+                    lineChartObj.Line(chartData, lineChartOptions);
+                    this.setLineChartObj(lineChartObj);
+                }
                 return this;
             },
             
@@ -1173,9 +1180,7 @@ var jQuery = jQuery,
             //repaint the lineChart
             repaint: function (LineChartData, LineChartOptions, Options) {
                 //set LineChartData
-                this.setLabelArr(LineChartData && LineChartData.labelArr);
-                this.setWebsiteDataArr(LineChartData && LineChartData.websiteArr);
-                this.setCompetitorDataArr(LineChartData && LineChartData.competitorArr);
+                this.setLineChartData(LineChartData);
                 if (LineChartOptions) {
                     this.setLineChartOptions(LineChartOptions);
                 }
@@ -1187,9 +1192,7 @@ var jQuery = jQuery,
             initialize: function (Id, LineChartData, LineChartOptions, Options) {
                 this.setId(Id);
                 //set LineChartData
-                this.setLabelArr(LineChartData && LineChartData.labelArr);
-                this.setWebsiteDataArr(LineChartData && LineChartData.websiteDataArr);
-                this.setCompetitorDataArr(LineChartData && LineChartData.competitorDataArr);
+                this.setLineChartData(LineChartData);
                 this.setChartData();
                 //set LineChart Options
                 this.setLineChartOptions(LineChartOptions);
