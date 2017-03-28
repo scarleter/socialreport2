@@ -1049,36 +1049,29 @@ var jQuery = jQuery,
                 return this.LineChartObj;
             },
             
+            //check if `LineChartData` valid
+            isLineChartDataVaild: function (LineChartData) {
+                //if `LineChartData` is not an object return false
+                if (!Toolbox.isObject(LineChartData)) {
+                    Toolbox.assert('Function SocialReport.LineChart.setLineChartData: `LineChartData` is undefined or not an object');
+                    return false;
+                }
+                //if `LineChartData.labelArr`,`LineChartData.websiteDataArr` and `LineChartData.competitorDataArr` is not an arry return false
+                if (!Toolbox.isArray(LineChartData.labelArr) || !Toolbox.isArray(LineChartData.websiteDataArr) || !Toolbox.isArray(LineChartData.competitorDataArr)) {
+                    Toolbox.assert('Function SocialReport.LineChart.setLineChartData: `LineChartData.labelArr` or `LineChartData.websiteDataArr` or `LineChartData.competitorDataArr` is undefined or not an array');
+                    return false;
+                }
+                return true;
+            },
+            
             //set LineChartData contain: labelArr, websiteDataArr and competitorDataArr
             setLineChartData: function (LineChartData) {
                 //initialize lineChartData
                 this.lineChartData = this.lineChartData || {};
-                //make sure `LineChartData` is object
-                if (Toolbox.isObject(LineChartData)) {
-                    //make sure `LineChartData.labelArr` is an array
-                    if (Toolbox.isArray(LineChartData.labelArr)) {
-                        this.lineChartData.labelArr = LineChartData.labelArr;
-                    } else {
-                        this.lineChartData.labelArr = this.lineChartData.labelArr || [];
-                        Toolbox.assert('Function SocialReport.LineChart.setLineChartData: `LineChartData.labelArr` is undefined or not an array');
-                    }
-                    //make sure `LineChartData.websiteDataArr` is an array
-                    if (Toolbox.isArray(LineChartData.websiteDataArr)) {
-                        this.lineChartData.websiteDataArr = LineChartData.websiteDataArr;
-                    } else {
-                        this.lineChartData.websiteDataArr = this.lineChartData.websiteDataArr || [];
-                        Toolbox.assert('Function SocialReport.LineChart.setLineChartData: `LineChartData.websiteDataArr` is undefined or not an array');
-                    }
-                    //make sure `LineChartData.competitorDataArr` is an array
-                    if (Toolbox.isArray(LineChartData.competitorDataArr)) {
-                        this.lineChartData.competitorDataArr = LineChartData.competitorDataArr;
-                    } else {
-                        this.lineChartData.competitorDataArr = this.lineChartData.competitorDataArr || [];
-                        Toolbox.assert('Function SocialReport.LineChart.setLineChartData: `LineChartData.competitorDataArr` is undefined or not an array');
-                    }
-                } else {
-                    Toolbox.assert('Function SocialReport.LineChart.setLineChartData: `LineChartData` is undefined or not an object');
-                }
+                //after checking we set the variable
+                this.lineChartData.labelArr = LineChartData.labelArr;
+                this.lineChartData.websiteDataArr = LineChartData.websiteDataArr;
+                this.lineChartData.competitorDataArr = LineChartData.competitorDataArr;
                 return this;
             },
             
@@ -1179,26 +1172,32 @@ var jQuery = jQuery,
 
             //repaint the lineChart
             repaint: function (LineChartData, LineChartOptions, Options) {
-                //set LineChartData
-                this.setLineChartData(LineChartData);
-                if (LineChartOptions) {
-                    this.setLineChartOptions(LineChartOptions);
+                //only when LineChartData valid, we set variable to paint LineChart
+                if (this.isLineChartDataVaild(LineChartData)) {
+                    //set LineChartData
+                    this.setLineChartData(LineChartData);
+                    if (LineChartOptions) {
+                        this.setLineChartOptions(LineChartOptions);
+                    }
+                    this.destoryDataTables();
+                    this.setLineChart();
                 }
-                this.destoryDataTables();
-                this.setLineChart();
             },
             
             //initialize
             initialize: function (Id, LineChartData, LineChartOptions, Options) {
                 this.setId(Id);
-                //set LineChartData
-                this.setLineChartData(LineChartData);
-                this.setChartData();
-                //set LineChart Options
-                this.setLineChartOptions(LineChartOptions);
                 this.setTemplate(['<div class="chart"><canvas id="', '%ID%', '" style="height:300px"></canvas></div>']);
                 this.render();
-                this.setLineChart();
+                //only when LineChartData valid, we set variable to paint LineChart
+                if (this.isLineChartDataVaild(LineChartData)) {
+                    //set LineChartData
+                    this.setLineChartData(LineChartData);
+                    this.setChartData();
+                    //set LineChart Options
+                    this.setLineChartOptions(LineChartOptions);
+                    this.setLineChart();
+                }
             }
         });
 
