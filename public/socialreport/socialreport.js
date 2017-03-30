@@ -1452,6 +1452,8 @@ var jQuery = jQuery,
                     switch (lineChartType) {
                     case 'postsize':
                         return this.getPostSizeByDateInFacebook();
+                    case 'avgreachbypost':
+                        return this.getAvgReachByPostNumberInFacebook();
                     default:
                         Toolbox.assert('Function SocialReport.Operation.getFormatDataFromLineChartType: go into the default branch');
                         return this.getData();
@@ -1753,6 +1755,37 @@ var jQuery = jQuery,
                         size = Toolbox.getObjectSize(classifiedPostsData[label]);
                         labelArr.push(label);
                         dataArr.push(size);
+                    }
+                }
+                return {
+                    labelArr: labelArr,
+                    dataArr: dataArr
+                };
+            },
+            
+            //build facebook avg reach by post number
+            //return `labelArr` and `dataArr`
+            getAvgReachByPostNumberInFacebook: function () {
+                var postsData = this.getData('postsData'),
+                    classifiedPostsData = this.ClassifyJson(postsData, 'created_time'),
+                    labelArr = [],
+                    dataArr = [],
+                    label = '',
+                    size = 0,
+                    reach = 0,
+                    postIndex = 0;
+                for (label in classifiedPostsData) {
+                    if (classifiedPostsData.hasOwnProperty(label)) {
+                        size = Toolbox.getObjectSize(classifiedPostsData[label]);
+                        //loop to get total reach in the same date
+                        for (postIndex in classifiedPostsData[label]) {
+                            if (classifiedPostsData[label].hasOwnProperty(postIndex)) {
+                                reach = reach + (classifiedPostsData[label][postIndex].post_impressions_unique || 0);
+                            }
+
+                        }
+                        labelArr.push(label);
+                        dataArr.push(Math.round(reach / size));
                     }
                 }
                 return {
