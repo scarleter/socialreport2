@@ -200,7 +200,18 @@
 <script type="text/javascript">
     $(function() {
         //set a gobal variable
-        window.troperlaicos = {};
+        window.troperlaicos = {
+            website: {
+                lineChart: {
+                    postSize: {}
+                }
+            },
+            competitor: {
+                lineChart: {
+                    postSize: {}
+                }
+            },
+        };
         //website setting panel,can choose dateRange to get different data
         troperlaicos.websitePanel = new SocialReport.DataComparePanel('websitePanel', {
             changeHandler: websitePanelChangeHandler,
@@ -221,30 +232,79 @@
 
     //websitePanel change will trigger this handler
     function websitePanelChangeHandler(currentValue, start, end) {
-        console.info(this + ' ' + currentValue + ' ' + start + ' ' + end);
-        troperlaicos.postSizeLineChart = new SocialReport.LineChart('postSizeLineChart', {
-            labelArr: [1, 2, 3],
-            websiteDataArr: [
-                2,
-                1,
-                2
-            ],
-            competitorDataArr: [
-                5,
-                8,
-                9
-            ]
-        });
+        //set paras for getting facebook data
+        var params = {
+            since: start.unix(),
+            until: end.unix(),
+            pageid: currentValue,
+            access_token: '<?php echo $pageAccessToken;?>'
+        };
+        //use asynchronous to get facebook data(posts and reach) and put the follow steps in the callback function such as `buildTable`.
+        SocialReport.Facebook.genFacebookOperation(params, buildWebsiteLineChartDataToGobal);
+
+        //it is a callback function to get LineChartData for website and set data in `troperlaicos`
+        function buildWebsiteLineChartDataToGobal() {
+            var facebookOperation = this;
+            //it return an object include attribute of `labelArr` and `dataArr`
+            postSizeData = facebookOperation.getFormatDataFromLineChartType('postsize');
+            //save it to global variable for further use
+            troperlaicos.website.lineChart.postSize.labelArr = postSizeData.labelArr;
+            troperlaicos.website.lineChart.postSize.dataArr = postSizeData.dataArr;
+            //then we build the whold LineChart
+            buildLineChart();
+        };
     };
 
     //competitorPanel change will trigger this handler
-    function competitorPanelChangeHandler(currentValue, start, endcurrentValue, start, end) {
-        console.info(this + ' ' + currentValue + ' ' + start + ' ' + end);
+    function competitorPanelChangeHandler(currentValue, start, end) {
+        //set paras for getting facebook data
+        var params = {
+            since: start.unix(),
+            until: end.unix(),
+            pageid: currentValue,
+            access_token: '<?php echo $pageAccessToken;?>'
+        };
+        //use asynchronous to get facebook data(posts and reach) and put the follow steps in the callback function such as `buildTable`.
+        SocialReport.Facebook.genFacebookOperation(params, buildCompetitorLineChartDataToGobal);
+
+        //it is a callback function to get LineChartData for competitor and set data in `troperlaicos`
+        function buildCompetitorLineChartDataToGobal() {
+            var facebookOperation = this;
+            //it return an object include attribute of `labelArr` and `dataArr`
+            postSizeData = facebookOperation.getFormatDataFromLineChartType('postsize');
+            //save it to global variable for further use
+            troperlaicos.competitor.lineChart.postSize.labelArr = postSizeData.labelArr;
+            troperlaicos.competitor.lineChart.postSize.dataArr = postSizeData.dataArr;
+            //then we build the whold LineChart
+            buildLineChart();
+        };
     };
 
-    //build lineChart
-    //    function buildLineChart(){
-    //        
-    //    };
+    //it is a callback function to build LineChart
+    function buildLineChart() {
+        //build LineChart
+        buildPostSizeLineChart();
+    };
+
+    //build number of posts lineChart
+    function buildPostSizeLineChart() {
+        var websiteLabelArr = troperlaicos.website.lineChart.postSize.labelArr || [],
+            websiteDataArr = troperlaicos.website.lineChart.postSize.dataArr || [],
+            competitorLabelArr = troperlaicos.competitor.lineChart.postSize.labelArr || [],
+            competitorDataArr = troperlaicos.competitor.lineChart.postSize.dataArr || [],
+            //we need to add element of `websiteLabelArr` and `competitorLabelArr` together
+            resultLabelArr = [],
+            maxLength = Math.max(websiteLabelArr.length, competitorLabelArr.length);
+
+        for (var i = 0; i < maxLength; i++) {
+            resultLabelArr.push((websiteLabelArr[i] || '-') + '/' + (competitorLabelArr[i] || '-'));
+        }
+        
+        troperlaicos.postSizeLineChart = new SocialReport.LineChart('postSizeLineChart', {
+            labelArr: resultLabelArr,
+            websiteDataArr: websiteDataArr,
+            competitorDataArr: competitorDataArr
+        });
+    };
 
 </script>

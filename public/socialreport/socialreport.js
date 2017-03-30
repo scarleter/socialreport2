@@ -71,6 +71,24 @@ var jQuery = jQuery,
                     var instance = Instance || undefined,
                         obj = Obj || Object;
                     return instance instanceof obj;
+                },
+                
+                //get the Object size
+                getObjectSize: function (Obj) {
+                    var size = 0,
+                        obj = Obj || {},
+                        key;
+                    //Object.keys could not support under IE9
+                    if (!!Object.keys) {
+                        size = Object.keys(obj).length;
+                    } else {
+                        for (key in obj) {
+                            if (obj.hasOwnProperty(key)) {
+                                size += 1;
+                            }
+                        }
+                    }
+                    return size;
                 }
             },
 
@@ -1241,7 +1259,7 @@ var jQuery = jQuery,
                     postObj.message = postsData[postIndex].message || '';
                     postObj.permalink_url = postsData[postIndex].permalink_url || '';
                     postObj.type = postsData[postIndex].type || '';
-                    postObj.insights = postsData[postIndex].insights.data || '';
+                    postObj.insights = (postsData[postIndex].insights && postsData[postIndex].insights.data) || '';
                     //loop to set insights object data
                     for (insightIndex = 0; insightIndex < postObj.insights.length; insightIndex += 1) {
                         switch (postObj.insights[insightIndex].name) {
@@ -1415,6 +1433,27 @@ var jQuery = jQuery,
                         return this.getTopPostsDataInFacebookByType('video', 5);
                     default:
                         Toolbox.assert('Function SocialReport.Operation.getFormatDataFromTableType: go into the default branch');
+                        return this.getData();
+                    }
+                case 'google':
+                    //return this._formatDataInGoogle();
+                    break;
+                default:
+                    return this.getData();
+                }
+            },
+            
+            //get standard format data from `LineChartType` to build LineChart
+            getFormatDataFromLineChartType: function (LineChartType) {
+                var dataOrigin = this.getOptions('dataOrigin') || '',
+                    lineChartType = LineChartType.toLowerCase() || '';
+                switch (dataOrigin.toLowerCase()) {
+                case 'facebook':
+                    switch (lineChartType) {
+                    case 'postsize':
+                        return this.getPostSizeByDateInFacebook();
+                    default:
+                        Toolbox.assert('Function SocialReport.Operation.getFormatDataFromLineChartType: go into the default branch');
                         return this.getData();
                     }
                 case 'google':
@@ -1699,6 +1738,28 @@ var jQuery = jQuery,
                     columnTitle: columnTitle
                 };
             },
+            
+            //build facebook post size by date
+            //return `labelArr` and `dataArr`
+            getPostSizeByDateInFacebook: function () {
+                var postsData = this.getData('postsData'),
+                    classifiedPostsData = this.ClassifyJson(postsData, 'created_time'),
+                    labelArr = [],
+                    dataArr = [],
+                    label = '',
+                    size = 0;
+                for (label in classifiedPostsData) {
+                    if (classifiedPostsData.hasOwnProperty(label)) {
+                        size = Toolbox.getObjectSize(classifiedPostsData[label]);
+                        labelArr.push(label);
+                        dataArr.push(size);
+                    }
+                }
+                return {
+                    labelArr: labelArr,
+                    dataArr: dataArr
+                };
+            },
 
             //internal function to get postsData in two dimension array format
             getPostsDataIn2DArray: function () {
@@ -1809,6 +1870,40 @@ var jQuery = jQuery,
                     }
                 }
                 return summary;
+            },
+            
+            //build an object which classify by `Attr`
+            //input a json and attribute Name, return an object classify by attribute value
+            //return object format like this:
+            //   resultObj = {
+            //      classNameOne: [
+            //          objectOne, ObjectTwo...
+            //      ],
+            //      classNameTwo: [
+            //           objectthree, objectFour
+            //      ]
+            //   }
+            ClassifyJson: function (Json, Attr) {
+                var resultObj = {},
+                    className = '';
+                //if `Json` is not an array or `Attr` is not a string return an empty object 
+                if (!Toolbox.isArray(Json) || !Toolbox.isString(Attr)) {
+                    return resultObj;
+                }
+                //loop the json element to classify
+                $.each(Json, function (key, obj) {
+                    //make sure `obj` has `Attr` attribute
+                    if (obj.hasOwnProperty(Attr)) {
+                        //if `Atrr` we need to accurate to day instead of accurate to minute
+                        className = (Attr === 'created_time') ? obj[Attr].substring(0, 10) : obj[Attr];
+                        //initialize `resultObj[className]` if it is not exist
+                        resultObj[className] = (resultObj.hasOwnProperty(className)) ? resultObj[className] : [];
+                        resultObj[className].push(obj);
+                    } else {
+                        Toolbox.assert('Function SocialReport.Operation.ClassifyJson：' + obj + ' is not an object or do not has ' + Attr + ' attribute');
+                    }
+                });
+                return resultObj;
             },
 
             //get data size
