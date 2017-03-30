@@ -157,7 +157,7 @@
                     </div>
                     <div class="box-body">
                         <div class="chart">
-                            <canvas id="lineChart_apfl" style="height:300px"></canvas>
+                            <canvas id="avgFanPageLikeLineChart" style="height:300px"></canvas>
                         </div>
                     </div>
                     <!-- /.box-body -->
@@ -205,12 +205,14 @@
                 lineChart: {
                     postSize: {},
                     avgReachByPost: {},
+                    avgFanPageLike: {},
                 },
             },
             competitor: {
                 lineChart: {
                     postSize: {},
                     avgReachByPost: {},
+                    avgFanPageLike: {},
                 }
             },
         };
@@ -251,10 +253,12 @@
             //it return an object include attribute of `labelArr` and `dataArr`
             postSizeData = facebookOperation.getFormatDataFromLineChartType('postsize');
             avgReachByPostData = facebookOperation.getFormatDataFromLineChartType('avgreachbypost');
+            avgPageFanLikeData = facebookOperation.getFormatDataFromLineChartType('avgpagefanlike');
             //save it to global variable for further use
             troperlaicos.website.lineChart.postSize.labelArr = postSizeData.labelArr;
-            troperlaicos.website.lineChart.postSize.dataArr = postSizeData.dataArr;console.info(avgReachByPostData);
+            troperlaicos.website.lineChart.postSize.dataArr = postSizeData.dataArr;
             troperlaicos.website.lineChart.avgReachByPost.dataArr = avgReachByPostData.dataArr || [];
+            troperlaicos.website.lineChart.avgFanPageLike.dataArr = avgPageFanLikeData.dataArr || [];
             //then we build the whold LineChart
             buildLineChart();
         };
@@ -278,10 +282,12 @@
             //it return an object include attribute of `labelArr` and `dataArr`
             postSizeData = facebookOperation.getFormatDataFromLineChartType('postsize');
             avgReachByPostData = facebookOperation.getFormatDataFromLineChartType('avgreachbypost');
+            avgPageFanLikeData = facebookOperation.getFormatDataFromLineChartType('avgpagefanlike');
             //save it to global variable for further use
             troperlaicos.competitor.lineChart.postSize.labelArr = postSizeData.labelArr;
             troperlaicos.competitor.lineChart.postSize.dataArr = postSizeData.dataArr;
             troperlaicos.competitor.lineChart.avgReachByPost.dataArr = avgReachByPostData.dataArr || [];
+            troperlaicos.competitor.lineChart.avgFanPageLike.dataArr = avgPageFanLikeData.dataArr || [];
             
             //then we build the whold LineChart
             buildLineChart();
@@ -295,6 +301,7 @@
         //build LineChart
         buildPostSizeLineChart();
         buildAvgReachByPostLineChart();
+        buildAvgPageFanLikeLineChart();
     };
     
     //build result label array
@@ -305,7 +312,7 @@
             resultLabelArr = [],
             maxLength = Math.max(websiteLabelArr.length, competitorLabelArr.length);
         for (var i = 0; i < maxLength; i++) {
-            resultLabelArr.push((websiteLabelArr[i] || '-') + '/' + (competitorLabelArr[i] || '-'));
+            resultLabelArr.push((websiteLabelArr[i] || '-') + ' / ' + (competitorLabelArr[i] || '-'));
         }
         troperlaicos.resultLabelArr = resultLabelArr;
     };
@@ -322,12 +329,24 @@
         });
     };
     
-    //build number of posts lineChart
+    //build avg reach by post number
     function buildAvgReachByPostLineChart() {
         var websiteDataArr = troperlaicos.website.lineChart.avgReachByPost.dataArr || [],
             competitorDataArr = troperlaicos.competitor.lineChart.avgReachByPost.dataArr || [];
 
         troperlaicos.avgReachByPostLineChart = new SocialReport.LineChart('avgReachByPostLineChart', {
+            labelArr: troperlaicos.resultLabelArr,
+            websiteDataArr: websiteDataArr,
+            competitorDataArr: competitorDataArr
+        });
+    };
+    
+    //build avg page fan like
+    function buildAvgPageFanLikeLineChart() {
+        var websiteDataArr = troperlaicos.website.lineChart.avgFanPageLike.dataArr || [],
+            competitorDataArr = troperlaicos.competitor.lineChart.avgFanPageLike.dataArr || [];
+
+        troperlaicos.avgFanPageLikeLineChart = new SocialReport.LineChart('avgFanPageLikeLineChart', {
             labelArr: troperlaicos.resultLabelArr,
             websiteDataArr: websiteDataArr,
             competitorDataArr: competitorDataArr

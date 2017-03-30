@@ -1454,6 +1454,8 @@ var jQuery = jQuery,
                         return this.getPostSizeByDateInFacebook();
                     case 'avgreachbypost':
                         return this.getAvgReachByPostNumberInFacebook();
+                    case 'avgpagefanlike':
+                        return this.getAvgPageFanLikeInFacebook();
                     default:
                         Toolbox.assert('Function SocialReport.Operation.getFormatDataFromLineChartType: go into the default branch');
                         return this.getData();
@@ -1757,6 +1759,8 @@ var jQuery = jQuery,
                         dataArr.push(size);
                     }
                 }
+                labelArr.reverse();
+                dataArr.reverse();
                 return {
                     labelArr: labelArr,
                     dataArr: dataArr
@@ -1786,6 +1790,28 @@ var jQuery = jQuery,
                         }
                         labelArr.push(label);
                         dataArr.push(Math.round(reach / size));
+                    }
+                }
+                labelArr.reverse();
+                dataArr.reverse();
+                return {
+                    labelArr: labelArr,
+                    dataArr: dataArr
+                };
+            },
+            
+            //build facebook avg page fan like
+            //return `labelArr` and `dataArr`
+            getAvgPageFanLikeInFacebook: function () {
+                var reachData = this.getData('reachData'),
+                    pageFansData = reachData.page_fans,
+                    labelArr = [],
+                    dataArr = [],
+                    key = '';
+                for (key in pageFansData) {
+                    if (pageFansData.hasOwnProperty(key)) {
+                        labelArr.push(pageFansData[key].end_time.substring(0, 10));
+                        dataArr.push(pageFansData[key].value);
                     }
                 }
                 return {
