@@ -202,9 +202,11 @@
         //set a gobal variable
         window.troperlaicos = {
             website: {
+                currentName: '<?php echo $pageId;?>',
                 lineChart: {},
             },
             competitor: {
+                currentName: '',
                 lineChart: {}
             },
         };
@@ -277,6 +279,7 @@
         };
         //use asynchronous to get facebook data(posts and reach) and put the follow steps in the callback function such as `buildTable`.
         SocialReport.Facebook.genFacebookOperation(params, buildCompetitorLineChartDataToGobal);
+        troperlaicos.competitor.currentName = currentValue;
 
         //it is a callback function to get LineChartData for competitor and set data in `troperlaicos`
         function buildCompetitorLineChartDataToGobal() {
@@ -308,8 +311,10 @@
     //build number of posts lineChart data table 
     function buildPostSizeLineChart() {
         troperlaicos.postSizeLineChart = new SocialReport.LineChart('postSizeLineChart', {
+            websiteName: troperlaicos.website.currentName,
             websiteLabelArr: troperlaicos.website.lineChart.postSizeData.labelArr,
             websiteDataArr: troperlaicos.website.lineChart.postSizeData.dataArr,
+            competitorName: troperlaicos.competitor.currentName,
             competitorLabelArr: troperlaicos.competitor.lineChart.postSizeData.labelArr,
             competitorDataArr: troperlaicos.competitor.lineChart.postSizeData.dataArr
         });
@@ -318,8 +323,10 @@
     //build avg reach by post number data table
     function buildAvgReachByPostLineChart() {
         troperlaicos.avgReachByPostLineChart = new SocialReport.LineChart('avgReachByPostLineChart', {
+            websiteName: troperlaicos.website.currentName,
             websiteLabelArr: troperlaicos.website.lineChart.avgReachByPostData.labelArr,
             websiteDataArr: troperlaicos.website.lineChart.avgReachByPostData.dataArr,
+            competitorName: troperlaicos.competitor.currentName,
             competitorLabelArr: troperlaicos.competitor.lineChart.avgReachByPostData.labelArr,
             competitorDataArr: troperlaicos.competitor.lineChart.avgReachByPostData.dataArr
         });
@@ -328,8 +335,10 @@
     //build avg page fan like data table
     function buildAvgPageFanLikeLineChart() {
         troperlaicos.avgFanPageLikeLineChart = new SocialReport.LineChart('avgFanPageLikeLineChart', {
+            websiteName: troperlaicos.website.currentName,
             websiteLabelArr: troperlaicos.website.lineChart.avgFanPageLikeData.labelArr,
             websiteDataArr: troperlaicos.website.lineChart.avgFanPageLikeData.dataArr,
+            competitorName: troperlaicos.competitor.currentName,
             competitorLabelArr: troperlaicos.competitor.lineChart.avgFanPageLikeData.labelArr,
             competitorDataArr: troperlaicos.competitor.lineChart.avgFanPageLikeData.dataArr
         });
@@ -362,8 +371,10 @@
             }
         }
         troperlaicos.reachRateLineChart = new SocialReport.LineChart('reachRateLineChart', {
+            websiteName: troperlaicos.website.currentName,
             websiteLabelArr: troperlaicos.website.lineChart.postSizeData.labelArr,
             websiteDataArr: websiteReachRateArr,
+            competitorName: troperlaicos.competitor.currentName,
             competitorLabelArr: troperlaicos.competitor.lineChart.postSizeData.labelArr,
             competitorDataArr: competitorReachRateArr
         });

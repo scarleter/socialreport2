@@ -1099,6 +1099,8 @@ var jQuery = jQuery,
                 }
                 this.lineChartData.websiteDataArr = LineChartData.websiteDataArr;
                 this.lineChartData.competitorDataArr = LineChartData.competitorDataArr;
+                this.lineChartData.websiteName = LineChartData.websiteName || '';
+                this.lineChartData.competitorName = LineChartData.competitorName || '';
                 return this;
             },
             
@@ -1116,7 +1118,9 @@ var jQuery = jQuery,
             //wrap data for CharJs to paint
             setChartData: function () {
                 var labelArr = this.getLineChartData('labelArr'),
+                    websiteName = this.getLineChartData('websiteName'),
                     websiteDataArr = this.getLineChartData('websiteDataArr'),
+                    competitorName = this.getLineChartData('competitorName'),
                     competitorDataArr = this.getLineChartData('competitorDataArr'),
                     chartData;
                 //if `labelArr`, `websiteDataArr` and `competitorDataArr` is not empty we set chartData
@@ -1125,7 +1129,7 @@ var jQuery = jQuery,
                         labels: labelArr,
                         datasets: [
                             {
-                                label: '',
+                                label: competitorName,
                                 fillColor: "rgba(210, 214, 222, 1)",
                                 strokeColor: "rgba(210, 214, 222, 1)",
                                 pointColor: "rgba(210, 214, 222, 1)",
@@ -1134,7 +1138,7 @@ var jQuery = jQuery,
                                 pointHighlightStroke: "rgba(220,220,220,1)",
                                 data: competitorDataArr
                             }, {
-                                label: '',
+                                label: websiteName,
                                 fillColor: "rgba(60,141,188,0.9)",
                                 strokeColor: "rgba(60,141,188,0.8)",
                                 pointColor: "#3b8bba",
