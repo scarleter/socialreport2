@@ -202,18 +202,10 @@
         //set a gobal variable
         window.troperlaicos = {
             website: {
-                lineChart: {
-                    postSize: {},
-                    avgReachByPost: {},
-                    avgFanPageLike: {},
-                },
+                lineChart: {},
             },
             competitor: {
-                lineChart: {
-                    postSize: {},
-                    avgReachByPost: {},
-                    avgFanPageLike: {},
-                }
+                lineChart: {}
             },
         };
         //website setting panel,can choose dateRange to get different data
@@ -259,12 +251,11 @@
             avgReachByPostData = facebookOperation.getFormatDataFromLineChartType('avgreachbypost');
             avgPageFanLikeData = facebookOperation.getFormatDataFromLineChartType('avgpagefanlike');
             //save it to global variable for further use
-            troperlaicos.website.lineChart.postSize.labelArr = postSizeData.labelArr;
-            troperlaicos.website.lineChart.postSize.dataArr = postSizeData.dataArr;
-            troperlaicos.website.lineChart.avgReachByPost.dataArr = avgReachByPostData.dataArr || [];
-            troperlaicos.website.lineChart.avgFanPageLike.dataArr = avgPageFanLikeData.dataArr || [];
+            troperlaicos.website.lineChart.postSizeData = postSizeData;
+            troperlaicos.website.lineChart.avgReachByPostData = avgReachByPostData;
+            troperlaicos.website.lineChart.avgFanPageLikeData = avgPageFanLikeData;
             //then when the other DataComparePanel finish load we build the whold LineChart
-            if (troperlaicos.competitor.lineChart.postSize.labelArr) {
+            if (troperlaicos.competitor.lineChart.postSizeData) {
                 buildLineChart();
             }
 
@@ -295,13 +286,11 @@
             avgReachByPostData = facebookOperation.getFormatDataFromLineChartType('avgreachbypost');
             avgPageFanLikeData = facebookOperation.getFormatDataFromLineChartType('avgpagefanlike');
             //save it to global variable for further use
-            troperlaicos.competitor.lineChart.postSize.labelArr = postSizeData.labelArr;
-            troperlaicos.competitor.lineChart.postSize.dataArr = postSizeData.dataArr;
-            troperlaicos.competitor.lineChart.avgReachByPost.dataArr = avgReachByPostData.dataArr || [];
-            troperlaicos.competitor.lineChart.avgFanPageLike.dataArr = avgPageFanLikeData.dataArr || [];
-
+            troperlaicos.competitor.lineChart.postSizeData = postSizeData;
+            troperlaicos.competitor.lineChart.avgReachByPostData = avgReachByPostData;
+            troperlaicos.competitor.lineChart.avgFanPageLikeData = avgPageFanLikeData;
             //then when the other DataComparePanel finish load we build the whold LineChart
-            if (troperlaicos.website.lineChart.postSize.labelArr) {
+            if (troperlaicos.website.lineChart.postSizeData) {
                 buildLineChart();
             }
         };
@@ -309,8 +298,6 @@
 
     //it is a callback function to build LineChart
     function buildLineChart() {
-        buildResultLabel();
-
         //build LineChart
         buildPostSizeLineChart();
         buildAvgReachByPostLineChart();
@@ -318,69 +305,67 @@
         buildReachRateLineChart();
     };
 
-    //build result label array
-    function buildResultLabel() {
-        var websiteLabelArr = troperlaicos.website.lineChart.postSize.labelArr || [],
-            competitorLabelArr = troperlaicos.competitor.lineChart.postSize.labelArr || [],
-            //we need to add element of `websiteLabelArr` and `competitorLabelArr` together
-            resultLabelArr = [],
-            maxLength = Math.max(websiteLabelArr.length, competitorLabelArr.length);
-        for (var i = 0; i < maxLength; i++) {
-            resultLabelArr.push((websiteLabelArr[i] || '-') + ' / ' + (competitorLabelArr[i] || '-'));
-        }
-        troperlaicos.resultLabelArr = resultLabelArr;
-    };
-
     //build number of posts lineChart data table 
     function buildPostSizeLineChart() {
-        var websiteDataArr = troperlaicos.website.lineChart.postSize.dataArr || [],
-            competitorDataArr = troperlaicos.competitor.lineChart.postSize.dataArr || [];
-
         troperlaicos.postSizeLineChart = new SocialReport.LineChart('postSizeLineChart', {
-            labelArr: troperlaicos.resultLabelArr,
-            websiteDataArr: websiteDataArr,
-            competitorDataArr: competitorDataArr
+            websiteLabelArr: troperlaicos.website.lineChart.postSizeData.labelArr,
+            websiteDataArr: troperlaicos.website.lineChart.postSizeData.dataArr,
+            competitorLabelArr: troperlaicos.competitor.lineChart.postSizeData.labelArr,
+            competitorDataArr: troperlaicos.competitor.lineChart.postSizeData.dataArr
         });
     };
 
     //build avg reach by post number data table
     function buildAvgReachByPostLineChart() {
-        var websiteDataArr = troperlaicos.website.lineChart.avgReachByPost.dataArr || [],
-            competitorDataArr = troperlaicos.competitor.lineChart.avgReachByPost.dataArr || [];
-
         troperlaicos.avgReachByPostLineChart = new SocialReport.LineChart('avgReachByPostLineChart', {
-            labelArr: troperlaicos.resultLabelArr,
-            websiteDataArr: websiteDataArr,
-            competitorDataArr: competitorDataArr
+            websiteLabelArr: troperlaicos.website.lineChart.avgReachByPostData.labelArr,
+            websiteDataArr: troperlaicos.website.lineChart.avgReachByPostData.dataArr,
+            competitorLabelArr: troperlaicos.competitor.lineChart.avgReachByPostData.labelArr,
+            competitorDataArr: troperlaicos.competitor.lineChart.avgReachByPostData.dataArr
         });
     };
 
     //build avg page fan like data table
     function buildAvgPageFanLikeLineChart() {
-        var websiteDataArr = troperlaicos.website.lineChart.avgFanPageLike.dataArr || [],
-            competitorDataArr = troperlaicos.competitor.lineChart.avgFanPageLike.dataArr || [];
-
         troperlaicos.avgFanPageLikeLineChart = new SocialReport.LineChart('avgFanPageLikeLineChart', {
-            labelArr: troperlaicos.resultLabelArr,
-            websiteDataArr: websiteDataArr,
-            competitorDataArr: competitorDataArr
+            websiteLabelArr: troperlaicos.website.lineChart.avgFanPageLikeData.labelArr,
+            websiteDataArr: troperlaicos.website.lineChart.avgFanPageLikeData.dataArr,
+            competitorLabelArr: troperlaicos.competitor.lineChart.avgFanPageLikeData.labelArr,
+            competitorDataArr: troperlaicos.competitor.lineChart.avgFanPageLikeData.dataArr
         });
     };
 
     //build reach rate data table
     function buildReachRateLineChart() {
-        var websiteAvgReachDataArr = troperlaicos.website.lineChart.avgReachByPost.dataArr || [],
-            websiteAvgFanLikeDataArr = troperlaicos.website.lineChart.avgFanPageLike.dataArr || [],
-            competitorAvgReachDataArr = troperlaicos.competitor.lineChart.avgReachByPost.dataArr || [],
-            competitorAvgFanLikeDataArr = troperlaicos.competitor.lineChart.avgFanPageLike.dataArr || [],
-            websiteReachRate = [],
-            competitorReachRate = [];
-
-
+        var websiteAvgReachDataArr = troperlaicos.website.lineChart.avgReachByPostData.dataArr,
+            websiteAvgFanLikeDataArr = troperlaicos.website.lineChart.avgFanPageLikeData.dataArr,
+            competitorAvgReachDataArr = troperlaicos.competitor.lineChart.avgReachByPostData.dataArr,
+            competitorAvgFanLikeDataArr = troperlaicos.competitor.lineChart.avgFanPageLikeData.dataArr,
+            websiteReachRateArr = [],
+            competitorReachRateArr = [],
+            websiteKey = '',
+            comopetitorKey = '',
+            websiteReachRate = 0,
+            competitorReachRate = 0;
+        //loop to get website ReachRate
+        for (websiteKey in websiteAvgReachDataArr) {
+            if (websiteAvgReachDataArr.hasOwnProperty(websiteKey)) {
+                websiteReachRate = (websiteAvgFanLikeDataArr[websiteKey] !== 0) ? parseFloat(websiteAvgReachDataArr[websiteKey] / websiteAvgFanLikeDataArr[websiteKey]).toFixed(2) : 0;
+                websiteReachRateArr.push(websiteReachRate);
+            }
+        }
+        //loop to get competitor ReachRate
+        for (comopetitorKey in competitorAvgReachDataArr) {
+            if (competitorAvgReachDataArr.hasOwnProperty(comopetitorKey)) {
+                competitorReachRate = (competitorAvgReachDataArr[comopetitorKey] !== 0) ? parseFloat(competitorAvgReachDataArr[comopetitorKey] / competitorAvgFanLikeDataArr[comopetitorKey]).toFixed(2) : 0;
+                competitorReachRateArr.push(competitorReachRate);
+            }
+        }
         troperlaicos.reachRateLineChart = new SocialReport.LineChart('reachRateLineChart', {
-            labelArr: troperlaicos.resultLabelArr,
-            websiteDataArr: websiteReachRate,
-            competitorDataArr: competitorReachRate
+            websiteLabelArr: troperlaicos.website.lineChart.postSizeData.labelArr,
+            websiteDataArr: websiteReachRateArr,
+            competitorLabelArr: troperlaicos.competitor.lineChart.postSizeData.labelArr,
+            competitorDataArr: competitorReachRateArr
         });
     };
 

@@ -268,17 +268,17 @@ var jQuery = jQuery,
                     success = options.success = function (resp) {
                         if (resp.data) {
                             this.data = this.data.concat(resp.data);
-                            if (resp.paging && resp.paging.next) {
-                                var nextUrl = resp.paging.next;
-                                SocialReport.DataInterface.ajax({}, {
-                                    url: nextUrl,
-                                    context: this,
-                                    success: success,
-                                    error: error
-                                });
-                            } else {
-                                callback(this.data);
-                            }
+//                            if (resp.paging && resp.paging.next) {
+//                                var nextUrl = resp.paging.next;
+//                                SocialReport.DataInterface.ajax({}, {
+//                                    url: nextUrl,
+//                                    context: this,
+//                                    success: success,
+//                                    error: error
+//                                });
+//                            } else {
+                            callback(this.data);
+//                            }
                         } else {
                             callback(this.data);
                         }
@@ -1076,8 +1076,8 @@ var jQuery = jQuery,
                     Toolbox.assert('Function SocialReport.LineChart.setLineChartData: `LineChartData` is undefined or not an object');
                     return false;
                 }
-                //if `LineChartData.labelArr`,`LineChartData.websiteDataArr` and `LineChartData.competitorDataArr` is not an arry return false
-                if (!Toolbox.isArray(LineChartData.labelArr) || !Toolbox.isArray(LineChartData.websiteDataArr) || !Toolbox.isArray(LineChartData.competitorDataArr)) {
+                //if `LineChartData.websiteLabelArr`,`LineChartData.competitorLabelArr`,`LineChartData.websiteDataArr` and `LineChartData.competitorDataArr` is not an arry return false
+                if (!Toolbox.isArray(LineChartData.websiteLabelArr) || !Toolbox.isArray(LineChartData.competitorLabelArr) || !Toolbox.isArray(LineChartData.websiteDataArr) || !Toolbox.isArray(LineChartData.competitorDataArr)) {
                     Toolbox.assert('Function SocialReport.LineChart.setLineChartData: `LineChartData.labelArr` or `LineChartData.websiteDataArr` or `LineChartData.competitorDataArr` is undefined or not an array');
                     return false;
                 }
@@ -1086,10 +1086,17 @@ var jQuery = jQuery,
             
             //set LineChartData contain: labelArr, websiteDataArr and competitorDataArr
             setLineChartData: function (LineChartData) {
+                var websiteLabelArr = LineChartData.websiteLabelArr,
+                    competitorLabelArr = LineChartData.competitorLabelArr,
+                    maxLabelLength = Math.max(websiteLabelArr.length, competitorLabelArr.length),
+                    labelIndex = 0;
                 //initialize lineChartData
                 this.lineChartData = this.lineChartData || {};
-                //after checking we set the variable
-                this.lineChartData.labelArr = LineChartData.labelArr;
+                this.lineChartData.labelArr = [];
+                //loop to set the combine label
+                for (labelIndex = 0; labelIndex < maxLabelLength; labelIndex += 1) {
+                    this.lineChartData.labelArr.push((websiteLabelArr[labelIndex] || '-') + ' / ' + (competitorLabelArr[labelIndex] || '-'));
+                }
                 this.lineChartData.websiteDataArr = LineChartData.websiteDataArr;
                 this.lineChartData.competitorDataArr = LineChartData.competitorDataArr;
                 return this;
@@ -1119,16 +1126,6 @@ var jQuery = jQuery,
                         datasets: [
                             {
                                 label: '',
-                                fillColor: "rgba(60,141,188,0.9)",
-                                strokeColor: "rgba(60,141,188,0.8)",
-                                pointColor: "#3b8bba",
-                                pointStrokeColor: "rgba(60,141,188,1)",
-                                pointHighlightFill: "#fff",
-                                pointHighlightStroke: "rgba(60,141,188,1)",
-                                data: websiteDataArr
-                            },
-                            {
-                                label: '',
                                 fillColor: "rgba(210, 214, 222, 1)",
                                 strokeColor: "rgba(210, 214, 222, 1)",
                                 pointColor: "rgba(210, 214, 222, 1)",
@@ -1136,7 +1133,17 @@ var jQuery = jQuery,
                                 pointHighlightFill: "#fff",
                                 pointHighlightStroke: "rgba(220,220,220,1)",
                                 data: competitorDataArr
+                            }, {
+                                label: '',
+                                fillColor: "rgba(60,141,188,0.9)",
+                                strokeColor: "rgba(60,141,188,0.8)",
+                                pointColor: "#3b8bba",
+                                pointStrokeColor: "rgba(60,141,188,1)",
+                                pointHighlightFill: "#fff",
+                                pointHighlightStroke: "rgba(60,141,188,1)",
+                                data: websiteDataArr
                             }
+
                         ]
                     };
                 } else {
@@ -1771,11 +1778,14 @@ var jQuery = jQuery,
                     dateKey = '';
                 for (label in labelArr) {
                     if (labelArr.hasOwnProperty(label)) {
+                        //`dateKey` is one of the duration date between dateStart and dateEnd
                         dateKey = labelArr[label];
                         //if classifiedPostsData has `date`
                         if (classifiedPostsData[dateKey]) {
                             size = Toolbox.getObjectSize(classifiedPostsData[dateKey]);
                             dataArr.push(size);
+                        } else {
+                            dataArr.push(0);
                         }
                     }
                 }
@@ -1790,28 +1800,32 @@ var jQuery = jQuery,
             getAvgReachByPostNumberInFacebook: function () {
                 var postsData = this.getData('postsData'),
                     classifiedPostsData = this.ClassifyJson(postsData, 'created_time'),
-                    labelArr = [],
+                    labelArr = this.buildDurationDateInArray(),
                     dataArr = [],
                     label = '',
                     size = 0,
                     reach = 0,
+                    dateKey = '',
                     postIndex = 0;
-                for (label in classifiedPostsData) {
-                    if (classifiedPostsData.hasOwnProperty(label)) {
-                        size = Toolbox.getObjectSize(classifiedPostsData[label]);
-                        //loop to get total reach in the same date
-                        for (postIndex in classifiedPostsData[label]) {
-                            if (classifiedPostsData[label].hasOwnProperty(postIndex)) {
-                                reach = reach + (classifiedPostsData[label][postIndex].post_impressions_unique || 0);
+                for (label in labelArr) {
+                    if (labelArr.hasOwnProperty(label)) {
+                        //`dateKey` is one of the duration date between dateStart and dateEnd
+                        dateKey = labelArr[label];
+                        //make sure classifiedPostsData has `date`
+                        if (classifiedPostsData[dateKey]) {
+                            size = Toolbox.getObjectSize(classifiedPostsData[dateKey]);
+                            //loop to get total reach in the same date
+                            for (postIndex in classifiedPostsData[dateKey]) {
+                                if (classifiedPostsData[dateKey].hasOwnProperty(postIndex)) {
+                                    reach = reach + (classifiedPostsData[dateKey][postIndex].post_impressions_unique || 0);
+                                }
                             }
-
+                            dataArr.push(Math.round(reach / size));
+                        } else {
+                            dataArr.push(0);
                         }
-                        labelArr.push(label);
-                        dataArr.push(Math.round(reach / size));
                     }
                 }
-                labelArr.reverse();
-                dataArr.reverse();
                 return {
                     labelArr: labelArr,
                     dataArr: dataArr
@@ -1823,13 +1837,29 @@ var jQuery = jQuery,
             getAvgPageFanLikeInFacebook: function () {
                 var reachData = this.getData('reachData'),
                     pageFansData = reachData.page_fans,
-                    labelArr = [],
+                    labelArr = this.buildDurationDateInArray(),
                     dataArr = [],
-                    key = '';
+                    label = '',
+                    key = '',
+                    dateKey = '',
+                    pageFansObj = {},
+                    pageFansObjKey = '';
+                //get pageFansObj whose key is date and value is pageFansLike
                 for (key in pageFansData) {
                     if (pageFansData.hasOwnProperty(key)) {
-                        labelArr.push(pageFansData[key].end_time.substring(0, 10));
-                        dataArr.push(pageFansData[key].value);
+                        pageFansObjKey = pageFansData[key].end_time.substring(0, 10);
+                        pageFansObj[pageFansObjKey] = pageFansData[key].value;
+                    }
+                }
+                for (label in labelArr) {
+                    if (labelArr.hasOwnProperty(label)) {
+                        //`dateKey` is one of the duration date between dateStart and dateEnd
+                        dateKey = labelArr[label];
+                        if (pageFansObj[dateKey]) {
+                            dataArr.push(pageFansObj[dateKey]);
+                        } else {
+                            dataArr.push(0);
+                        }
                     }
                 }
                 return {
