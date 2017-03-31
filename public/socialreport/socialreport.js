@@ -386,7 +386,9 @@ var jQuery = jQuery,
                         data.reachData = resp;
                         var facebookOperation = new SocialReport.Operation(data, {
                             dataOrigin: 'facebook',
-                            seconds: parseInt(params.until - params.since, 0)
+                            seconds: parseInt(params.until - params.since, 0),
+                            dateStart: params.dataStart,
+                            dateEnd: params.dateEnd
                         });
                         if (Callback) {
                             Callback.call(facebookOperation);
@@ -1743,24 +1745,40 @@ var jQuery = jQuery,
                 };
             },
             
+            //return an array contain all the date between start date and end date order by asc
+            buildDurationDateInArray: function () {
+                var dateStart = moment(this.getOptions('dateStart')),
+                    dateEnd = moment(this.getOptions('dateEnd')),
+                    dateIndex = moment(dateStart),
+                    durationArr = [];
+                //loop until reach the dateEnd
+                while (!dateIndex.isAfter(dateEnd)) {
+                    durationArr.push(dateIndex.format('YYYY-MM-DD'));
+                    dateIndex.add(1, 'days');
+                }
+                return durationArr;
+            },
+            
             //build facebook post size by date
             //return `labelArr` and `dataArr`
             getPostSizeByDateInFacebook: function () {
                 var postsData = this.getData('postsData'),
                     classifiedPostsData = this.ClassifyJson(postsData, 'created_time'),
-                    labelArr = [],
+                    labelArr = this.buildDurationDateInArray(),
                     dataArr = [],
                     label = '',
-                    size = 0;
-                for (label in classifiedPostsData) {
-                    if (classifiedPostsData.hasOwnProperty(label)) {
-                        size = Toolbox.getObjectSize(classifiedPostsData[label]);
-                        labelArr.push(label);
-                        dataArr.push(size);
+                    size = 0,
+                    dateKey = '';
+                for (label in labelArr) {
+                    if (labelArr.hasOwnProperty(label)) {
+                        dateKey = labelArr[label];
+                        //if classifiedPostsData has `date`
+                        if (classifiedPostsData[dateKey]) {
+                            size = Toolbox.getObjectSize(classifiedPostsData[dateKey]);
+                            dataArr.push(size);
+                        }
                     }
                 }
-                labelArr.reverse();
-                dataArr.reverse();
                 return {
                     labelArr: labelArr,
                     dataArr: dataArr

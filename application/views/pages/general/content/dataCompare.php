@@ -181,7 +181,7 @@
                     </div>
                     <div class="box-body">
                         <div class="chart">
-                            <canvas id="lineChart_rp" style="height:300px"></canvas>
+                            <canvas id="reachRateLineChart" style="height:300px"></canvas>
                         </div>
                     </div>
                     <!-- /.box-body -->
@@ -235,14 +235,18 @@
         });
     });
 
+    //#############################################
     //websitePanel change will trigger this handler
+    //#############################################
     function websitePanelChangeHandler(currentValue, start, end) {
         //set paras for getting facebook data
         var params = {
             since: start.unix(),
             until: end.unix(),
             pageid: currentValue,
-            access_token: '<?php echo $pageAccessToken;?>'
+            access_token: '<?php echo $pageAccessToken;?>',
+            dataStart: start,
+            dateEnd: end
         };
         //use asynchronous to get facebook data(posts and reach) and put the follow steps in the callback function such as `buildTable`.
         SocialReport.Facebook.genFacebookOperation(params, buildWebsiteLineChartDataToGobal);
@@ -259,19 +263,26 @@
             troperlaicos.website.lineChart.postSize.dataArr = postSizeData.dataArr;
             troperlaicos.website.lineChart.avgReachByPost.dataArr = avgReachByPostData.dataArr || [];
             troperlaicos.website.lineChart.avgFanPageLike.dataArr = avgPageFanLikeData.dataArr || [];
-            //then we build the whold LineChart
-            buildLineChart();
+            //then when the other DataComparePanel finish load we build the whold LineChart
+            if (troperlaicos.competitor.lineChart.postSize.labelArr) {
+                buildLineChart();
+            }
+
         };
     };
 
+    //################################################
     //competitorPanel change will trigger this handler
+    //################################################
     function competitorPanelChangeHandler(currentValue, start, end) {
         //set paras for getting facebook data
         var params = {
             since: start.unix(),
             until: end.unix(),
             pageid: currentValue,
-            access_token: '<?php echo $pageAccessToken;?>'
+            access_token: '<?php echo $pageAccessToken;?>',
+            dataStart: start,
+            dateEnd: end
         };
         //use asynchronous to get facebook data(posts and reach) and put the follow steps in the callback function such as `buildTable`.
         SocialReport.Facebook.genFacebookOperation(params, buildCompetitorLineChartDataToGobal);
@@ -288,9 +299,11 @@
             troperlaicos.competitor.lineChart.postSize.dataArr = postSizeData.dataArr;
             troperlaicos.competitor.lineChart.avgReachByPost.dataArr = avgReachByPostData.dataArr || [];
             troperlaicos.competitor.lineChart.avgFanPageLike.dataArr = avgPageFanLikeData.dataArr || [];
-            
-            //then we build the whold LineChart
-            buildLineChart();
+
+            //then when the other DataComparePanel finish load we build the whold LineChart
+            if (troperlaicos.website.lineChart.postSize.labelArr) {
+                buildLineChart();
+            }
         };
     };
 
@@ -302,10 +315,11 @@
         buildPostSizeLineChart();
         buildAvgReachByPostLineChart();
         buildAvgPageFanLikeLineChart();
+        buildReachRateLineChart();
     };
-    
+
     //build result label array
-    function buildResultLabel(){
+    function buildResultLabel() {
         var websiteLabelArr = troperlaicos.website.lineChart.postSize.labelArr || [],
             competitorLabelArr = troperlaicos.competitor.lineChart.postSize.labelArr || [],
             //we need to add element of `websiteLabelArr` and `competitorLabelArr` together
@@ -317,7 +331,7 @@
         troperlaicos.resultLabelArr = resultLabelArr;
     };
 
-    //build number of posts lineChart
+    //build number of posts lineChart data table 
     function buildPostSizeLineChart() {
         var websiteDataArr = troperlaicos.website.lineChart.postSize.dataArr || [],
             competitorDataArr = troperlaicos.competitor.lineChart.postSize.dataArr || [];
@@ -328,8 +342,8 @@
             competitorDataArr: competitorDataArr
         });
     };
-    
-    //build avg reach by post number
+
+    //build avg reach by post number data table
     function buildAvgReachByPostLineChart() {
         var websiteDataArr = troperlaicos.website.lineChart.avgReachByPost.dataArr || [],
             competitorDataArr = troperlaicos.competitor.lineChart.avgReachByPost.dataArr || [];
@@ -340,8 +354,8 @@
             competitorDataArr: competitorDataArr
         });
     };
-    
-    //build avg page fan like
+
+    //build avg page fan like data table
     function buildAvgPageFanLikeLineChart() {
         var websiteDataArr = troperlaicos.website.lineChart.avgFanPageLike.dataArr || [],
             competitorDataArr = troperlaicos.competitor.lineChart.avgFanPageLike.dataArr || [];
@@ -350,6 +364,23 @@
             labelArr: troperlaicos.resultLabelArr,
             websiteDataArr: websiteDataArr,
             competitorDataArr: competitorDataArr
+        });
+    };
+
+    //build reach rate data table
+    function buildReachRateLineChart() {
+        var websiteAvgReachDataArr = troperlaicos.website.lineChart.avgReachByPost.dataArr || [],
+            websiteAvgFanLikeDataArr = troperlaicos.website.lineChart.avgFanPageLike.dataArr || [],
+            competitorAvgReachDataArr = troperlaicos.competitor.lineChart.avgReachByPost.dataArr || [],
+            competitorAvgFanLikeDataArr = troperlaicos.competitor.lineChart.avgFanPageLike.dataArr || [],
+            websiteReachRate = [],
+            competitorReachRate = [];
+
+
+        troperlaicos.reachRateLineChart = new SocialReport.LineChart('reachRateLineChart', {
+            labelArr: troperlaicos.resultLabelArr,
+            websiteDataArr: websiteReachRate,
+            competitorDataArr: competitorReachRate
         });
     };
 
