@@ -435,7 +435,7 @@ var jQuery = jQuery,
                     }
                     //callback for `getFacebookFanpageInfo`
                     function FBFanpageCallback(resp) {
-                        data.fanPageData = resp;
+                        data.fanpageData = resp;
                         var facebookOperation = new SocialReport.Operation(data, {
                             dataOrigin: 'facebook',
                             seconds: parseInt(params.until - params.since, 0),
@@ -1310,9 +1310,10 @@ var jQuery = jQuery,
             parseFacebookData: function () {
                 var parsedPostsData = [],
                     parsedReachData = [],
+                    parsedFanpageData = {},
                     postsData = this.getData('postsData'),
                     reachData = this.getData('reachData'),
-                    fanPageData = this.getData('fanPageData'),
+                    fanpageData = this.getData('fanpageData'),
                     size = this.getSize(),
                     postIndex = 0,
                     insightIndex = 0,
@@ -1395,11 +1396,19 @@ var jQuery = jQuery,
                         break;
                     }
                 });
+                
+                //parse fanPage data
+                parsedFanpageData = {
+                    id: fanpageData[0].id,
+                    fan_count: fanpageData[0].fan_count,
+                    name: fanpageData[0].name,
+                    picture_src: fanpageData[0].picture.data.url
+                };
 
                 this.setData({
                     postsData: parsedPostsData,
                     reachData: parsedReachData,
-                    fanPageData: fanPageData
+                    fanpageData: parsedFanpageData
                 });
             },
 
