@@ -187,7 +187,8 @@ var jQuery = jQuery,
                         data = {
                             since: params.since || '',
                             until: params.until || '',
-                            access_token: params.access_token || ''
+                            access_token: params.access_token || '',
+                            limit: params.limit || 100
                         },
                         options = {},
                         result = {
@@ -268,6 +269,57 @@ var jQuery = jQuery,
                     success = options.success = function (resp) {
                         if (resp.data) {
                             this.data = this.data.concat(resp.data);
+//                            if (resp.paging && resp.paging.next) {
+//                                var nextUrl = resp.paging.next;
+//                                SocialReport.DataInterface.ajax({}, {
+//                                    url: nextUrl,
+//                                    context: this,
+//                                    success: success,
+//                                    error: error
+//                                });
+//                            } else {
+                            callback(this.data);
+//                            }
+                        } else {
+                            callback(this.data);
+                        }
+                    };
+
+                    SocialReport.DataInterface.ajax(data, options);
+                },
+                
+                //get facebook fanpage id,name,picture,fan_count and engagement
+                getFacebookFanpageInfo: function (Params, Callback) {
+                    var params = Params || {},
+                        data = {
+                            since: params.since || '',
+                            until: params.until || '',
+                            access_token: params.access_token || ''
+                        },
+                        options = {},
+                        result = {
+                            data: []
+                        },
+                        error = '',
+                        success = '',
+                        callback = (Toolbox.isFunction(Callback) && Callback) || Toolbox.assert('Function DataInterface.getFacebookFanpageInfo: `Callback` is undefined');
+                    //if `data.since` or `data.until` or `data.access_token` or `params.pageid` is empty return `result`
+                    if (!(data.since && data.until && data.access_token && params.pageid)) {
+                        return result.data;
+                    }
+                    options = {
+                        //url: 'https://graph.facebook.com/v2.8/' + params.pageid + '/insights/page_consumptions,page_positive_feedback_by_type,page_fans',
+                        url: 'https://graph.facebook.com/v2.8/' + params.pageid + '/?fields=id,picture,name,fan_count&access_token=' + data.access_token,
+                        context: result
+                    };
+                    //set the `options.error`
+                    error = options.error = function (resp) {
+                        Toolbox.assert('Function DataInterface.getFacebookFanpageInfo go to error branch: msg is ' + resp);
+                    };
+                    //set the `options.success`
+                    success = options.success = function (resp) {
+                        if (resp) {
+                            this.data = this.data.concat(resp);
 //                            if (resp.paging && resp.paging.next) {
 //                                var nextUrl = resp.paging.next;
 //                                SocialReport.DataInterface.ajax({}, {
@@ -381,9 +433,9 @@ var jQuery = jQuery,
                         SocialReport.Toolbox.assert('Function SocialReport.Facebook.genFacebookOperation: params since or until or pageid or access_token is undefined');
                         return;
                     }
-                    //callback for `getFacebookReach`
-                    function FBReachCallback(resp) {
-                        data.reachData = resp;
+                    //callback for `getFacebookFanpageInfo`
+                    function FBFanpageCallback(resp) {
+                        data.fanPageData = resp;
                         var facebookOperation = new SocialReport.Operation(data, {
                             dataOrigin: 'facebook',
                             seconds: parseInt(params.until - params.since, 0),
@@ -393,6 +445,12 @@ var jQuery = jQuery,
                         if (Callback) {
                             Callback.call(facebookOperation);
                         }
+                    }
+                    //callback for `getFacebookReach`
+                    function FBReachCallback(resp) {
+                        data.reachData = resp;
+                        //request to get FacebookFanpageInfo
+                        SocialReport.DataInterface.getFacebookFanpageInfo(params, FBFanpageCallback);
                     }
                     //callback for `getFacebookPosts`
                     function FBPostsCallback(resp) {
@@ -1254,6 +1312,7 @@ var jQuery = jQuery,
                     parsedReachData = [],
                     postsData = this.getData('postsData'),
                     reachData = this.getData('reachData'),
+                    fanPageData = this.getData('fanPageData'),
                     size = this.getSize(),
                     postIndex = 0,
                     insightIndex = 0,
@@ -1339,7 +1398,8 @@ var jQuery = jQuery,
 
                 this.setData({
                     postsData: parsedPostsData,
-                    reachData: parsedReachData
+                    reachData: parsedReachData,
+                    fanPageData: fanPageData
                 });
             },
 
