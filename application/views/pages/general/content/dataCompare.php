@@ -201,6 +201,7 @@
     $(function() {
         //set a gobal variable
         window.troperlaicos = {
+            pagesToWatchList: JSON.parse('<?php echo $pagesToWatchList;?>'),
             website: {
                 currentName: '<?php echo $pageId;?>',
                 lineChart: {},
@@ -220,12 +221,7 @@
         //competitor setting panel,change competitor and dateRnage to get different data
         troperlaicos.competitorPanel = new SocialReport.DataComparePanel('competitorPanel', {
             changeHandler: competitorPanelChangeHandler,
-            option: {
-                '<?php echo $pageId;?>': '<?php echo $websiteName;?>',
-                'weekendweeklyjetso': '新假期JetSo',
-                '100most': '100毛',
-                'umagazinehk': 'U Magazine'
-            }
+            option: troperlaicos.pagesToWatchList
         });
     });
 
