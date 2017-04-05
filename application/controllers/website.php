@@ -19,6 +19,7 @@ class Website extends MY_Controller {
         $data['websiteName'] = FACEBOOK_WEBSITE_NAME;
         $data['pageId'] = FACEBOOK_WEBSITE_PAGEID;
         $data['pageAccessToken'] = FACEBOOK_WEBSITE_PAGE_ACCESS_TOKEN;
+        $data['pagesToWatchList'] = $this->pagestowatch_model->getlistbytype(FACEBOOK_WEBSITE_NAME);die(var_dump($data['pagesToWatchList']));
         $content = $this->load->view('pages/general/content/dataCompare', $data, true);
 		$this->loadview($content);
 	}

@@ -246,7 +246,7 @@
         SocialReport.Facebook.genFacebookOperation(params, buildWebsiteLineChartDataToGobal);
 
         //it is a callback function to get LineChartData for website and set data in `troperlaicos`
-        function buildWebsiteLineChartDataToGobal() {console.info(this.getData());
+        function buildWebsiteLineChartDataToGobal() {
             var facebookOperation = this;
             //it return an object include attribute of `labelArr` and `dataArr`
             postSizeData = facebookOperation.getFormatDataFromLineChartType('postsize');
