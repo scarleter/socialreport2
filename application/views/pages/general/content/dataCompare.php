@@ -201,6 +201,9 @@
     $(function() {
         //set a gobal variable
         window.troperlaicos = {
+            pageToWatchLoadingLayer: '',
+            websiteLoadingLayer: '',
+            competitorLoadingLayer: '',
             pagesToWatchList: JSON.parse('<?php echo $pagesToWatchList;?>'),
             website: {
                 currentName: '<?php echo $pageId;?>',
@@ -223,14 +226,24 @@
             changeHandler: competitorPanelChangeHandler,
             option: troperlaicos.pagesToWatchList
         });
-
+        
+        //set a new one ajax loading layer
+        troperlaicos.pageToWatchLoadingLayer = layer.load(2, {
+            shade: [0.1, '#000']
+        });
         //get page to watch dataTable data, it return labelArr and dataArr for dataTable api
         SocialReport.Facebook.genPagesToWatchListData({
             since: moment().subtract(6, 'days').hours(0).minutes(0).seconds(0).unix(),
             until: moment().hours(23).minutes(59).seconds(59).unix(),
             pageidList: troperlaicos.pagesToWatchList,
             access_token: '<?php echo $pageAccessToken;?>'
+        }, function(LabelArr, DataArr) {
+            //call back function for genPagesToWatchListData, it return labelArr and dataArr for building pageToWatch datatable.`this` is `facebookOperationList`
+            //close loadding layer
+            layer.close(troperlaicos.pageToWatchLoadingLayer);
+            console.info(this);
         });
+
     });
 
     //#############################################
@@ -246,6 +259,10 @@
             dataStart: start,
             dateEnd: end
         };
+        //set a new one ajax loading layer
+        troperlaicos.websiteLoadingLayer = layer.load(2, {
+            shade: [0.1, '#000']
+        });
         //use asynchronous to get facebook data(posts and reach) and put the follow steps in the callback function such as `buildTable`.
         SocialReport.Facebook.genFacebookOperation(params, buildWebsiteLineChartDataToGobal);
 
@@ -260,6 +277,8 @@
             troperlaicos.website.lineChart.postSizeData = postSizeData;
             troperlaicos.website.lineChart.avgReachByPostData = avgReachByPostData;
             troperlaicos.website.lineChart.avgFanPageLikeData = avgPageFanLikeData;
+            //close loadding layer
+            layer.close(troperlaicos.websiteLoadingLayer);
             //then when the other DataComparePanel finish load we build the whold LineChart
             if (troperlaicos.competitor.lineChart.postSizeData) {
                 buildLineChart();
@@ -281,6 +300,10 @@
             dataStart: start,
             dateEnd: end
         };
+        //set a new one ajax loading layer
+        troperlaicos.competitorLoadingLayer = layer.load(2, {
+            shade: [0.1, '#000']
+        });
         //use asynchronous to get facebook data(posts and reach) and put the follow steps in the callback function such as `buildTable`.
         SocialReport.Facebook.genFacebookOperation(params, buildCompetitorLineChartDataToGobal);
         troperlaicos.competitor.currentName = currentValue;
@@ -296,6 +319,8 @@
             troperlaicos.competitor.lineChart.postSizeData = postSizeData;
             troperlaicos.competitor.lineChart.avgReachByPostData = avgReachByPostData;
             troperlaicos.competitor.lineChart.avgFanPageLikeData = avgPageFanLikeData;
+            //close loadding layer
+            layer.close(troperlaicos.competitorLoadingLayer);
             //then when the other DataComparePanel finish load we build the whold LineChart
             if (troperlaicos.website.lineChart.postSizeData) {
                 buildLineChart();

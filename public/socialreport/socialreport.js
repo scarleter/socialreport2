@@ -448,7 +448,7 @@ var jQuery = jQuery,
                 
                 //get pagesToWatch list data
                 //return labelArr and dataArr for building dataTable
-                genPagesToWatchListData: function (Params) {
+                genPagesToWatchListData: function (Params, Callback) {
                     //set facebook request params
                     var params = Params || {},
                         pageParams = {},
@@ -483,8 +483,11 @@ var jQuery = jQuery,
                     function buildFanpageData() {
                         var labelArr = [],
                             dataArr = [];
-                        console.info(facebookOperationList);
-
+                        
+                        
+                        if (Callback) {
+                            Callback.call(facebookOperationList, labelArr, dataArr);
+                        }
                     }
 
                     //call this function after each request fanpage data
