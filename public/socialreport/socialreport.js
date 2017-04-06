@@ -493,16 +493,18 @@ var jQuery = jQuery,
                             dataArr = [],
                             operationKey = '',
                             operation = '',
-                            fanpageData = [],
-                            summary;
+                            fanpageData = [];
+                        //loop to set dataArr
                         for (operationKey in operationList) {
                             if (operationList.hasOwnProperty(operationKey)) {
                                 operation = operationList[operationKey];
-                                summary = operation.getPostsDataSummary();
-                                //console.info(summary);
+                                //reset `fanpageData` for next fanpage
+                                fanpageData = [];
                                 fanpageData.push('<div class="pageContainer"><img src="' + operation.getData('fanpageData').picture_src + '"><label>' + operation.getData('fanpageData').name + '</label></div>');
                                 fanpageData.push(Math.round(operation.getData('fanpageData').fan_count).toLocaleString());
-                                fanpageData.push(Math.round(operation.getSize()).toLocaleString());
+                                fanpageData.push(Math.round(operation.getData('fanpageData').postSize).toLocaleString());
+                                fanpageData.push(Math.round(operation.getData('fanpageData').engagement).toLocaleString());
+                                dataArr.push(fanpageData);
                             }
                         }
 
@@ -1479,7 +1481,8 @@ var jQuery = jQuery,
                     comments: 0,
                     likes: 0,
                     shares: 0,
-                    reactioins: 0
+                    reactioins: 0,
+                    engagement: 0
                 };
                 //loop to get summary comments, likes, shares and reactions
                 for (fanpagePostIndex in fanpageData[0].posts.data) {
@@ -1491,6 +1494,7 @@ var jQuery = jQuery,
                         parsedFanpageData.reactioins += parseInt((fanpagePostObject.reactioins && fanpagePostObject.reactioins.summary.total_count) || 0, 0);
                     }
                 }
+                parsedFanpageData.engagement += parsedFanpageData.comments + parsedFanpageData.likes + parsedFanpageData.shares + parsedFanpageData.reactioins;
 
                 this.setData({
                     postsData: parsedPostsData,

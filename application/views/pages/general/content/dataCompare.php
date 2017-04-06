@@ -242,6 +242,8 @@
             //close loadding layer
             layer.close(troperlaicos.pageToWatchLoadingLayer);
             console.info(this);
+            console.info(LabelArr);
+            console.info(DataArr);
         });
 
     });
