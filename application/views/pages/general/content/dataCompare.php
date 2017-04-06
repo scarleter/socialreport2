@@ -223,6 +223,14 @@
             changeHandler: competitorPanelChangeHandler,
             option: troperlaicos.pagesToWatchList
         });
+
+        //get page to watch dataTable data, it return labelArr and dataArr for dataTable api
+        SocialReport.Facebook.genPagesToWatchListData({
+            since: moment().subtract(6, 'days').hours(0).minutes(0).seconds(0).unix(),
+            until: moment().hours(23).minutes(59).seconds(59).unix(),
+            pageidList: troperlaicos.pagesToWatchList,
+            access_token: '<?php echo $pageAccessToken;?>'
+        });
     });
 
     //#############################################

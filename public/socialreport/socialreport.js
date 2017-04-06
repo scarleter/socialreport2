@@ -1,19 +1,15 @@
 //SocialReport.js
 
-//It is dependent on jQuery,moment,DataTables(https://datatables.net/),DateRangePicker(http://www.daterangepicker.com/),layer(http://www.layui.com/doc/modules/layer.html),ChartJs(http://www.chartjs.org/).
+//It is dependent on jQuery,moment,DataTables(https://datatables.net/),DateRangePicker(http://www.daterangepicker.com/),ChartJs(http://www.chartjs.org/).
 //It has some subclassess: Data, vVew, Operation, Toolbox, Facebook
 var jQuery = jQuery,
     moment = moment,
-    layer = layer,
     Chart = Chart;
 
-(function ($, window, moment, layer, Chart) {
+(function ($, window, moment, Chart) {
     "use strict";
     window.SocialReport = (function () {
         var SocialReport = {},
-
-            //variable for layer plugin ajax loading layer
-            ajaxLoadingLayer = '',
 
             //class Toolbox
             //-------------
@@ -105,8 +101,6 @@ var jQuery = jQuery,
                 ajax: function (Data, Options) {
                     //set `success` function
                     var success = function (resp) {
-                            //close ajax loading layer
-                            layer.close(ajaxLoadingLayer);
                             //if `Options.success` exists call it
                             if (Options.success) {
                                 //if `Options.context` exists use function.prototype.call to call `Options.success`
@@ -120,8 +114,6 @@ var jQuery = jQuery,
 
                         //set `error` function
                         error = function (resp) {
-                            //close ajax loading layer
-                            layer.close(ajaxLoadingLayer);
                             //if `Options.error` exists call it
                             if (Options.error) {
                                 //if `Options.context` exists use function.prototype.call to call `Options.error`
@@ -132,15 +124,6 @@ var jQuery = jQuery,
                                 }
                             }
                         };
-
-                    //if has ajax loading layer then close it
-                    if (ajaxLoadingLayer) {
-                        layer.close(ajaxLoadingLayer);
-                    }
-                    //set a new one ajax loading layer
-                    ajaxLoadingLayer = layer.load(2, {
-                        shade: [0.1, '#000']
-                    });
 
                     $.ajax({
                         url: Options.url,
@@ -461,6 +444,67 @@ var jQuery = jQuery,
                     }
                     //request to get facebook posts data
                     SocialReport.DataInterface.getFacebookPosts(params, FBPostsCallback);
+                },
+                
+                //get pagesToWatch list data
+                //return labelArr and dataArr for building dataTable
+                genPagesToWatchListData: function (Params) {
+                    //set facebook request params
+                    var params = Params || {},
+                        pageParams = {},
+                        data = {},
+                        pageid = '',
+                        facebookOperationList = [];
+                    //if `params.since` or `params.until` or `params.pageidList` or `params.access_token` is 0 console assert the msg and return
+                    if (!(params.since && params.until && params.pageidList && params.access_token)) {
+                        SocialReport.Toolbox.assert('Function SocialReport.Facebook.genPagesToWatchListData: params since or until or pageidList or access_token is undefined');
+                        return;
+                    }
+                    //set the true request data object for each fanpage
+                    pageParams = {
+                        since: params.since,
+                        until: params.until,
+                        access_token: params.access_token
+                    };
+                    
+                    //check if all request is done
+                    function isRequestAllDone() {
+                        var normalOperationSize = Toolbox.getObjectSize(params.pageidList),
+                            acturalOperationSize = facebookOperationList.length;
+                        if (acturalOperationSize === normalOperationSize) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+                    
+                    //build all fanpage data to dataTable format
+                    //return labelArr and dataArr
+                    function buildFanpageData() {
+                        var labelArr = [],
+                            dataArr = [];
+                        console.info(facebookOperationList);
+
+                    }
+
+                    //call this function after each request fanpage data
+                    //save this fanpage operation in the `faceboookOperation`
+                    function FBDataCallback() {
+                        var faceboookOperation = this;
+                        facebookOperationList.push(faceboookOperation);
+                        if (isRequestAllDone()) {
+                            buildFanpageData();
+                        }
+                    }
+                    
+                    //loop to get all fanpage facebook data
+                    for (pageid in params.pageidList) {
+                        if (params.pageidList.hasOwnProperty(pageid)) {
+                            pageParams.pageid = pageid;
+                            //use asynchronous to get facebook data(posts and reach) and put the follow steps in the callback function such as `buildTable`.
+                            Facebook.genFacebookOperation(pageParams, FBDataCallback);
+                        }
+                    }
                 }
             };
 
@@ -2128,4 +2172,4 @@ var jQuery = jQuery,
     }());
 
 
-}(jQuery, window, moment, layer, Chart));
+}(jQuery, window, moment, Chart));
