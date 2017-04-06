@@ -275,8 +275,6 @@ var jQuery = jQuery,
                 getFacebookFanpageInfo: function (Params, Callback) {
                     var params = Params || {},
                         data = {
-                            since: params.since || '',
-                            until: params.until || '',
                             access_token: params.access_token || ''
                         },
                         options = {},
@@ -287,12 +285,12 @@ var jQuery = jQuery,
                         success = '',
                         callback = (Toolbox.isFunction(Callback) && Callback) || Toolbox.assert('Function DataInterface.getFacebookFanpageInfo: `Callback` is undefined');
                     //if `data.since` or `data.until` or `data.access_token` or `params.pageid` is empty return `result`
-                    if (!(data.since && data.until && data.access_token && params.pageid)) {
+                    if (!(params.since && params.until && data.access_token && params.pageid)) {
                         return result.data;
                     }
                     options = {
                         //url: 'https://graph.facebook.com/v2.8/' + params.pageid + '/insights/page_consumptions,page_positive_feedback_by_type,page_fans',
-                        url: 'https://graph.facebook.com/v2.8/' + params.pageid + '/?fields=id,picture,name,fan_count&access_token=' + data.access_token,
+                        url: 'https://graph.facebook.com/v2.8/' + params.pageid + '/?fields=id,picture,name,fan_count,posts.limit(100).since(' + params.since + ').until(' + params.until + '){created_time,id,shares,comments.limit(0).summary(1),reactions.type(LOVE).limit(0).summary(1),likes.limit(0).summary(1)}',
                         context: result
                     };
                     //set the `options.error`
@@ -302,18 +300,26 @@ var jQuery = jQuery,
                     //set the `options.success`
                     success = options.success = function (resp) {
                         if (resp) {
-                            this.data = this.data.concat(resp);
-//                            if (resp.paging && resp.paging.next) {
-//                                var nextUrl = resp.paging.next;
-//                                SocialReport.DataInterface.ajax({}, {
-//                                    url: nextUrl,
-//                                    context: this,
-//                                    success: success,
-//                                    error: error
-//                                });
-//                            } else {
-                            callback(this.data);
-//                            }
+                            //if resp has data attribute,it means this is the next data
+                            if (resp.data) {
+                                //when data is not null
+                                if (resp.data.length !== 0) {
+                                    this.data[0].posts.data = this.data[0].posts.data.concat(resp.data);
+                                }
+                            } else {
+                                this.data = this.data.concat(resp);
+                            }
+                            if (resp.posts && resp.posts.paging && resp.posts.paging.next) {
+                                var nextUrl = resp.posts.paging.next;
+                                SocialReport.DataInterface.ajax({}, {
+                                    url: nextUrl,
+                                    context: this,
+                                    success: success,
+                                    error: error
+                                });
+                            } else {
+                                callback(this.data);
+                            }
                         } else {
                             callback(this.data);
                         }
@@ -466,7 +472,7 @@ var jQuery = jQuery,
                         until: params.until,
                         access_token: params.access_token
                     };
-                    
+
                     //check if all request is done
                     function isRequestAllDone() {
                         var normalOperationSize = Toolbox.getObjectSize(params.pageidList),
@@ -477,14 +483,29 @@ var jQuery = jQuery,
                             return false;
                         }
                     }
-                    
+
                     //build all fanpage data to dataTable format
                     //return labelArr and dataArr
                     function buildFanpageData() {
-                        var labelArr = [],
-                            dataArr = [];
-                        
-                        
+                        var operationList = facebookOperationList,
+                            //postsData = this.getData('postsData'),
+                            labelArr = ['Page', 'Total Page Likes', 'Posts This Week', 'Engagement This Week'],
+                            dataArr = [],
+                            operationKey = '',
+                            operation = '',
+                            fanpageData = [],
+                            summary;
+                        for (operationKey in operationList) {
+                            if (operationList.hasOwnProperty(operationKey)) {
+                                operation = operationList[operationKey];
+                                summary = operation.getPostsDataSummary();
+                                //console.info(summary);
+                                fanpageData.push('<div class="pageContainer"><img src="' + operation.getData('fanpageData').picture_src + '"><label>' + operation.getData('fanpageData').name + '</label></div>');
+                                fanpageData.push(Math.round(operation.getData('fanpageData').fan_count).toLocaleString());
+                                fanpageData.push(Math.round(operation.getSize()).toLocaleString());
+                            }
+                        }
+
                         if (Callback) {
                             Callback.call(facebookOperationList, labelArr, dataArr);
                         }
@@ -499,13 +520,14 @@ var jQuery = jQuery,
                             buildFanpageData();
                         }
                     }
-                    
+
                     //loop to get all fanpage facebook data
                     for (pageid in params.pageidList) {
                         if (params.pageidList.hasOwnProperty(pageid)) {
-                            pageParams.pageid = pageid;
                             //use asynchronous to get facebook data(posts and reach) and put the follow steps in the callback function such as `buildTable`.
-                            Facebook.genFacebookOperation(pageParams, FBDataCallback);
+                            Facebook.genFacebookOperation($.extend({}, pageParams, {
+                                'pageid': pageid
+                            }), FBDataCallback);
                         }
                     }
                 }
@@ -1368,7 +1390,9 @@ var jQuery = jQuery,
                     reactionsObj = {},
                     consumptionsObj = {},
                     reactionsKey = '',
-                    consumptionskey = '';
+                    consumptionskey = '',
+                    fanpagePostIndex = 0,
+                    fanpagePostObject;
                 //loop to set postsData
                 for (postIndex = 0; postIndex < size; postIndex += 1) {
                     postObj = {};
@@ -1433,6 +1457,7 @@ var jQuery = jQuery,
                     }
                     parsedPostsData[postIndex] = postObj;
                 }
+                
                 //loop to set reachData
                 $.each(reachData, function (key, value) {
                     switch (value.name) {
@@ -1449,8 +1474,23 @@ var jQuery = jQuery,
                     id: fanpageData[0].id,
                     fan_count: fanpageData[0].fan_count,
                     name: fanpageData[0].name,
-                    picture_src: fanpageData[0].picture.data.url
+                    picture_src: fanpageData[0].picture.data.url,
+                    postSize: Toolbox.getObjectSize(fanpageData[0].posts.data),
+                    comments: 0,
+                    likes: 0,
+                    shares: 0,
+                    reactioins: 0
                 };
+                //loop to get summary comments, likes, shares and reactions
+                for (fanpagePostIndex in fanpageData[0].posts.data) {
+                    if (fanpageData[0].posts.data.hasOwnProperty(fanpagePostIndex)) {
+                        fanpagePostObject = fanpageData[0].posts.data[fanpagePostIndex];
+                        parsedFanpageData.comments += parseInt((fanpagePostObject.comments && fanpagePostObject.comments.summary.total_count) || 0, 0);
+                        parsedFanpageData.likes += parseInt((fanpagePostObject.likes && fanpagePostObject.likes.summary.total_count) || 0, 0);
+                        parsedFanpageData.shares += parseInt((fanpagePostObject.shares && fanpagePostObject.shares.count) || 0, 0);
+                        parsedFanpageData.reactioins += parseInt((fanpagePostObject.reactioins && fanpagePostObject.reactioins.summary.total_count) || 0, 0);
+                    }
+                }
 
                 this.setData({
                     postsData: parsedPostsData,
