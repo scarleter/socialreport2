@@ -16,6 +16,15 @@
         <div class="row">
 
             <style>
+                .dataTables_wrapper .dataTables_paginate .paginate_button {
+                    padding: 0;
+                }
+                
+                .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+                    border-color: #fff;
+                    background: none;
+                }
+                
                 .pageContainer {
                     white-space: nowrap;
                     text-align: left;
@@ -57,7 +66,7 @@
                     <!-- /.box-header -->
                     <div class="box-body">
                         <label>Compare the performance of your Page and posts with similar Pages on Facebook.</label>
-                        <table id="ptwDataTable" class="table table-striped table-bordered dt-responsive" cellspacing="0" width="100%"></table>
+                        <table id="pageToWatchDataTable" class="table table-striped table-bordered dt-responsive" cellspacing="0" width="100%"></table>
                     </div>
                     <!-- /.box-body -->
                 </div>
@@ -226,24 +235,37 @@
             changeHandler: competitorPanelChangeHandler,
             option: troperlaicos.pagesToWatchList
         });
-        
+
         //set a new one ajax loading layer
         troperlaicos.pageToWatchLoadingLayer = layer.load(2, {
             shade: [0.1, '#000']
         });
         //get page to watch dataTable data, it return labelArr and dataArr for dataTable api
         SocialReport.Facebook.genPagesToWatchListData({
-            since: moment().subtract(6, 'days').hours(0).minutes(0).seconds(0).unix(),
-            until: moment().hours(23).minutes(59).seconds(59).unix(),
+            since: moment().add(8, 'hours').subtract(8, 'days').hours(8).minutes(0).seconds(0).unix(),
+            until: moment().add(8, 'hours').hours(8).minutes(0).seconds(0).unix(),
             pageidList: troperlaicos.pagesToWatchList,
             access_token: '<?php echo $pageAccessToken;?>'
         }, function(LabelArr, DataArr) {
-            //call back function for genPagesToWatchListData, it return labelArr and dataArr for building pageToWatch datatable.`this` is `facebookOperationList`
+            //this is a call back function for genPagesToWatchListData, it return labelArr and dataArr for building pageToWatch datatable.`this` is `facebookOperationList`
+
             //close loadding layer
             layer.close(troperlaicos.pageToWatchLoadingLayer);
-            console.info(this);
-            console.info(LabelArr);
-            console.info(DataArr);
+
+            var tableAttrs = {
+                columns: LabelArr,
+                order: [1, 'des']
+            };
+            //if table is exist
+            if (troperlaicos.pageToWatchDataTable) {
+                //use repaint
+                troperlaicos.pageToWatchDataTable.repaint(DataArr, tableAttrs);
+            } else {
+                //build datatable object
+                troperlaicos.pageToWatchDataTable = new SocialReport.DataTables('pageToWatchDataTable', DataArr, tableAttrs);
+            }
+            //highlight website
+            $('.<?php echo $pageId?>').closest('tr').css('border', '3px solid #00C0EF');
         });
 
     });

@@ -489,7 +489,19 @@ var jQuery = jQuery,
                     function buildFanpageData() {
                         var operationList = facebookOperationList,
                             //postsData = this.getData('postsData'),
-                            labelArr = ['Page', 'Total Page Likes', 'Posts This Week', 'Engagement This Week'],
+                            labelArr = [
+                                {
+                                    title: "Page"
+                                },
+                                {
+                                    title: "Total Page Likes"
+                                },
+                                {
+                                    title: "Posts This Week"
+                                },
+                                {
+                                    title: "Engagement This Week"
+                                }],
                             dataArr = [],
                             operationKey = '',
                             operation = '',
@@ -500,7 +512,7 @@ var jQuery = jQuery,
                                 operation = operationList[operationKey];
                                 //reset `fanpageData` for next fanpage
                                 fanpageData = [];
-                                fanpageData.push('<div class="pageContainer"><img src="' + operation.getData('fanpageData').picture_src + '"><label>' + operation.getData('fanpageData').name + '</label></div>');
+                                fanpageData.push('<div class="pageContainer ' + operation.getData('fanpageData').id + '"><img src="' + operation.getData('fanpageData').picture_src + '"><label>' + operation.getData('fanpageData').name + '</label></div>');
                                 fanpageData.push(Math.round(operation.getData('fanpageData').fan_count).toLocaleString());
                                 fanpageData.push(Math.round(operation.getData('fanpageData').postSize).toLocaleString());
                                 fanpageData.push(Math.round(operation.getData('fanpageData').engagement).toLocaleString());
