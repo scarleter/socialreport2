@@ -164,7 +164,7 @@ var jQuery = jQuery,
                 },
 
                 //temporary function to get facebook posts data before the sever php versin upgrade to 5.4 or above
-                getFacebookPosts: function (Params, Callback) {
+                getFacebookPosts: function (Params, Callback, FBErrorCallback) {
 
                     var params = Params || {},
                         data = {
@@ -175,7 +175,12 @@ var jQuery = jQuery,
                         },
                         options = {},
                         result = {
-                            data: []
+                            data: [],
+                            error: {
+                                facebookPostsRequestError: '',
+                                facebookReachRequestError: '',
+                                facebookFanpageRequestError: ''
+                            }
                         },
                         error = '',
                         success = '',
@@ -192,6 +197,11 @@ var jQuery = jQuery,
 
                     //set the `options.error`
                     error = options.error = function (resp) {
+                        //make sure `FBErrorCallback` is an exist function
+                        if(Toolbox.isFunction(FBErrorCallback)){
+                            this.error.facebookPostsRequestError = resp;
+                            FBErrorCallback(this.error);
+                        }
                         Toolbox.assert('Function DataInterface.getFacebookPosts go to error branch: msg is ' + resp);
                     };
                     //set the `options.success`
@@ -218,7 +228,7 @@ var jQuery = jQuery,
                 },
 
                 //temporary function to get facebook reach data before the sever php versin upgrade to 5.4 or above
-                getFacebookReach: function (Params, Callback) {
+                getFacebookReach: function (Params, Callback, FBErrorCallback) {
 
                     var params = Params || {},
                         data = {
@@ -246,6 +256,11 @@ var jQuery = jQuery,
 
                     //set the `options.error`
                     error = options.error = function (resp) {
+                        //make sure `FBErrorCallback` is an exist function
+                        if(Toolbox.isFunction(FBErrorCallback)){
+                            this.error.facebookReachRequestError = resp;
+                            FBErrorCallback(this.error);
+                        }
                         Toolbox.assert('Function DataInterface.getFacebookReach go to error branch: msg is ' + resp);
                     };
                     //set the `options.success`
@@ -272,7 +287,7 @@ var jQuery = jQuery,
                 },
                 
                 //get facebook fanpage id,name,picture,fan_count and engagement
-                getFacebookFanpageInfo: function (Params, Callback) {
+                getFacebookFanpageInfo: function (Params, Callback, FBErrorCallback) {
                     var params = Params || {},
                         data = {
                             access_token: params.access_token || ''
@@ -295,6 +310,11 @@ var jQuery = jQuery,
                     };
                     //set the `options.error`
                     error = options.error = function (resp) {
+                        //make sure `FBErrorCallback` is an exist function
+                        if(Toolbox.isFunction(FBErrorCallback)){
+                            this.error.facebookFanpageRequestError = resp;
+                            FBErrorCallback(this.error);
+                        }
                         Toolbox.assert('Function DataInterface.getFacebookFanpageInfo go to error branch: msg is ' + resp);
                     };
                     //set the `options.success`
@@ -412,8 +432,8 @@ var jQuery = jQuery,
             //Facebook class contain function relative facebook
             Facebook = SocialReport.Facebook = {
 
-                //get facebook operatioin object
-                genFacebookOperation: function (Params, Callback) {
+                //get facebook operatioin object, `FBErrorCallback` is an object contain all facebook request(getFacebookPosts, getFacebookReach and getFacebookFanpageInfo) error
+                genFacebookOperation: function (Params, Callback, FBErrorCallback) {
                     //set facebook request params
                     var params = Params || {},
                         data = {};
@@ -439,17 +459,17 @@ var jQuery = jQuery,
                     function FBReachCallback(resp) {
                         data.reachData = resp;
                         //request to get FacebookFanpageInfo
-                        SocialReport.DataInterface.getFacebookFanpageInfo(params, FBFanpageCallback);
+                        SocialReport.DataInterface.getFacebookFanpageInfo(params, FBFanpageCallback, FBErrorCallback);
                     }
                     //callback for `getFacebookPosts`
                     function FBPostsCallback(resp) {
                         //set `data.postsData`
                         data.postsData = resp;
                         //request to get facebook reach data
-                        SocialReport.DataInterface.getFacebookReach(params, FBReachCallback);
+                        SocialReport.DataInterface.getFacebookReach(params, FBReachCallback, FBErrorCallback);
                     }
                     //request to get facebook posts data
-                    SocialReport.DataInterface.getFacebookPosts(params, FBPostsCallback);
+                    SocialReport.DataInterface.getFacebookPosts(params, FBPostsCallback, FBErrorCallback);
                 },
                 
                 //get pagesToWatch list data
@@ -460,7 +480,8 @@ var jQuery = jQuery,
                         pageParams = {},
                         data = {},
                         pageid = '',
-                        facebookOperationList = [];
+                        facebookOperationList = [],
+                        errorRequestNum = 0;
                     //if `params.since` or `params.until` or `params.pageidList` or `params.access_token` is 0 console assert the msg and return
                     if (!(params.since && params.until && params.pageidList && params.access_token)) {
                         SocialReport.Toolbox.assert('Function SocialReport.Facebook.genPagesToWatchListData: params since or until or pageidList or access_token is undefined');
@@ -477,7 +498,7 @@ var jQuery = jQuery,
                     function isRequestAllDone() {
                         var normalOperationSize = Toolbox.getObjectSize(params.pageidList),
                             acturalOperationSize = facebookOperationList.length;
-                        if (acturalOperationSize === normalOperationSize) {
+                        if (parseInt((acturalOperationSize + errorRequestNum), 0) === normalOperationSize) {
                             return true;
                         } else {
                             return false;
@@ -534,6 +555,16 @@ var jQuery = jQuery,
                             buildFanpageData();
                         }
                     }
+                    
+                    //an request error call back function, the parameter is an error object
+                    function FBErrorCallback(Error){
+                        var errorPageId = $.trim(Error.facebookPostsRequestError.responseJSON.error.message.split(':')[1]);
+                        Toolbox.assert(errorPageId + 'is not a corret page id in facebook, so we don not show facebook data of ' + errorPageId);
+                        errorRequestNum += 1;
+                        if (isRequestAllDone()) {
+                            buildFanpageData();
+                        }
+                    }
 
                     //loop to get all fanpage facebook data
                     for (pageid in params.pageidList) {
@@ -541,7 +572,7 @@ var jQuery = jQuery,
                             //use asynchronous to get facebook data(posts and reach) and put the follow steps in the callback function such as `buildTable`.
                             Facebook.genFacebookOperation($.extend({}, pageParams, {
                                 'pageid': pageid
-                            }), FBDataCallback);
+                            }), FBDataCallback, FBErrorCallback);
                         }
                     }
                 }
@@ -1943,7 +1974,7 @@ var jQuery = jQuery,
             },
             
             //build facebook post size by date
-            //return `labelArr` and `dataArr`
+            //return `labelArr` and `dataArr` and `numberOfPost`(total post size)
             getPostSizeByDateInFacebook: function () {
                 var postsData = this.getData('postsData'),
                     classifiedPostsData = this.ClassifyJson(postsData, 'created_time'),
@@ -1951,7 +1982,8 @@ var jQuery = jQuery,
                     dataArr = [],
                     label = '',
                     size = 0,
-                    dateKey = '';
+                    dateKey = '',
+                    numberOfPost = 0;
                 for (label in labelArr) {
                     if (labelArr.hasOwnProperty(label)) {
                         //`dateKey` is one of the duration date between dateStart and dateEnd
@@ -1960,6 +1992,7 @@ var jQuery = jQuery,
                         if (classifiedPostsData[dateKey]) {
                             size = Toolbox.getObjectSize(classifiedPostsData[dateKey]);
                             dataArr.push(size);
+                            numberOfPost += size;
                         } else {
                             dataArr.push(0);
                         }
@@ -1967,12 +2000,13 @@ var jQuery = jQuery,
                 }
                 return {
                     labelArr: labelArr,
-                    dataArr: dataArr
+                    dataArr: dataArr,
+                    numberOfPost: numberOfPost
                 };
             },
             
             //build facebook avg reach by post number
-            //return `labelArr` and `dataArr`
+            //return `labelArr` and `dataArr` and `avgReachByPost`(total reach over post)
             getAvgReachByPostNumberInFacebook: function () {
                 var postsData = this.getData('postsData'),
                     classifiedPostsData = this.ClassifyJson(postsData, 'created_time'),
@@ -1982,21 +2016,26 @@ var jQuery = jQuery,
                     size = 0,
                     reach = 0,
                     dateKey = '',
-                    postIndex = 0;
+                    postIndex = 0,
+                    totalSize = 0,
+                    totalReach = 0;
                 for (label in labelArr) {
                     if (labelArr.hasOwnProperty(label)) {
                         //`dateKey` is one of the duration date between dateStart and dateEnd
                         dateKey = labelArr[label];
+                        reach = 0;
                         //make sure classifiedPostsData has `date`
                         if (classifiedPostsData[dateKey]) {
                             size = Toolbox.getObjectSize(classifiedPostsData[dateKey]);
+                            totalSize += size;
                             //loop to get total reach in the same date
                             for (postIndex in classifiedPostsData[dateKey]) {
                                 if (classifiedPostsData[dateKey].hasOwnProperty(postIndex)) {
-                                    reach = reach + (classifiedPostsData[dateKey][postIndex].post_impressions_unique || 0);
+                                    reach += (classifiedPostsData[dateKey][postIndex].post_impressions_unique || 0);
                                 }
                             }
                             dataArr.push(Math.round(reach / size));
+                            totalReach += reach;
                         } else {
                             dataArr.push(0);
                         }
@@ -2004,12 +2043,13 @@ var jQuery = jQuery,
                 }
                 return {
                     labelArr: labelArr,
-                    dataArr: dataArr
+                    dataArr: dataArr,
+                    avgReachByPost: Math.round(totalReach / totalSize)
                 };
             },
             
             //build facebook avg page fan like
-            //return `labelArr` and `dataArr`
+            //return `labelArr` and `dataArr` and `avgPageFansLike`(total pagefanslike over dayrange)
             getAvgPageFanLikeInFacebook: function () {
                 var reachData = this.getData('reachData'),
                     pageFansData = reachData.page_fans,
@@ -2019,7 +2059,9 @@ var jQuery = jQuery,
                     key = '',
                     dateKey = '',
                     pageFansObj = {},
-                    pageFansObjKey = '';
+                    pageFansObjKey = '',
+                    pageFansSummary = 0,
+                    dayRange = this.getDayRange();
                 //get pageFansObj whose key is date and value is pageFansLike
                 for (key in pageFansData) {
                     if (pageFansData.hasOwnProperty(key)) {
@@ -2033,6 +2075,7 @@ var jQuery = jQuery,
                         dateKey = labelArr[label];
                         if (pageFansObj[dateKey]) {
                             dataArr.push(pageFansObj[dateKey]);
+                            pageFansSummary += pageFansObj[dateKey];
                         } else {
                             dataArr.push(0);
                         }
@@ -2040,7 +2083,8 @@ var jQuery = jQuery,
                 }
                 return {
                     labelArr: labelArr,
-                    dataArr: dataArr
+                    dataArr: dataArr,
+                    avgPageFansLike: Math.round(pageFansSummary / dayRange)
                 };
             },
 
