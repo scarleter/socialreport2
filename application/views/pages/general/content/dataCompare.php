@@ -109,7 +109,7 @@
                 <div class="box box-info">
                     <div class="box-header with-border">
                         <h3 class="box-title">Number of Posts
-                            <span class="nopSummaryContainer"></span>
+                            <span class="numberOfPostsContainer"></span>
                         </h3>
 
                         <div class="box-tools pull-right">
@@ -131,7 +131,7 @@
                 <div class="box box-info">
                     <div class="box-header with-border">
                         <h3 class="box-title">Avg Reach By Posts
-                            <span class="arSummaryContainer"></span>
+                            <span class="avgReachByPostsContainer"></span>
                         </h3>
 
                         <div class="box-tools pull-right">
@@ -155,7 +155,7 @@
                 <div class="box box-info">
                     <div class="box-header with-border">
                         <h3 class="box-title">Avg Page Fans Like
-                            <span class="apflSummaryContainer"></span>
+                            <span class="avgPageFansLikeByDayRangeContainer"></span>
                         </h3>
 
                         <div class="box-tools pull-right">
@@ -179,7 +179,7 @@
                 <div class="box box-info">
                     <div class="box-header with-border">
                         <h3 class="box-title">Reach% (Avg Reach / Avg Fans Like)
-                            <span class="rpSummaryContainer"></span>
+                            <span class="reachRateContainer"></span>
                         </h3>
 
                         <div class="box-tools pull-right">
@@ -329,7 +329,7 @@
             shade: [0.1, '#000']
         });
         //use asynchronous to get facebook data(posts and reach) and put the follow steps in the callback function such as `buildTable`.
-        SocialReport.Facebook.genFacebookOperation(params, buildCompetitorLineChartDataToGobal);
+        SocialReport.Facebook.genFacebookOperation(params, buildCompetitorLineChartDataToGobal, fbErrorCallback);
         troperlaicos.competitor.currentName = currentValue;
 
         //it is a callback function to get LineChartData for competitor and set data in `troperlaicos`
@@ -349,6 +349,14 @@
             if (troperlaicos.website.lineChart.postSizeData) {
                 buildLineChart();
             }
+        };
+        
+        //it is a callback for facebook request error 
+        function fbErrorCallback(Error){
+            //close loadding layer
+            layer.close(troperlaicos.competitorLoadingLayer);
+            var errorPageId = $.trim(Error.facebookPostsRequestError.responseJSON.error.message.split(':')[1]);
+            layer.alert(errorPageId + ' is not a corret page id in facebook, so we can not show facebook data of ' + errorPageId);
         };
     };
 
@@ -371,6 +379,8 @@
             competitorLabelArr: troperlaicos.competitor.lineChart.postSizeData.labelArr,
             competitorDataArr: troperlaicos.competitor.lineChart.postSizeData.dataArr
         });
+        //draw a overall data in the section
+        $('.numberOfPostsContainer').html(' &nbsp; &nbsp; &nbsp; &nbsp;(<label class="text-aqua">Total: &nbsp;' + troperlaicos.website.lineChart.postSizeData.numberOfPost.toLocaleString() + '</label><label class="text-muted"> &nbsp; / &nbsp;Total: &nbsp;' + troperlaicos.competitor.lineChart.postSizeData.numberOfPost.toLocaleString() + ')</label>');
     };
 
     //build avg reach by post number data table
@@ -383,6 +393,8 @@
             competitorLabelArr: troperlaicos.competitor.lineChart.avgReachByPostData.labelArr,
             competitorDataArr: troperlaicos.competitor.lineChart.avgReachByPostData.dataArr
         });
+        //draw a overall data in the section
+        $('.avgReachByPostsContainer').html('&nbsp;&nbsp;&nbsp;&nbsp;(<label class="text-aqua">Total: &nbsp;' + troperlaicos.website.lineChart.avgReachByPostData.avgReachByPost.toLocaleString() + '</label><label class="text-muted">&nbsp; / &nbsp;Total: &nbsp;' + troperlaicos.competitor.lineChart.avgReachByPostData.avgReachByPost.toLocaleString() + '</label>)');
     };
 
     //build avg page fan like data table
@@ -395,6 +407,8 @@
             competitorLabelArr: troperlaicos.competitor.lineChart.avgFanPageLikeData.labelArr,
             competitorDataArr: troperlaicos.competitor.lineChart.avgFanPageLikeData.dataArr
         });
+        //draw a overall data in the section
+        $('.avgPageFansLikeByDayRangeContainer').html('&nbsp;&nbsp;&nbsp;&nbsp;(<label class="text-aqua">Total: &nbsp;' + troperlaicos.website.lineChart.avgFanPageLikeData.avgPageFansLike.toLocaleString() + '</label><label class="text-muted">&nbsp; / &nbsp;Total: &nbsp;' + troperlaicos.competitor.lineChart.avgFanPageLikeData.avgPageFansLike.toLocaleString() + '</label>)');
     };
 
     //build reach rate data table
@@ -431,6 +445,8 @@
             competitorLabelArr: troperlaicos.competitor.lineChart.postSizeData.labelArr,
             competitorDataArr: competitorReachRateArr
         });
+        //draw a overall data in the section
+        $('.reachRateContainer').html('&nbsp;&nbsp;&nbsp;&nbsp;(<label class="text-aqua">Total: &nbsp;' + (parseFloat(troperlaicos.website.lineChart.avgReachByPostData.avgReachByPost / troperlaicos.website.lineChart.avgFanPageLikeData.avgPageFansLike) * 100).toFixed(2) + '%</label><label class="text-muted">&nbsp; / &nbsp;Total: &nbsp;' + (parseFloat(troperlaicos.competitor.lineChart.avgReachByPostData.avgReachByPost / troperlaicos.competitor.lineChart.avgFanPageLikeData.avgPageFansLike) * 100).toFixed(2) + '%</label>)');
     };
 
 </script>

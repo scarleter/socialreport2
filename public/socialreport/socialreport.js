@@ -202,7 +202,7 @@ var jQuery = jQuery,
                             this.error.facebookPostsRequestError = resp;
                             FBErrorCallback(this.error);
                         }
-                        Toolbox.assert('Function DataInterface.getFacebookPosts go to error branch: msg is ' + resp);
+                        //Toolbox.assert('Function DataInterface.getFacebookPosts go to error branch: msg is ' + resp);
                     };
                     //set the `options.success`
                     success = options.success = function (resp) {
@@ -261,7 +261,7 @@ var jQuery = jQuery,
                             this.error.facebookReachRequestError = resp;
                             FBErrorCallback(this.error);
                         }
-                        Toolbox.assert('Function DataInterface.getFacebookReach go to error branch: msg is ' + resp);
+                        //Toolbox.assert('Function DataInterface.getFacebookReach go to error branch: msg is ' + resp);
                     };
                     //set the `options.success`
                     success = options.success = function (resp) {
@@ -315,7 +315,7 @@ var jQuery = jQuery,
                             this.error.facebookFanpageRequestError = resp;
                             FBErrorCallback(this.error);
                         }
-                        Toolbox.assert('Function DataInterface.getFacebookFanpageInfo go to error branch: msg is ' + resp);
+                        //Toolbox.assert('Function DataInterface.getFacebookFanpageInfo go to error branch: msg is ' + resp);
                     };
                     //set the `options.success`
                     success = options.success = function (resp) {
@@ -559,7 +559,7 @@ var jQuery = jQuery,
                     //an request error call back function, the parameter is an error object
                     function FBErrorCallback(Error){
                         var errorPageId = $.trim(Error.facebookPostsRequestError.responseJSON.error.message.split(':')[1]);
-                        Toolbox.assert(errorPageId + 'is not a corret page id in facebook, so we don not show facebook data of ' + errorPageId);
+                        Toolbox.assert(errorPageId + ' is not a corret page id in facebook, so we can not show facebook data of ' + errorPageId);
                         errorRequestNum += 1;
                         if (isRequestAllDone()) {
                             buildFanpageData();
