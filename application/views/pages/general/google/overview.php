@@ -151,9 +151,41 @@
             };
 
             //build google analytics chart
+            buildUsersLineChart(params);
             buildPageviewsLineChart(params);
             buildAvgSessionDurationLineChart(params);
 
+        }
+        
+        //build google analytics UsersLineChart
+        function buildUsersLineChart(Params){
+            var params = $.extend({}, {
+                metrics: 'ga:users',
+                dimensions: 'ga:date'
+            }, Params);
+            SocialReport.GoogleAnalytics.getGoogleAnalyticsData(params, function(resp) {
+                var data = resp.rows,
+                    chartData = {
+                        rowData: [],
+                        columnData: [{
+                            type: 'datetime',
+                            name: 'date',
+                            pattern: 'yyyy/M/d'//for formatting tooltip
+                        }, {
+                            type: 'number',
+                            name: 'Users'
+                        }]
+                    },
+                    options = {};
+                //format data in 2d Array
+                for (key in data) {
+                    if (data.hasOwnProperty(key)) {
+                        chartData.rowData.push([new Date(data[key][0].substring(0, 4) + ',' + data[key][0].substring(4, 6) + ',' + data[key][0].substring(6, 8)), parseInt(data[key][1], 0)]);
+                    }
+                }
+                //draw line chart
+                SocialReport.GoogleAnalytics.drawLineChartByGoogleVisualization('userstimeline', chartData, options);
+            });
         }
         
         //build google analytics Pageviews LineChart
