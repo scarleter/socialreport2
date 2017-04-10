@@ -29,4 +29,18 @@ class Website extends MY_Controller {
         $content = $this->load->view('pages/general/content/dataCompare', $data, true);
 		$this->loadview($content);
 	}
+    
+    public function overview()
+    {   
+        $accessToken = getGoogleAccessToken();
+        
+        //render page
+        $data = array();
+        $data['websiteName'] = 'websiteName';
+        $data['accessToken'] = $accessToken;
+        $data['ids'] = array('idOne' => 'idOne','idTwo' => 'idTwo');
+        $data['ids'] = json_encode($data['ids']);
+        $content=$this->load->view('pages/general/google/overview', $data, true);
+		$this->loadview($content);
+	}
 }
