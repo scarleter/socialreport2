@@ -179,11 +179,11 @@
                 //format data in 2d Array
                 for (key in data) {
                     if (data.hasOwnProperty(key)) {
-                        chartData.rowData.push([new Date(data[key][0].substring(0, 4) + ',' + data[key][0].substring(4, 6) + ',' + data[key][0].substring(6, 8)), new Date(parseInt(data[key][2] * 1000))]);
+                        chartData.rowData.push([new Date(data[key][0].substring(0, 4) + ',' + data[key][0].substring(4, 6) + ',' + data[key][0].substring(6, 8)), parseInt(data[key][1], 0)]);
                     }
                 }
                 //draw line chart
-                SocialReport.GoogleAnalytics.drawLineChartByGoogleVisualization('avgsessiondurationtimeline', chartData, options);
+                SocialReport.GoogleAnalytics.drawLineChartByGoogleVisualization('pageviewstimeline', chartData, options);
             });
         }
 
