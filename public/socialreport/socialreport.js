@@ -654,7 +654,7 @@ var jQuery = jQuery,
                     });
                 },
                 
-                //a meghod to get google analytics data
+                //a method to get google analytics data
                 getGoogleAnalyticsData: function (Params, Callback) {
                     var params = $.extend({}, {
                         'since': moment().subtract(6, 'days').format("YYYY-MM-DD"),
@@ -674,6 +674,64 @@ var jQuery = jQuery,
                     }).execute(function (resp) {
                         Callback.call(GoogleAnalytics, resp);
                     });
+                },
+                
+                // a method to draw line chart use google visualization api
+                //lineChart in google visualization api(https://developers.google.com/chart/interactive/docs/gallery/linechart#data-format)
+                drawLineChartByGoogleVisualization: function (Id, ChartData, Optioins) {
+                    //make sure `Id` exist and `ChartData.rowData` is an array(in face it shoud be 2D array)
+                    if (!Id || !ChartData || !Toolbox.isArray(ChartData.rowData) || !Toolbox.isArray(ChartData.columnData)) {
+                        Toolbox.assert('Function SocialReport.GoogleAnalytics.drawLineChartByGoogleVisualization: `Id` is undefined or `ChartData.rowData` is not an array` or `ChartData.columnData` is not an array');
+                        return false;
+                    }
+
+                    var data = new window.google.visualization.DataTable(),
+                        chart,
+                        columnDataKey,
+                        option = $.extend({}, {
+                            width: '100%',
+                            height: 300,
+                            chartArea: {
+                                width: '100%'
+                            },
+                            hAxis: {
+                                format: 'yyyy/M/d',
+                                gridlines: {
+                                    color: 'transparent'
+                                }
+                            },
+                            vAxis: {
+                                gridlines: {
+                                    color: 'transparent'
+                                }
+                            },
+                            colors: ['#058DC7'],
+                            lineWidth: 4,
+                            pointsVisible: true,
+                            legend: {
+                                position: 'top',
+                                textStyle: {
+                                    fontSize: 12
+                                }
+                            }
+                        }, ChartData.option);
+                    for (columnDataKey in ChartData.columnData) {
+                        if (ChartData.columnData.hasOwnProperty(columnDataKey)) {
+                            data.addColumn(ChartData.columnData[columnDataKey].type, ChartData.columnData[columnDataKey].name);
+                        }
+                    }
+                    data.addRows(ChartData.rowData);
+                    //                        dateFormaterInToolTip = new google.visualization.DateFormat({
+                    //                            pattern: 'yyyy/M/d'
+                    //                        }),
+                    //                        durationFormaterInToolTip = new google.visualization.DateFormat({
+                    //                            pattern: 'mm:ss'
+                    //                        });
+                    //to format the date in tooltip
+                    //                    dateFormaterInToolTip.format(data, 0);
+                    //                    durationFormaterInToolTip.format(data, 1);
+                    chart = new window.google.visualization.LineChart(document.getElementById(Id));
+                    chart.draw(data, option);
                 }
             };
 
