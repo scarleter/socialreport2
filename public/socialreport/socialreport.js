@@ -6,7 +6,7 @@ var jQuery = jQuery,
     moment = moment,
     Chart = Chart;
 
-(function ($, window, moment, Chart) {
+(function ($, window, document, moment, Chart) {
     "use strict";
     window.SocialReport = (function () {
         var SocialReport = {},
@@ -198,9 +198,9 @@ var jQuery = jQuery,
                     //set the `options.error`
                     error = options.error = function (resp) {
                         //make sure `FBErrorCallback` is an exist function
-                        if(Toolbox.isFunction(FBErrorCallback)){
+                        if (Toolbox.isFunction(FBErrorCallback)) {
                             this.error.facebookPostsRequestError = resp;
-                            FBErrorCallback(this.error);
+                            FBErrorCallback.call(this, this.error);
                         }
                         //Toolbox.assert('Function DataInterface.getFacebookPosts go to error branch: msg is ' + resp);
                     };
@@ -257,9 +257,9 @@ var jQuery = jQuery,
                     //set the `options.error`
                     error = options.error = function (resp) {
                         //make sure `FBErrorCallback` is an exist function
-                        if(Toolbox.isFunction(FBErrorCallback)){
+                        if (Toolbox.isFunction(FBErrorCallback)) {
                             this.error.facebookReachRequestError = resp;
-                            FBErrorCallback(this.error);
+                            FBErrorCallback.call(this, this.error);
                         }
                         //Toolbox.assert('Function DataInterface.getFacebookReach go to error branch: msg is ' + resp);
                     };
@@ -311,9 +311,9 @@ var jQuery = jQuery,
                     //set the `options.error`
                     error = options.error = function (resp) {
                         //make sure `FBErrorCallback` is an exist function
-                        if(Toolbox.isFunction(FBErrorCallback)){
+                        if (Toolbox.isFunction(FBErrorCallback)) {
                             this.error.facebookFanpageRequestError = resp;
-                            FBErrorCallback(this.error);
+                            FBErrorCallback.call(this, this.error);
                         }
                         //Toolbox.assert('Function DataInterface.getFacebookFanpageInfo go to error branch: msg is ' + resp);
                     };
@@ -557,7 +557,7 @@ var jQuery = jQuery,
                     }
                     
                     //an request error call back function, the parameter is an error object
-                    function FBErrorCallback(Error){
+                    function FBErrorCallback(Error) {
                         var errorPageId = $.trim(Error.facebookPostsRequestError.responseJSON.error.message.split(':')[1]);
                         Toolbox.assert(errorPageId + ' is not a corret page id in facebook, so we can not show facebook data of ' + errorPageId);
                         errorRequestNum += 1;
@@ -575,6 +575,83 @@ var jQuery = jQuery,
                             }), FBDataCallback, FBErrorCallback);
                         }
                     }
+                }
+            },
+        
+            //class GoogleAnalytics
+            //---------------------
+
+            //GoogleAnalytics class contain function relative Google Analytics and google.visualization.linechart
+            //need to use GoogleAnalytics.ready to load google script and get google authorize before use other google method
+            GoogleAnalytics = SocialReport.GoogleAnalytics = {
+                //load google script and get authorize asynchronously
+                ready: function (AccessToken, Callback) {
+                    var googleAnalytic = this;
+                    //make sure `AccessToken` is exist and `Callback` is a function
+                    if (!AccessToken || !Toolbox.isFunction(Callback)) {
+                        Toolbox.assert('Function SocialReport.Google.ready: `AccessToken` is undefined or `Callback` is not a function');
+                        return false;
+                    }
+                    
+                    //load google script
+                    this.loadGoogleScript(function () {
+                        //get google authorize
+                        window.gapi.analytics.auth.authorize({
+                            serverAuth: {
+                                access_token: AccessToken
+                            }
+                        });
+                        //finally after all is done we call `Callback`
+                        Callback.call(googleAnalytic);
+                    });
+                },
+
+                //load google script
+                loadGoogleScript: function (Callback) {
+                    //make sure `Callback` is a function
+                    if (!Toolbox.isFunction(Callback)) {
+                        Toolbox.assert('Function SocialReport.Google.loadGoogleScript: `Callback` is not a function');
+                        return false;
+                    }
+                    //load google script
+                    $.getScript('https://www.google.com/jsapi', function () {
+                        $.getScript('https://www.gstatic.com/charts/loader.js', function () {
+                            (function (w, d, s, g, js, fs) {
+                                if (w.gapi) {
+                                    g = w.gapi;
+                                } else {
+                                    g = w.gapi = {};
+                                }
+                                //g = w.gapi || (w.gapi = {});
+                                g.analytics = {
+                                    q: [],
+                                    ready: function (f) {
+                                        this.q.push(f);
+                                    }
+                                };
+                                js = d.createElement(s);
+                                fs = d.getElementsByTagName(s)[0];
+                                js.src = 'https://apis.google.com/js/platform.js';
+                                fs.parentNode.insertBefore(js, fs);
+                                js.onload = function () {
+                                    g.load('analytics');
+                                };
+                            }(window, document, 'script'));
+
+                            //when google analytics is ready
+                            window.gapi.analytics.ready(function () {
+                                //load something for visualization linechart 
+                                window.google.charts.load('current', {
+                                    packages: ['corechart', 'line']
+                                });
+                                //after google script all loaded, get google authorize and load packages for visualization linechart, we call the Callback function
+                                window.google.charts.setOnLoadCallback(function () {
+                                    //after all google script is loaded
+                                    Callback.call();
+                                });
+                            });
+                        });
+                    });
                 }
             };
 
@@ -2275,4 +2352,4 @@ var jQuery = jQuery,
     }());
 
 
-}(jQuery, window, moment, Chart));
+}(jQuery, window, document, moment, Chart));
