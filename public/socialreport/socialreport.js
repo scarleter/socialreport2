@@ -688,6 +688,10 @@ var jQuery = jQuery,
                     var data = new window.google.visualization.DataTable(),
                         chart,
                         columnDataKey,
+                        formaterForToolTip,
+                        formaterForToolTipSaver = [],
+                        formaterForToolTipSaverKey,
+                        columnIndex,
                         option = $.extend({}, {
                             width: '100%',
                             height: 300,
@@ -715,21 +719,35 @@ var jQuery = jQuery,
                                 }
                             }
                         }, ChartData.option);
+                    //loop columnData
                     for (columnDataKey in ChartData.columnData) {
                         if (ChartData.columnData.hasOwnProperty(columnDataKey)) {
                             data.addColumn(ChartData.columnData[columnDataKey].type, ChartData.columnData[columnDataKey].name);
+                            //if columnData has pattern attribute, we will use it to format tooltip
+                            if (ChartData.columnData[columnDataKey].pattern) {
+                                //create a formater by patter
+                                formaterForToolTip = new window.google.visualization.DateFormat({
+                                    pattern: ChartData.columnData[columnDataKey].pattern
+                                });
+                                //save the formater and the index of column. loop to format after data has been all set
+                                formaterForToolTipSaver.push({
+                                    formater: formaterForToolTip,
+                                    index: columnDataKey
+                                });
+                            }
                         }
                     }
+                    //set rowData
                     data.addRows(ChartData.rowData);
-                    //                        dateFormaterInToolTip = new google.visualization.DateFormat({
-                    //                            pattern: 'yyyy/M/d'
-                    //                        }),
-                    //                        durationFormaterInToolTip = new google.visualization.DateFormat({
-                    //                            pattern: 'mm:ss'
-                    //                        });
-                    //to format the date in tooltip
-                    //                    dateFormaterInToolTip.format(data, 0);
-                    //                    durationFormaterInToolTip.format(data, 1);
+                    //format tooltip if we do have formater 
+                    for (formaterForToolTipSaverKey in formaterForToolTipSaver) {
+                        if (formaterForToolTipSaver.hasOwnProperty(formaterForToolTipSaverKey)) {
+                            formaterForToolTip = formaterForToolTipSaver[formaterForToolTipSaverKey].formater;
+                            columnIndex = formaterForToolTipSaver[formaterForToolTipSaverKey].index;
+                            formaterForToolTip.format(data, parseInt(columnIndex, 0));
+                        }
+                    }
+                    //finally draw linechart
                     chart = new window.google.visualization.LineChart(document.getElementById(Id));
                     chart.draw(data, option);
                 }
