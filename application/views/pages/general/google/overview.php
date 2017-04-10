@@ -152,9 +152,58 @@
         };
 
         //build google analytics chart
+        buildOverviewDataTable(params);
         buildUsersLineChart(params);
         buildPageviewsLineChart(params);
         buildAvgSessionDurationLineChart(params);
+    }
+    
+    //build overview data table
+    function buildOverviewDataTable(Params){
+        var params = $.extend({}, {
+            metrics: 'ga:sessions,ga:users,ga:pageviews,ga:pageviewsPerSession',
+            dimensions: 'ga:medium'
+        }, Params);
+        SocialReport.GoogleAnalytics.getGoogleAnalyticsData(params, function(resp) {
+            var dataArr = [];
+            
+            //make sure resp.totalsForAllResults exist
+            if(!resp.totalsForAllResults){
+                SocialReport.Toolbox.assert.assert('No data avaliable in the request of Overview of google analytics');
+                return false;
+            }
+            //set data to dataArr
+            dataArr.push([resp.totalsForAllResults['ga:sessions'], resp.totalsForAllResults['ga:users'], resp.totalsForAllResults['ga:pageviews'], resp.totalsForAllResults['ga:pageviewsPerSession']]);
+            //if table is exist
+            if (troperlaicos.overviewTable) {
+                //use repaint function to 
+                troperlaicos.overviewTable.repaint(data);
+            } else {
+                //build datatable object
+                troperlaicos.overviewTable = new SocialReport.DataTables('overviewTable', dataArr, {
+                    paging: false,
+                    lengthChange: false,
+                    searching: false,
+                    ordering: false,
+                    info: false,
+                    autoWidth: false,
+                    border: false,
+                    columns: [{
+                            title: "Sessions"
+                        },
+                        {
+                            title: "Users"
+                        },
+                        {
+                            title: "Pageviews"
+                        },
+                        {
+                            title: "Pages / Session"
+                        }
+                    ]
+                });
+            }
+        });
     }
 
     //build google analytics UsersLineChart
