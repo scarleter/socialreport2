@@ -125,7 +125,7 @@
             'ids': JSON.parse('<?php echo $ids;?>'),
             'behaviorAllPagesMax': 30,
         };
-
+        //load google script and get google authorize
         SocialReport.GoogleAnalytics.ready('<?php echo $accessToken;?>', googleAnalyticsReady);
     });
 
@@ -139,118 +139,116 @@
             option: troperlaicos.ids,
             template: ['<div class="row"><div class="col-md-4"><div class="form-group"><label>Property</label><span id="', '%ID%Select"></span></div></div><div class="col-md-6"><div class="form-group"><label>Date range button:</label><div class="input-group"><span id="', '%ID%DateRangePicker"></span></div></div></div></div>']
         });
+    }
+    
+    //##################################################
+    //dataSelectorPanel change will trigger this handler
+    //##################################################
+    function dataSelectorPanelChangeHandler(currentProperty, start, end) {
+        var params = {
+            since: start.format("YYYY-MM-DD"),
+            until: end.format("YYYY-MM-DD"),
+            ids: currentProperty
+        };
 
-        //##################################################
-        //dataSelectorPanel change will trigger this handler
-        //##################################################
-        function dataSelectorPanelChangeHandler(currentProperty, start, end) {
-            var params = {
-                since: start.format("YYYY-MM-DD"),
-                until: end.format("YYYY-MM-DD"),
-                ids: currentProperty
-            };
+        //build google analytics chart
+        buildUsersLineChart(params);
+        buildPageviewsLineChart(params);
+        buildAvgSessionDurationLineChart(params);
+    }
 
-            //build google analytics chart
-            buildUsersLineChart(params);
-            buildPageviewsLineChart(params);
-            buildAvgSessionDurationLineChart(params);
-
-        }
-        
-        //build google analytics UsersLineChart
-        function buildUsersLineChart(Params){
-            var params = $.extend({}, {
-                metrics: 'ga:users',
-                dimensions: 'ga:date'
-            }, Params);
-            SocialReport.GoogleAnalytics.getGoogleAnalyticsData(params, function(resp) {
-                var data = resp.rows,
-                    chartData = {
-                        rowData: [],
-                        columnData: [{
-                            type: 'datetime',
-                            name: 'date',
-                            pattern: 'yyyy/M/d'//for formatting tooltip
-                        }, {
-                            type: 'number',
-                            name: 'Users'
-                        }]
-                    },
-                    options = {};
-                //format data in 2d Array
-                for (key in data) {
-                    if (data.hasOwnProperty(key)) {
-                        chartData.rowData.push([new Date(data[key][0].substring(0, 4) + ',' + data[key][0].substring(4, 6) + ',' + data[key][0].substring(6, 8)), parseInt(data[key][1], 0)]);
-                    }
+    //build google analytics UsersLineChart
+    function buildUsersLineChart(Params){
+        var params = $.extend({}, {
+            metrics: 'ga:users',
+            dimensions: 'ga:date'
+        }, Params);
+        SocialReport.GoogleAnalytics.getGoogleAnalyticsData(params, function(resp) {
+            var data = resp.rows,
+                chartData = {
+                    rowData: [],
+                    columnData: [{
+                        type: 'datetime',
+                        name: 'date',
+                        pattern: 'yyyy/M/d'//for formatting tooltip
+                    }, {
+                        type: 'number',
+                        name: 'Users'
+                    }]
+                },
+                options = {};
+            //format data in 2d Array
+            for (key in data) {
+                if (data.hasOwnProperty(key)) {
+                    chartData.rowData.push([new Date(data[key][0].substring(0, 4) + ',' + data[key][0].substring(4, 6) + ',' + data[key][0].substring(6, 8)), parseInt(data[key][1], 0)]);
                 }
-                //draw line chart
-                SocialReport.GoogleAnalytics.drawLineChartByGoogleVisualization('userstimeline', chartData, options);
-            });
-        }
-        
-        //build google analytics Pageviews LineChart
-        function buildPageviewsLineChart(Params){
-            var params = $.extend({}, {
-                metrics: 'ga:pageviews',
-                dimensions: 'ga:date'
-            }, Params);
-            SocialReport.GoogleAnalytics.getGoogleAnalyticsData(params, function(resp) {
-                var data = resp.rows,
-                    chartData = {
-                        rowData: [],
-                        columnData: [{
-                            type: 'datetime',
-                            name: 'date',
-                            pattern: 'yyyy/M/d'//for formatting tooltip
-                        }, {
-                            type: 'number',
-                            name: 'Pageviews'
-                        }]
-                    },
-                    options = {};
-                //format data in 2d Array
-                for (key in data) {
-                    if (data.hasOwnProperty(key)) {
-                        chartData.rowData.push([new Date(data[key][0].substring(0, 4) + ',' + data[key][0].substring(4, 6) + ',' + data[key][0].substring(6, 8)), parseInt(data[key][1], 0)]);
-                    }
-                }
-                //draw line chart
-                SocialReport.GoogleAnalytics.drawLineChartByGoogleVisualization('pageviewstimeline', chartData, options);
-            });
-        }
+            }
+            //draw line chart
+            SocialReport.GoogleAnalytics.drawLineChartByGoogleVisualization('userstimeline', chartData, options);
+        });
+    }
 
-        //build google analytics avg session duration line chart
-        function buildAvgSessionDurationLineChart(Params) {
-            var params = $.extend({}, {
-                metrics: 'ga:sessions,ga:avgSessionDuration',
-                dimensions: 'ga:date'
-            }, Params);
-            SocialReport.GoogleAnalytics.getGoogleAnalyticsData(params, function(resp) {
-                var data = resp.rows,
-                    chartData = {
-                        rowData: [],
-                        columnData: [{
-                            type: 'datetime',
-                            name: 'date',
-                            pattern: 'yyyy/M/d'//for formatting tooltip
-                        }, {
-                            type: 'datetime',
-                            name: 'Avg. Session Duration',
-                            pattern: 'mm:ss'//for formatting tooltip
-                        }]
-                    },
-                    options = {};
-                //format data in 2d Array
-                for (key in data) {
-                    if (data.hasOwnProperty(key)) {
-                        chartData.rowData.push([new Date(data[key][0].substring(0, 4) + ',' + data[key][0].substring(4, 6) + ',' + data[key][0].substring(6, 8)), new Date(parseInt(data[key][2] * 1000))]);
-                    }
+    //build google analytics Pageviews LineChart
+    function buildPageviewsLineChart(Params){
+        var params = $.extend({}, {
+            metrics: 'ga:pageviews',
+            dimensions: 'ga:date'
+        }, Params);
+        SocialReport.GoogleAnalytics.getGoogleAnalyticsData(params, function(resp) {
+            var data = resp.rows,
+                chartData = {
+                    rowData: [],
+                    columnData: [{
+                        type: 'datetime',
+                        name: 'date',
+                        pattern: 'yyyy/M/d'//for formatting tooltip
+                    }, {
+                        type: 'number',
+                        name: 'Pageviews'
+                    }]
+                },
+                options = {};
+            //format data in 2d Array
+            for (key in data) {
+                if (data.hasOwnProperty(key)) {
+                    chartData.rowData.push([new Date(data[key][0].substring(0, 4) + ',' + data[key][0].substring(4, 6) + ',' + data[key][0].substring(6, 8)), parseInt(data[key][1], 0)]);
                 }
-                //draw line chart
-                SocialReport.GoogleAnalytics.drawLineChartByGoogleVisualization('avgsessiondurationtimeline', chartData, options);
-            });
-        }
+            }
+            //draw line chart
+            SocialReport.GoogleAnalytics.drawLineChartByGoogleVisualization('pageviewstimeline', chartData, options);
+        });
+    }
 
+    //build google analytics avg session duration line chart
+    function buildAvgSessionDurationLineChart(Params) {
+        var params = $.extend({}, {
+            metrics: 'ga:sessions,ga:avgSessionDuration',
+            dimensions: 'ga:date'
+        }, Params);
+        SocialReport.GoogleAnalytics.getGoogleAnalyticsData(params, function(resp) {
+            var data = resp.rows,
+                chartData = {
+                    rowData: [],
+                    columnData: [{
+                        type: 'datetime',
+                        name: 'date',
+                        pattern: 'yyyy/M/d'//for formatting tooltip
+                    }, {
+                        type: 'datetime',
+                        name: 'Avg. Session Duration',
+                        pattern: 'mm:ss'//for formatting tooltip
+                    }]
+                },
+                options = {};
+            //format data in 2d Array
+            for (key in data) {
+                if (data.hasOwnProperty(key)) {
+                    chartData.rowData.push([new Date(data[key][0].substring(0, 4) + ',' + data[key][0].substring(4, 6) + ',' + data[key][0].substring(6, 8)), new Date(parseInt(data[key][2] * 1000))]);
+                }
+            }
+            //draw line chart
+            SocialReport.GoogleAnalytics.drawLineChartByGoogleVisualization('avgsessiondurationtimeline', chartData, options);
+        });
     }
 
 </script>
