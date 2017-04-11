@@ -140,14 +140,14 @@
             template: ['<div class="row"><div class="col-md-4"><div class="form-group"><label>Property</label><span id="', '%ID%Select"></span></div></div><div class="col-md-6"><div class="form-group"><label>Date range button:</label><div class="input-group"><span id="', '%ID%DateRangePicker"></span></div></div></div></div>']
         });
     }
-    
+
     //##################################################
     //dataSelectorPanel change will trigger this handler
     //##################################################
     function dataSelectorPanelChangeHandler(currentProperty, start, end) {
         var params = {
-            since: start.format("YYYY-MM-DD"),
-            until: end.format("YYYY-MM-DD"),
+            'start-date': start.format("YYYY-MM-DD"),
+            'end-date': end.format("YYYY-MM-DD"),
             ids: currentProperty
         };
 
@@ -156,24 +156,25 @@
         buildUsersLineChart(params);
         buildPageviewsLineChart(params);
         buildAvgSessionDurationLineChart(params);
+        buildBehaviorAllPageDataTable(params);
     }
-    
+
     //build overview data table
-    function buildOverviewDataTable(Params){
+    function buildOverviewDataTable(Params) {
         var params = $.extend({}, {
             metrics: 'ga:sessions,ga:users,ga:pageviews,ga:pageviewsPerSession',
             dimensions: 'ga:medium'
         }, Params);
         SocialReport.GoogleAnalytics.getGoogleAnalyticsData(params, function(resp) {
             var dataArr = [];
-            
+
             //make sure resp.totalsForAllResults exist
-            if(!resp.totalsForAllResults){
+            if (!resp.totalsForAllResults) {
                 SocialReport.Toolbox.assert.assert('No data avaliable in the request of Overview of google analytics');
                 return false;
             }
             //set data to dataArr
-            dataArr.push([resp.totalsForAllResults['ga:sessions'], resp.totalsForAllResults['ga:users'], resp.totalsForAllResults['ga:pageviews'], resp.totalsForAllResults['ga:pageviewsPerSession']]);
+            dataArr.push(['Data', Number(resp.totalsForAllResults['ga:sessions']).toLocaleString(), Number(resp.totalsForAllResults['ga:users']).toLocaleString(), Number(resp.totalsForAllResults['ga:pageviews']).toLocaleString(), Number(resp.totalsForAllResults['ga:pageviewsPerSession']).toFixed(2)]);
             //if table is exist
             if (troperlaicos.overviewTable) {
                 //use repaint function to 
@@ -189,6 +190,8 @@
                     autoWidth: false,
                     border: false,
                     columns: [{
+                            title: ""
+                        },{
                             title: "Sessions"
                         },
                         {
@@ -207,7 +210,7 @@
     }
 
     //build google analytics UsersLineChart
-    function buildUsersLineChart(Params){
+    function buildUsersLineChart(Params) {
         var params = $.extend({}, {
             metrics: 'ga:users',
             dimensions: 'ga:date'
@@ -219,7 +222,7 @@
                     columnData: [{
                         type: 'datetime',
                         name: 'date',
-                        pattern: 'yyyy/M/d'//for formatting tooltip
+                        pattern: 'yyyy/M/d' //for formatting tooltip
                     }, {
                         type: 'number',
                         name: 'Users'
@@ -238,7 +241,7 @@
     }
 
     //build google analytics Pageviews LineChart
-    function buildPageviewsLineChart(Params){
+    function buildPageviewsLineChart(Params) {
         var params = $.extend({}, {
             metrics: 'ga:pageviews',
             dimensions: 'ga:date'
@@ -250,7 +253,7 @@
                     columnData: [{
                         type: 'datetime',
                         name: 'date',
-                        pattern: 'yyyy/M/d'//for formatting tooltip
+                        pattern: 'yyyy/M/d' //for formatting tooltip
                     }, {
                         type: 'number',
                         name: 'Pageviews'
@@ -281,11 +284,11 @@
                     columnData: [{
                         type: 'datetime',
                         name: 'date',
-                        pattern: 'yyyy/M/d'//for formatting tooltip
+                        pattern: 'yyyy/M/d' //for formatting tooltip
                     }, {
                         type: 'datetime',
                         name: 'Avg. Session Duration',
-                        pattern: 'mm:ss'//for formatting tooltip
+                        pattern: 'mm:ss' //for formatting tooltip
                     }]
                 },
                 options = {};
@@ -297,6 +300,21 @@
             }
             //draw line chart
             SocialReport.GoogleAnalytics.drawLineChartByGoogleVisualization('avgsessiondurationtimeline', chartData, options);
+        });
+    }
+
+    //build google ananlytics behavior all page data table
+    function buildBehaviorAllPageDataTable(Params) {
+        var params = $.extend({}, {
+            'metrics': 'ga:pageviews,ga:uniquePageviews,ga:avgTimeOnPage',
+            'dimensions': 'ga:pagePath,ga:pageTitle',
+            'max-results': 30,
+            'sort': '-ga:pageviews'
+        }, Params);
+        SocialReport.GoogleAnalytics.getGoogleAnalyticsData(params, function(resp) {
+            console.info(resp);
+
+
         });
     }
 

@@ -657,21 +657,15 @@ var jQuery = jQuery,
                 //a method to get google analytics data
                 getGoogleAnalyticsData: function (Params, Callback) {
                     var params = $.extend({}, {
-                        'since': moment().subtract(6, 'days').format("YYYY-MM-DD"),
-                        'until': moment().format("YYYY-MM-DD")
+                        'start-date': moment().subtract(6, 'days').format("YYYY-MM-DD"),
+                        'end-date': moment().format("YYYY-MM-DD")
                     }, Params);
                     //make sure `Params` is valid and `Callback` is a function
                     if (!params.ids || !params.metrics || !params.dimensions || !Toolbox.isFunction(Callback)) {
                         Toolbox.assert('Function SocialReport.GoogleAnalytics.getGoogleAnalyticsData: `Params` is invalid or `Callback` is not a function');
                         return false;
                     }
-                    window.gapi.client.analytics.data.ga.get({
-                        ids: params.ids,
-                        'metrics': params.metrics,
-                        'start-date': params.since,
-                        'end-date': params.until,
-                        'dimensions': params.dimensions
-                    }).execute(function (resp) {
+                    window.gapi.client.analytics.data.ga.get(params).execute(function (resp) {
                         Callback.call(GoogleAnalytics, resp);
                     });
                 },
