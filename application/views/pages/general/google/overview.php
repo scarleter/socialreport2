@@ -122,15 +122,22 @@
     $(function() {
         //set a gobal variable
         window.troperlaicos = {
-            'ids': JSON.parse('<?php echo $ids;?>'),
-            'behaviorAllPagesMax': 30,
+            ids: JSON.parse('<?php echo $ids;?>'),
+            googleRequestloadingLayer: '',
+            googleLoadingLayer: ''
         };
+        //set google loading layer
+        troperlaicos.googleLoadingLayer = layer.load(2, {
+            shade: [0.1, '#000']
+        });
         //load google script and get google authorize
         SocialReport.GoogleAnalytics.ready('<?php echo $accessToken;?>', googleAnalyticsReady);
     });
 
     //when google script is loaded and get google authorize this function will call
     function googleAnalyticsReady() {
+        //close google loading layer
+        layer.close(troperlaicos.googleLoadingLayer);
         var googleAnalytics = this;
 
         //data selector panel,change Property and dateRnage to get different data
@@ -151,6 +158,11 @@
             ids: currentProperty
         };
 
+        //set google request loading layer
+        troperlaicos.googleRequestloadingLayer = layer.load(2, {
+            shade: [0.1, '#000']
+        });
+
         //build google analytics chart
         buildOverviewDataTable(params);
         buildUsersLineChart(params);
@@ -166,22 +178,22 @@
             dimensions: 'ga:medium'
         }, Params);
         SocialReport.GoogleAnalytics.getGoogleAnalyticsData(params, function(resp) {
-            var dataArr = [];
+            var chartData = [];
 
             //make sure resp.totalsForAllResults exist
             if (!resp.totalsForAllResults) {
                 SocialReport.Toolbox.assert.assert('No data avaliable in the request of Overview of google analytics');
                 return false;
             }
-            //set data to dataArr
-            dataArr.push(['Data', Number(resp.totalsForAllResults['ga:sessions']).toLocaleString(), Number(resp.totalsForAllResults['ga:users']).toLocaleString(), Number(resp.totalsForAllResults['ga:pageviews']).toLocaleString(), Number(resp.totalsForAllResults['ga:pageviewsPerSession']).toFixed(2)]);
+            //set data to chartData
+            chartData.push(['Data', Number(resp.totalsForAllResults['ga:sessions']).toLocaleString(), Number(resp.totalsForAllResults['ga:users']).toLocaleString(), Number(resp.totalsForAllResults['ga:pageviews']).toLocaleString(), Number(resp.totalsForAllResults['ga:pageviewsPerSession']).toFixed(2)]);
             //if table is exist
             if (troperlaicos.overviewTable) {
                 //use repaint function to 
-                troperlaicos.overviewTable.repaint(dataArr);
+                troperlaicos.overviewTable.repaint(chartData);
             } else {
                 //build datatable object
-                troperlaicos.overviewTable = new SocialReport.DataTables('overviewTable', dataArr, {
+                troperlaicos.overviewTable = new SocialReport.DataTables('overviewTable', chartData, {
                     paging: false,
                     lengthChange: false,
                     searching: false,
@@ -191,7 +203,7 @@
                     border: false,
                     columns: [{
                             title: ""
-                        },{
+                        }, {
                             title: "Sessions"
                         },
                         {
@@ -312,8 +324,67 @@
             'sort': '-ga:pageviews'
         }, Params);
         SocialReport.GoogleAnalytics.getGoogleAnalyticsData(params, function(resp) {
-            console.info(resp);
+            //close google request loading layer
+            layer.close(troperlaicos.googleRequestloadingLayer);
+            
+            var chartData = [],
+                dataArr = [],
+                rowKey,
+                url;
 
+            //make sure resp.rows exist
+            if (!resp.rows) {
+                SocialReport.Toolbox.assert.assert('No data avaliable in the request of Behavior all page of google analytics');
+                return false;
+            }
+            //loop to set data to chartData
+            for (rowKey in resp.rows) {
+                if (resp.rows.hasOwnProperty(rowKey)) {
+                    dataArr = [];
+                    url = 'http://eastweek.my-magazine.me' + resp.rows[rowKey][0];
+                    dataArr.push('<a href="' + url + '" target="_blank">' + url + '</a>');
+                    dataArr.push(resp.rows[rowKey][1]);
+                    dataArr.push(parseInt(resp.rows[rowKey][2]).toLocaleString());
+                    dataArr.push(parseInt(resp.rows[rowKey][3]).toLocaleString());
+                    dataArr.push(moment().set({
+                        'minute': 0,
+                        'second': resp.rows[rowKey][4]
+                    }).format('mm:ss'));
+                    chartData.push(dataArr);
+                }
+            }
+            //if table is exist
+            if (troperlaicos.behaviorAllPages) {
+                //use repaint function to 
+                troperlaicos.behaviorAllPages.repaint(chartData);
+            } else {
+                //build datatable object
+                troperlaicos.behaviorAllPages = new SocialReport.DataTables('behaviorAllPages', chartData, {
+                    paging: false,
+                    lengthChange: false,
+                    searching: true,
+                    ordering: false,
+                    info: false,
+                    autoWidth: false,
+                    border: false,
+                    columns: [{
+                            title: "Page"
+                        },
+                        {
+                            title: "Title"
+                        },
+                        {
+                            title: "Pageviews"
+                        },
+                        {
+                            title: "Unique Pageviews"
+                        },
+                        {
+                            title: "Avg. Time on Page"
+                        }
+                    ]
+                });
+            }
 
         });
     }
