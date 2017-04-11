@@ -134,7 +134,7 @@
         var googleAnalytics = this;
 
         //data selector panel,change Property and dateRnage to get different data
-        troperlaicos.dataSelectorPanel = new SocialReport.DataComparePanel('dataSelectorPanel', {
+        troperlaicos.dataSelectorPanel = new SocialReport.DateRangePickerSelectorPanel('dataSelectorPanel', {
             changeHandler: dataSelectorPanelChangeHandler,
             option: troperlaicos.ids,
             template: ['<div class="row"><div class="col-md-4"><div class="form-group"><label>Property</label><span id="', '%ID%Select"></span></div></div><div class="col-md-6"><div class="form-group"><label>Date range button:</label><div class="input-group"><span id="', '%ID%DateRangePicker"></span></div></div></div></div>']
@@ -178,7 +178,7 @@
             //if table is exist
             if (troperlaicos.overviewTable) {
                 //use repaint function to 
-                troperlaicos.overviewTable.repaint(data);
+                troperlaicos.overviewTable.repaint(dataArr);
             } else {
                 //build datatable object
                 troperlaicos.overviewTable = new SocialReport.DataTables('overviewTable', dataArr, {

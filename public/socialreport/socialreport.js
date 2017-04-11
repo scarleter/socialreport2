@@ -379,12 +379,12 @@ var jQuery = jQuery,
             },
 
 
-            //SocialReport.DataComparePanel
+            //SocialReport.DateRangePickerSelectorPanel
             //-----------------------------
 
-            //DataComparePanel contains a DateRangePicker object and a Select object
+            //DateRangePickerSelectorPanel contains a DateRangePicker object and a Select object
             //just make DateRangePicker and Select become one class
-            DataComparePanel = SocialReport.DataComparePanel = function (Id, Options) {
+            DateRangePickerSelectorPanel = SocialReport.DateRangePickerSelectorPanel = function (Id, Options) {
                 this.initialize(Id, Options);
             },
 
@@ -1072,8 +1072,8 @@ var jQuery = jQuery,
             }
         });
 
-        //extend DataComparePanel class prototype object
-        $.extend(DataComparePanel.prototype, View.prototype, {
+        //extend DateRangePickerSelectorPanel class prototype object
+        $.extend(DateRangePickerSelectorPanel.prototype, View.prototype, {
             //set Select
             setSelect: function (Obj) {
                 //set it if `Obj` is create by Select
@@ -1081,7 +1081,7 @@ var jQuery = jQuery,
                     this.select = Obj;
                     return this.select;
                 } else {
-                    Toolbox.assert('Function SocialReport.DataComparePanel.setSelect: `Obj` is undefined or not create by SocialReport.Select');
+                    Toolbox.assert('Function SocialReport.DateRangePickerSelectorPanel.setSelect: `Obj` is undefined or not create by SocialReport.Select');
                     return false;
                 }
             },
@@ -1098,7 +1098,7 @@ var jQuery = jQuery,
                     this.dateRangePicker = Obj;
                     return this.dateRangePicker;
                 } else {
-                    Toolbox.assert('Function SocialReport.DataComparePanel.setDateRangePicker: `Obj` is undefined or not create by SocialReport.DateRangePicker');
+                    Toolbox.assert('Function SocialReport.DateRangePickerSelectorPanel.setDateRangePicker: `Obj` is undefined or not create by SocialReport.DateRangePicker');
                     return false;
                 }
             },
@@ -1149,7 +1149,7 @@ var jQuery = jQuery,
                 if (Toolbox.isFunction(ChangeHandler)) {
                     this.changeHandler = ChangeHandler;
                 } else {
-                    Toolbox.assert('Function SocialReport.DataComparePanel.setChangeHandler: `ChangeHandler` is not a function');
+                    Toolbox.assert('Function SocialReport.DateRangePickerSelectorPanel.setChangeHandler: `ChangeHandler` is not a function');
                     return false;
                 }
             },
@@ -1159,7 +1159,7 @@ var jQuery = jQuery,
                 return this.changeHandler;
             },
 
-            //trigger DataComparePanel change event
+            //trigger DateRangePickerSelectorPanel change event
             triggerChange: function () {
                 var currentValue = this.getCurrentValue(),
                     start = this.getStart(),
@@ -1170,21 +1170,21 @@ var jQuery = jQuery,
 
             //generate Select change event handler
             genSelectChangeHandler: function () {
-                //save DataComparePanel object
+                //save DateRangePickerSelectorPanel object
                 var context = this;
                 return function (CurrentValue) {
                     if (CurrentValue) {
                         context.setCurrentValue(CurrentValue);
                         context.triggerChange();
                     } else {
-                        Toolbox.assert('Function SocialReport.DataComparePanel.genSelectChangeHandler: `CurrentValue` is undefined');
+                        Toolbox.assert('Function SocialReport.DateRangePickerSelectorPanel.genSelectChangeHandler: `CurrentValue` is undefined');
                     }
                 };
             },
 
             //generate DateRangePicker change event handler
             genDateRangePickerChangeHandler: function () {
-                //save DataComparePanel object
+                //save DateRangePickerSelectorPanel object
                 var context = this;
                 return function (Start, End) {
                     if (Toolbox.isInstance(Start, moment) && Toolbox.isInstance(End, moment)) {
@@ -1192,7 +1192,7 @@ var jQuery = jQuery,
                         context.setEnd(End);
                         context.triggerChange();
                     } else {
-                        Toolbox.assert('Function SocialReport.DataComparePanel.genDateRangePickerChangeHandler: `Start` or `End` is undefined or is invalid (need to be constructor by moment"');
+                        Toolbox.assert('Function SocialReport.DateRangePickerSelectorPanel.genDateRangePickerChangeHandler: `Start` or `End` is undefined or is invalid (need to be constructor by moment"');
                     }
                 };
 
@@ -1205,7 +1205,7 @@ var jQuery = jQuery,
                     template = this.getTemplate().join('').replace(/%ID%/g, id);
                 //check if there is element obj whose id attribute is `id`
                 if ($obj.size() === 0) {
-                    Toolbox.assert('Function SocialReport.DataComparePanel.render: there is no element\'s id is ' + id);
+                    Toolbox.assert('Function SocialReport.DateRangePickerSelectorPanel.render: there is no element\'s id is ' + id);
                     return false;
                 }
                 $obj.prop('outerHTML', template);
@@ -1223,7 +1223,7 @@ var jQuery = jQuery,
                 this.setChangeHandler(Options.changeHandler);
                 //need to reander before set Select and DateRangePicker
                 this.render();
-                //create new Select object and DateRangePicker object for the DataComparePanel as internal members
+                //create new Select object and DateRangePicker object for the DateRangePickerSelectorPanel as internal members
                 this.setSelect(new Select(Id + 'Select', {
                     option: Options.option,
                     changeHandler: this.genSelectChangeHandler()

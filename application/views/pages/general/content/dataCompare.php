@@ -224,14 +224,14 @@
             },
         };
         //website setting panel,can choose dateRange to get different data
-        troperlaicos.websitePanel = new SocialReport.DataComparePanel('websitePanel', {
+        troperlaicos.websitePanel = new SocialReport.DateRangePickerSelectorPanel('websitePanel', {
             changeHandler: websitePanelChangeHandler,
             option: {
                 '<?php echo $pageId;?>': '<?php echo $websiteName;?>'
             }
         });
         //competitor setting panel,change competitor and dateRnage to get different data
-        troperlaicos.competitorPanel = new SocialReport.DataComparePanel('competitorPanel', {
+        troperlaicos.competitorPanel = new SocialReport.DateRangePickerSelectorPanel('competitorPanel', {
             changeHandler: competitorPanelChangeHandler,
             option: troperlaicos.pagesToWatchList
         });
@@ -303,7 +303,7 @@
             troperlaicos.website.lineChart.avgFanPageLikeData = avgPageFanLikeData;
             //close loadding layer
             layer.close(troperlaicos.websiteLoadingLayer);
-            //then when the other DataComparePanel finish load we build the whold LineChart
+            //then when the other DateRangePickerSelectorPanel finish load we build the whold LineChart
             if (troperlaicos.competitor.lineChart.postSizeData) {
                 buildLineChart();
             }
@@ -345,7 +345,7 @@
             troperlaicos.competitor.lineChart.avgFanPageLikeData = avgPageFanLikeData;
             //close loadding layer
             layer.close(troperlaicos.competitorLoadingLayer);
-            //then when the other DataComparePanel finish load we build the whold LineChart
+            //then when the other DateRangePickerSelectorPanel finish load we build the whold LineChart
             if (troperlaicos.website.lineChart.postSizeData) {
                 buildLineChart();
             }
