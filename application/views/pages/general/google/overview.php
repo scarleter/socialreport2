@@ -178,15 +178,10 @@
             dimensions: 'ga:medium'
         }, Params);
         SocialReport.GoogleAnalytics.getGoogleAnalyticsData(params, function(resp) {
-            var chartData = [];
-
-            //make sure resp.totalsForAllResults exist
-            if (!resp.totalsForAllResults) {
-                SocialReport.Toolbox.assert.assert('No data avaliable in the request of Overview of google analytics');
-                return false;
-            }
+            var chartData = [],
+                dataSource = resp.totalsForAllResults || [];
             //set data to chartData
-            chartData.push(['Data', Number(resp.totalsForAllResults['ga:sessions']).toLocaleString(), Number(resp.totalsForAllResults['ga:users']).toLocaleString(), Number(resp.totalsForAllResults['ga:pageviews']).toLocaleString(), Number(resp.totalsForAllResults['ga:pageviewsPerSession']).toFixed(2)]);
+            chartData.push(['Data', Number(dataSource['ga:sessions']).toLocaleString(), Number(dataSource['ga:users']).toLocaleString(), Number(dataSource['ga:pageviews']).toLocaleString(), Number(dataSource['ga:pageviewsPerSession']).toFixed(2)]);
             //if table is exist
             if (troperlaicos.overviewTable) {
                 //use repaint function to 
@@ -330,25 +325,21 @@
             var chartData = [],
                 dataArr = [],
                 rowKey,
-                url;
-
-            //make sure resp.rows exist
-            if (!resp.rows) {
-                SocialReport.Toolbox.assert.assert('No data avaliable in the request of Behavior all page of google analytics');
-                return false;
-            }
+                url,
+                dateSource = resp.rows || [];
+            
             //loop to set data to chartData
-            for (rowKey in resp.rows) {
-                if (resp.rows.hasOwnProperty(rowKey)) {
+            for (rowKey in dateSource) {
+                if (dateSource.hasOwnProperty(rowKey)) {
                     dataArr = [];
-                    url = 'http://eastweek.my-magazine.me' + resp.rows[rowKey][0];
+                    url = 'http://eastweek.my-magazine.me' + dateSource[rowKey][0];
                     dataArr.push('<a href="' + url + '" target="_blank">' + url + '</a>');
-                    dataArr.push(resp.rows[rowKey][1]);
-                    dataArr.push(parseInt(resp.rows[rowKey][2]).toLocaleString());
-                    dataArr.push(parseInt(resp.rows[rowKey][3]).toLocaleString());
+                    dataArr.push(dateSource[rowKey][1]);
+                    dataArr.push(parseInt(dateSource[rowKey][2]).toLocaleString());
+                    dataArr.push(parseInt(dateSource[rowKey][3]).toLocaleString());
                     dataArr.push(moment().set({
                         'minute': 0,
-                        'second': resp.rows[rowKey][4]
+                        'second': dateSource[rowKey][4]
                     }).format('mm:ss'));
                     chartData.push(dataArr);
                 }
