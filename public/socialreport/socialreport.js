@@ -693,7 +693,7 @@ var jQuery = jQuery,
                                 width: '100%'
                             },
                             hAxis: {
-                                format: 'yyyy/M/d',
+                                format: 'yyyy-MM-dd',
                                 gridlines: {
                                     color: 'transparent'
                                 }

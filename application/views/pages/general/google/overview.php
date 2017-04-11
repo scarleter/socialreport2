@@ -234,7 +234,7 @@
                     columnData: [{
                         type: 'datetime',
                         name: 'date',
-                        pattern: 'yyyy/M/d' //for formatting tooltip
+                        pattern: 'yyyy-MM-dd' //for formatting tooltip
                     }, {
                         type: 'number',
                         name: 'Users'
@@ -265,7 +265,7 @@
                     columnData: [{
                         type: 'datetime',
                         name: 'date',
-                        pattern: 'yyyy/M/d' //for formatting tooltip
+                        pattern: 'yyyy-MM-dd' //for formatting tooltip
                     }, {
                         type: 'number',
                         name: 'Pageviews'
@@ -296,7 +296,7 @@
                     columnData: [{
                         type: 'datetime',
                         name: 'date',
-                        pattern: 'yyyy/M/d' //for formatting tooltip
+                        pattern: 'yyyy-MM-dd' //for formatting tooltip
                     }, {
                         type: 'datetime',
                         name: 'Avg. Session Duration',
