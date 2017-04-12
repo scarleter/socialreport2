@@ -1619,7 +1619,7 @@ var jQuery = jQuery,
                     postObj.shares = postsData[postIndex].shares ? postsData[postIndex].shares.count : 0;
                     postObj.created_time = Toolbox.formatTime(postsData[postIndex].created_time) || '';
                     postObj.id = postsData[postIndex].id || '';
-                    postObj.message = postsData[postIndex].message || '';
+                    postObj.message = (postsData[postIndex].message.substring(0, 30) + '...') || '';
                     postObj.permalink_url = postsData[postIndex].permalink_url || '';
                     postObj.type = postsData[postIndex].type || '';
                     postObj.insights = (postsData[postIndex].insights && postsData[postIndex].insights.data) || '';
@@ -2111,16 +2111,62 @@ var jQuery = jQuery,
                         },
                         {
                             title: "Posted"
+                        },
+                        {
+                            title: "Organic Reached(a)"
+                        },
+                        {
+                            title: "Paid Reached(b)"
+                        },
+                        {
+                            title: "Total Reached(c)"
+                        },
+                        {
+                            title: "Like(d)"
+                        },
+                        {
+                            title: "Share(e)"
+                        },
+                        {
+                            title: "Comment(f)"
+                        },
+                        {
+                            title: "Video Views(h)"
+                        },
+                        {
+                            title: "Reactions(i)"
+                        },
+                        {
+                            title: "Post Clicks(j)"
+                        },
+                        {
+                            title: "Lifetime Post <br/>Organic Impressions(k)"
+                        },
+                        {
+                            title: "Lifetime Post <br/>Paid Impressions(l)"
+                        },
+                        {
+                            title: "Lifetime Post <br/>Total Impressions(g)"
                         }
                     ],
                     data = [],
                     limit = Limit || 5,
                     type = Type || 'link',
-                    postIndex = 0;
+                    postIndex = 0,
+                    postAttrIndex = 0,
+                    postAttrArray = [];
                 for (postIndex = 0; postIndex < dataSize; postIndex += 1) {
                     //if type suited
                     if (sortedPostsData[postIndex][3] === type) {
-                        data.push([sortedPostsData[postIndex][0], sortedPostsData[postIndex][1], sortedPostsData[postIndex][2], sortedPostsData[postIndex][3], sortedPostsData[postIndex][4]]);
+                        //initialize the `postAttrArray` for save new attribute of suited post
+                        postAttrArray = [];
+                        //loop this post all attribute to build an array which will be added to the `data` array
+                        for (postAttrIndex in sortedPostsData[postIndex]) {
+                            if (sortedPostsData[postIndex].hasOwnProperty(postAttrIndex)) {
+                                postAttrArray.push(sortedPostsData[postIndex][postAttrIndex]);
+                            }
+                        }
+                        data.push(postAttrArray);
                         //when data length reach limit,it should jump out the loop
                         if (data.length >= limit) {
                             break;
