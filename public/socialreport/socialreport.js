@@ -191,7 +191,7 @@ var jQuery = jQuery,
                         return result.data;
                     }
                     options = {
-                        url: 'https://graph.facebook.com/v2.8/' + params.pageid + '/posts?fields=id,permalink_url,message,type,created_time,insights.metric(post_impressions_organic,post_impressions_by_story_type,post_impressions_paid,post_impressions,post_impressions_unique,post_impressions_paid_unique,post_reactions_by_type_total,post_consumptions_by_type,post_video_views),shares,comments.limit(0).summary(1)',
+                        url: 'https://graph.facebook.com/v2.8/' + params.pageid + '/posts?fields=id,admin_creator,permalink_url,message,type,created_time,insights.metric(post_impressions_organic,post_impressions_by_story_type,post_impressions_paid,post_impressions,post_impressions_unique,post_impressions_paid_unique,post_reactions_by_type_total,post_consumptions_by_type,post_video_views),shares,comments.limit(0).summary(1)',
                         context: result
                     };
 
@@ -1158,6 +1158,12 @@ var jQuery = jQuery,
             getChangeHandler: function () {
                 return this.changeHandler;
             },
+            
+            //convert dateRange in text format
+            getDateRangeInText: function () {
+                var dateRangePickerObj = this.getDateRangePicker();
+                return dateRangePickerObj.getStart('MMMM D, YYYY') + ' - ' + dateRangePickerObj.getEnd('MMMM D, YYYY');
+            },
 
             //trigger DateRangePickerSelectorPanel change event
             triggerChange: function () {
@@ -1622,6 +1628,8 @@ var jQuery = jQuery,
                     postObj.message = (postsData[postIndex].message.substring(0, 30) + '...') || '';
                     postObj.permalink_url = postsData[postIndex].permalink_url || '';
                     postObj.type = postsData[postIndex].type || '';
+                    postObj.authorId = postsData[postIndex].admin_creator.id || '';
+                    postObj.authorName = postsData[postIndex].admin_creator.name || '';
                     postObj.insights = (postsData[postIndex].insights && postsData[postIndex].insights.data) || '';
                     //loop to set insights object data
                     for (insightIndex = 0; insightIndex < postObj.insights.length; insightIndex += 1) {
@@ -1801,7 +1809,7 @@ var jQuery = jQuery,
             },
 
             //get standard format data from `TableType` to build datatable
-            getFormatDataFromTableType: function (TableType) {
+            getFormatDataFromTableType: function (TableType, Options) {
                 var dataOrigin = this.getOptions('dataOrigin') || '',
                     tableType = TableType.toLowerCase() || '';
                 switch (dataOrigin.toLowerCase()) {
@@ -1821,6 +1829,8 @@ var jQuery = jQuery,
                         return this.getTopPostsDataInFacebookByType('photo', 5);
                     case 'topvideos':
                         return this.getTopPostsDataInFacebookByType('video', 5);
+                    case 'postlog':
+                        return this.getPostLogDataInFacebookByDate(Options.interval || 1);
                     default:
                         Toolbox.assert('Function SocialReport.Operation.getFormatDataFromTableType: go into the default branch');
                         return this.getData();
@@ -1913,6 +1923,9 @@ var jQuery = jQuery,
                     },
                     {
                         title: "Lifetime Post <br/>Total Impressions(g)"
+                    },
+                    {
+                        title: "Author"
                     }],
                     data = [];
                 //get postsdata in 2d array
@@ -2147,6 +2160,9 @@ var jQuery = jQuery,
                         },
                         {
                             title: "Lifetime Post <br/>Total Impressions(g)"
+                        },
+                        {
+                            title: "Author"
                         }
                     ],
                     data = [],
@@ -2172,6 +2188,94 @@ var jQuery = jQuery,
                             break;
                         }
                     }
+                }
+                return {
+                    data: data,
+                    columnTitle: columnTitle
+                };
+            },
+            
+            //build facebook post log data in datatable format
+            //return `columnTitle` and `data`
+            getPostLogDataInFacebookByDate: function (Interval) {
+                //set the variable for looping
+                //4 mean sort by posted time
+                var sortedPostsData = this.sortPostsData(4),
+                    dataSize = this.getSize(),
+                    columnTitle = [
+                        {
+                            title: "Editor"
+                        },
+                        {
+                            title: "Time"
+                        },
+                        {
+                            title: "Short Description"
+                        },
+                        {
+                            title: "Reach"
+                        },
+                        {
+                            title: "Like"
+                        },
+                        {
+                            title: "Share"
+                        },
+                        {
+                            title: "Comment"
+                        }
+                    ],
+                    data = [],
+                    postIndex = 0,
+                    postAttrArray = [],
+                    interval = parseInt(Interval, 0) || 1,
+                    previousYearMonthDay = '0000-00-00',
+                    previousHourMinuteSecond = '00:00:00',
+                    thisYearMonthDay = '',
+                    thisHour = '',
+                    thisMinute = '',
+                    postMinuteStart,
+                    postMinuteEnd;
+                for (postIndex = dataSize - 1; postIndex >= 0; postIndex -= 1) {
+                    thisYearMonthDay = moment(sortedPostsData[postIndex][4]).format("YYYY-MM-DD");
+                    thisHour = moment(sortedPostsData[postIndex][4]).format("HH");
+                    thisMinute = moment(sortedPostsData[postIndex][4]).format("mm");
+                    //check if `currentYearMonthDay` is change, we will open a new row for showing new date
+                    if (previousYearMonthDay !== thisYearMonthDay) {
+                        //initialize the `postAttrArray` for saving new attribute of post
+                        postAttrArray = [];
+                        //save thisYearMonthDay to previousYearMonthDay
+                        previousYearMonthDay = thisYearMonthDay;
+                        postAttrArray.push('');
+                        postAttrArray.push('<div class="dateHeader">' + thisYearMonthDay + '</div>');
+                        postAttrArray.push('');
+                        postAttrArray.push('');
+                        postAttrArray.push('');
+                        postAttrArray.push('');
+                        postAttrArray.push('');
+                        //push this post array into result array `data`
+                        data.push(postAttrArray);
+                    }
+                    //initialize the `postAttrArray` for saving new attribute of post
+                    postAttrArray = [];
+                    //calculate the start hour:minute:second
+                    postMinuteStart = Math.floor(parseInt(thisMinute, 0) / interval) * interval;
+                    //calculate the start hour:minute:second
+                    postMinuteEnd = postMinuteStart + interval - 1;
+                    //set this post attribute to an array which will be added to the `data` array
+                    postAttrArray.push(sortedPostsData[postIndex][17]);
+                    //postAttrArray.push(thisHour + ':' + postMinuteStart + '00');
+                    //postAttrArray.push(thisHour + ':' + postMinuteStart + ':00 - ' + thisHour + ':' + postMinuteEnd + ':00');
+                    postAttrArray.push(thisYearMonthDay + ' ' + thisHour + ':' + (postMinuteStart < 10 ? '0' + postMinuteStart : postMinuteStart) + ':00');
+                    postAttrArray.push(sortedPostsData[postIndex][2]);
+                    postAttrArray.push(sortedPostsData[postIndex][7]);
+                    postAttrArray.push(sortedPostsData[postIndex][8]);
+                    postAttrArray.push(sortedPostsData[postIndex][9]);
+                    postAttrArray.push(sortedPostsData[postIndex][10]);
+
+
+                    //push this post array into result array `data`
+                    data.push(postAttrArray);
                 }
                 return {
                     data: data,
@@ -2331,12 +2435,14 @@ var jQuery = jQuery,
                     paidReached,
                     totalReached,
                     paidImpressions,
-                    totalImpressions;
+                    totalImpressions,
+                    author;
                 //loop to set a two dimension array to get datatable data
                 for (postIndex = 0; postIndex < dataSize; postIndex += 1) {
                     //some middle variable
                     postArr = [];
                     type = postsData[postIndex].type;
+                    author = postsData[postIndex].authorName;
                     like = postsData[postIndex].like || 0;
                     love = postsData[postIndex].love || 0;
                     haha = postsData[postIndex].haha || 0;
@@ -2371,6 +2477,7 @@ var jQuery = jQuery,
                     postArr.push((totalImpressions - paidImpressions).toLocaleString());
                     postArr.push(paidImpressions.toLocaleString());
                     postArr.push(totalImpressions.toLocaleString());
+                    postArr.push(postsData[postIndex].authorName);
                     //push in data array
                     data.push(postArr);
                 }
@@ -2389,7 +2496,25 @@ var jQuery = jQuery,
                         arrayA = a[index].replace(',', '');
                     return arrayB - arrayA;
                 }
-                resultPostsData = originPostsData.sort(sortByIndex);
+                //a sort function sort by date
+                function sortByDate(a, b) {
+                    var isBefore = moment(a[index]).isBefore(b[index]),
+                        isSame = moment(a[index]).isSame(b[index]);
+                    if (isBefore) {
+                        return 1;
+                    } else if (isSame) {
+                        return 0;
+                    } else {
+                        return -1;
+                    }
+                }
+                //Index is '4' meaning we sort by date
+                if (index === 4) {
+                    resultPostsData = originPostsData.sort(sortByDate);
+                } else {
+                    resultPostsData = originPostsData.sort(sortByIndex);
+                }
+
                 return resultPostsData;
             },
 
