@@ -106,6 +106,7 @@
                 '30': '30 minutes',
                 '60': '60 minutes'
             },
+            defaultValue: '15',
             template: ['<div class="row"><div class="col-md-4" style="max-width:180px;"><div class="form-group"><label>Interval</label><span id="', '%ID%Select"></span></div></div><div class="col-md-6"><div class="form-group"><label>Date range button:</label><div class="input-group"><span id="', '%ID%DateRangePicker"></span></div></div></div></div>']
         });
 

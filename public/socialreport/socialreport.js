@@ -988,6 +988,23 @@ var jQuery = jQuery,
             getSelectOption: function () {
                 return this.selectOpion;
             },
+            
+            //set default value
+            setDefaultValue: function (DefaultValue) {
+                if (DefaultValue) {
+                    this.defaultValue = DefaultValue;
+                    this.setCurrentValue(DefaultValue.toString());
+                } else {
+                    this.defaultValue = undefined;
+                    Toolbox.assert('Function SocialReport.Select.setDefaultValue: `DefaultValue` is undefined');
+                    return false;
+                }
+            },
+            
+            //get default value
+            getDefaultValue: function () {
+                return this.defaultValue;
+            },
 
             //render
             render: function () {
@@ -995,7 +1012,8 @@ var jQuery = jQuery,
                     $obj = $('#' + id),
                     template = this.getTemplate().join('').replace('%ID%', id),
                     selectOpion = this.getSelectOption(),
-                    opionHtml = '';
+                    opionHtml = '',
+                    defaultValue = this.getDefaultValue();
                 //check if there is element obj whose id attribute is `id`
                 if ($obj.size() === 0) {
                     Toolbox.assert('Function SocialReport.Select.render: there is no element\'s id is ' + id);
@@ -1006,10 +1024,13 @@ var jQuery = jQuery,
                 $obj = $('#' + id);
                 //loop the selectOpion to render select
                 $.each(selectOpion, function (key, value) {
-                    opionHtml = opionHtml + '<option value="' + key + '">' + value + '</option>';
+                    opionHtml = opionHtml + '<option value="' + key + '" ' + ((key === defaultValue) ? 'selected' : '') + '>' + value + '</option>';
                 });
                 $obj.html(opionHtml);
-                this.setCurrentValue($obj.find('option:first').val());
+                //only when `defaultValue` is undefined, we set the first value to currentValue
+                if (!defaultValue) {
+                    this.setCurrentValue($obj.find('option:first').val());
+                }
             },
 
             //bind select change event
@@ -1048,11 +1069,11 @@ var jQuery = jQuery,
 
             //set currentValue
             setCurrentValue: function (CurrentValue) {
-                if (Toolbox.isString(CurrentValue)) {
+                if (CurrentValue) {
                     this.currentValue = CurrentValue;
                     return this.currentValue;
                 } else {
-                    Toolbox.assert('Function SocialReport.Select.setCurrentValue: `CurrentValue` is not a string');
+                    Toolbox.assert('Function SocialReport.Select.setCurrentValue: `CurrentValue` is undefined');
                     return false;
                 }
             },
@@ -1065,6 +1086,9 @@ var jQuery = jQuery,
             //initialize function
             initialize: function (Id, Options) {
                 this.setId(Id);
+                if (Options.defaultValue) {
+                    this.setDefaultValue(Options.defaultValue);
+                }
                 this.setSelectOption(Options.option);
                 this.setTemplate(['<select class="form-control" id="', '%ID%', '"></select>']);
                 this.render();
@@ -1232,6 +1256,7 @@ var jQuery = jQuery,
                 //create new Select object and DateRangePicker object for the DateRangePickerSelectorPanel as internal members
                 this.setSelect(new Select(Id + 'Select', {
                     option: Options.option,
+                    defaultValue: Options.defaultValue,
                     changeHandler: this.genSelectChangeHandler()
                 }));
                 this.setDateRangePicker(new DateRangePicker(Id + 'DateRangePicker', {
@@ -1625,11 +1650,11 @@ var jQuery = jQuery,
                     postObj.shares = postsData[postIndex].shares ? postsData[postIndex].shares.count : 0;
                     postObj.created_time = Toolbox.formatTime(postsData[postIndex].created_time) || '';
                     postObj.id = postsData[postIndex].id || '';
-                    postObj.message = (postsData[postIndex].message.substring(0, 30) + '...') || '';
+                    postObj.message = (postsData[postIndex].message || '').substring(0, 30) + '...';
                     postObj.permalink_url = postsData[postIndex].permalink_url || '';
                     postObj.type = postsData[postIndex].type || '';
-                    postObj.authorId = postsData[postIndex].admin_creator.id || '';
-                    postObj.authorName = postsData[postIndex].admin_creator.name || '';
+                    postObj.authorId = (postsData[postIndex].admin_creator && postsData[postIndex].admin_creator.id) || '';
+                    postObj.authorName = (postsData[postIndex].admin_creator && postsData[postIndex].admin_creator.name) || '';
                     postObj.insights = (postsData[postIndex].insights && postsData[postIndex].insights.data) || '';
                     //loop to set insights object data
                     for (insightIndex = 0; insightIndex < postObj.insights.length; insightIndex += 1) {
