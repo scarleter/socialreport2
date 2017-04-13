@@ -97,6 +97,12 @@
                     <!-- /.box-body -->
                 </div>
             </div>
+            <style>
+                .dt-responsive.table tr td.breakall {
+                    word-break: break-all;
+                    max-width: 350px;
+                }
+            </style>
 
             <div class="col-md-12">
                 <div class="box box-info">
@@ -151,11 +157,12 @@
     //##################################################
     //dataSelectorPanel change will trigger this handler
     //##################################################
-    function dataSelectorPanelChangeHandler(currentProperty, start, end) {
+    function dataSelectorPanelChangeHandler(currentProperty, start, end, pageTitleFilterString) {
         var params = {
             'start-date': start.format("YYYY-MM-DD"),
             'end-date': end.format("YYYY-MM-DD"),
-            ids: currentProperty
+            ids: currentProperty,
+            'filters': 'ga:PageTitle=~(pageTitleFilterStringishere)',
         };
 
         //set google request loading layer
@@ -358,6 +365,10 @@
                     info: false,
                     autoWidth: false,
                     border: false,
+                    columnDefs: [{
+                        "className": "breakall",
+                        "targets": [0]
+                    }],
                     columns: [{
                             title: "Page"
                         },
