@@ -1721,6 +1721,9 @@ var jQuery = jQuery,
                     }
                 });
                 
+                //make sure `fanpageData[0].posts` is not undefine
+                fanpageData[0].posts = fanpageData[0].posts || {};
+                
                 //parse fanPage data
                 parsedFanpageData = {
                     id: fanpageData[0].id,
@@ -1964,6 +1967,27 @@ var jQuery = jQuery,
             //build facebook average posts data in datatable format
             //return `columnTitle` and `data`
             getAveragePostsDataInFacebook: function () {
+                //when postData size is 0, we just return empty `data`
+                if (Toolbox.getObjectSize(this.getData('postsData')) === 0) {
+                    return {
+                        data: [],
+                        columnTitle: [
+                            {
+                                title: "Name"
+                            },
+                            {
+                                title: "Sum"
+                            },
+                            {
+                                title: "Number of posts"
+                            },
+                            {
+                                title: "Average"
+                            }
+                        ]
+                    };
+                }
+                
                 //set the variable for looping
                 var originData = this.getData('postsData'),
                     dataSize = this.getSize(),
@@ -2030,6 +2054,30 @@ var jQuery = jQuery,
             //build facebook reachrate data in datatable format
             //return `columnTitle` and `data`
             getReachRateInFacebook: function () {
+                //when postData size is 0, we just return empty `data`
+                if (Toolbox.getObjectSize(this.getData('postsData')) === 0) {
+                    return {
+                        data: [],
+                        columnTitle: [
+                            {
+                                title: ""
+                            },
+                            {
+                                title: "Total Reach"
+                            },
+                            {
+                                title: "Avg Reach"
+                            },
+                            {
+                                title: "Avg Page Fans Like"
+                            },
+                            {
+                                title: "Reach % (Avg Reach/ Avg Fans Like)"
+                            }
+                        ]
+                    };
+                }
+                
                 //set the variable for looping
                 var postsData = this.getData('postsData'),
                     reachData = this.getData('reachData'),
@@ -2080,6 +2128,32 @@ var jQuery = jQuery,
             //build facebook engagementrate data in datatable format
             //return `columnTitle` and `data`
             getEngagementRateInFacebook: function () {
+                //when postData size is 0, we just return empty `data`
+                if (Toolbox.getObjectSize(this.getData('postsData')) === 0) {
+                    return {
+                        data: [],
+                        columnTitle: [
+                            {
+                                title: ""
+                            },
+                            {
+                                title: "Avg Like & Comment & Share"
+                            },
+                            {
+                                title: "Avg Reaction & Post Click"
+                            },
+                            {
+                                title: "Avg Reach"
+                            },
+                            {
+                                title: "Avg Like & Comment & Share / Avg Reach"
+                            },
+                            {
+                                title: "Avg Reaction & Post Click / Avg Reach"
+                            }
+                        ]
+                    };
+                }
                 //set the variable for looping
                 var postsData = this.getData('postsData'),
                     dataSize = this.getSize(),
