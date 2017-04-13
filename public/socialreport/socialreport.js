@@ -2309,6 +2309,9 @@ var jQuery = jQuery,
                             title: "Time"
                         },
                         {
+                            title: "Permalink"
+                        },
+                        {
                             title: "Short Description"
                         },
                         {
@@ -2352,6 +2355,7 @@ var jQuery = jQuery,
                         postAttrArray.push('');
                         postAttrArray.push('');
                         postAttrArray.push('');
+                        postAttrArray.push('');
                         //push this post array into result array `data`
                         data.push(postAttrArray);
                     }
@@ -2366,6 +2370,7 @@ var jQuery = jQuery,
                     //postAttrArray.push(thisHour + ':' + postMinuteStart + '00');
                     //postAttrArray.push(thisHour + ':' + postMinuteStart + ':00 - ' + thisHour + ':' + postMinuteEnd + ':00');
                     postAttrArray.push(thisHour + ':' + (postMinuteStart < 10 ? '0' + postMinuteStart : postMinuteStart) + ':00');
+                    postAttrArray.push(sortedPostsData[postIndex][1]);
                     postAttrArray.push(sortedPostsData[postIndex][2]);
                     postAttrArray.push(sortedPostsData[postIndex][7]);
                     postAttrArray.push(sortedPostsData[postIndex][8]);

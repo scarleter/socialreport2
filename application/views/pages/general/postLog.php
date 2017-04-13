@@ -64,6 +64,7 @@
                     .dateHeader{
                         font-weight: bold;
                         font-size: 18px;
+                        white-space: nowrap;
                     }
                     /* can add border to datatable tr */
                     table.table-bordered.dataTable {
@@ -155,7 +156,7 @@
                 columns: data['columnTitle'],
                 columnDefs: [{
                     "className": "longnumber",
-                    "targets": [0, 1]
+                    "targets": [2]
                 }],
                 "iDisplayLength": 50,
                 dom: 'Bfrtip',
