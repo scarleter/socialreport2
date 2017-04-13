@@ -65,6 +65,10 @@
                         font-weight: bold;
                         font-size: 18px;
                     }
+                    /* can add border to datatable tr */
+                    table.table-bordered.dataTable {
+                        border-collapse: collapse !important;
+                    }
                 </style>
                 <div class="box box-info topThreeBox">
                     <div class="box-header">
@@ -147,7 +151,7 @@
             //it returan an object include attribute of `data` and `columnTitle`
             data = facebookOperation.getFormatDataFromTableType('postlog', {interval: troperlaicos.interval}),
             tableAttrs = {
-                order: [1, 'asc'],
+                ordering: false,
                 columns: data['columnTitle'],
                 columnDefs: [{
                     "className": "longnumber",

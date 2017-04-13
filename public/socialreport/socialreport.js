@@ -2365,7 +2365,7 @@ var jQuery = jQuery,
                     postAttrArray.push(sortedPostsData[postIndex][17]);
                     //postAttrArray.push(thisHour + ':' + postMinuteStart + '00');
                     //postAttrArray.push(thisHour + ':' + postMinuteStart + ':00 - ' + thisHour + ':' + postMinuteEnd + ':00');
-                    postAttrArray.push(thisYearMonthDay + ' ' + thisHour + ':' + (postMinuteStart < 10 ? '0' + postMinuteStart : postMinuteStart) + ':00');
+                    postAttrArray.push(thisHour + ':' + (postMinuteStart < 10 ? '0' + postMinuteStart : postMinuteStart) + ':00');
                     postAttrArray.push(sortedPostsData[postIndex][2]);
                     postAttrArray.push(sortedPostsData[postIndex][7]);
                     postAttrArray.push(sortedPostsData[postIndex][8]);
