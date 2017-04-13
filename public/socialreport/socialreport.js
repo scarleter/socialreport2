@@ -377,6 +377,16 @@ var jQuery = jQuery,
             Select = SocialReport.Select = function (Id, Options) {
                 this.initialize(Id, Options);
             },
+            
+            
+            //SocialReport.SearchBox
+            //----------------------
+
+            //SearchBox is inherited from View
+            //it containe a input and submit button
+            SearchBox = SocialReport.SearchBox = function (Id, Options) {
+                this.initialize(Id, Options);
+            },
 
 
             //SocialReport.DateRangePickerSelectorPanel
@@ -1093,6 +1103,88 @@ var jQuery = jQuery,
                 this.setTemplate(['<select class="form-control" id="', '%ID%', '"></select>']);
                 this.render();
                 this.setChangeHandler(Options.changeHandler);
+            }
+        });
+        
+        //extend SearchBox class prototype object
+        $.extend(SearchBox.prototype, View.prototype, {
+            //render
+            render: function () {
+                var id = this.getId(),
+                    $obj = $('#' + id),
+                    template = this.getTemplate().join('').replace('%ID%', id);
+                //check if there is element obj whose id attribute is `id`
+                if ($obj.size() === 0) {
+                    Toolbox.assert('Function SocialReport.SearchBox.render: there is no element\'s id is ' + id);
+                    return false;
+                }
+                $obj.prop('outerHTML', template);
+            },
+
+            //set searchValue
+            setSearchValue: function (SearchValue) {
+                if (SearchValue) {
+                    this.searchValue = SearchValue;
+                } else {
+                    Toolbox.assert('Function SocialReport.SearchBox.setSearchValue: `SearchValue` is undefined');
+                    return false;
+                }
+            },
+            
+            //get searchValue
+            getSearchValue: function () {
+                return this.searchValue;
+            },
+
+            //set user customized submit handler function
+            setSubmitHandler: function (SubmitHandler) {
+                if (Toolbox.isFunction(SubmitHandler)) {
+                    this.submitHandler = SubmitHandler;
+                    this.bindSubmitEvent();
+                } else {
+                    Toolbox.assert('Function SocialReport.SearchBox.setSubmitHandler: `SubmitHandler` is not a function');
+                    return false;
+                }
+            },
+
+            //get user customized submit handler function
+            getSubmitHandler: function () {
+                return this.submitHandler;
+            },
+            
+            //bind input change event
+            bindInputChangeEvent: function () {
+                var context = this,
+                    id = this.getId(),
+                    $obj = $('#' + id),
+                    $inputObj = $obj.find('input');
+                $inputObj.change(function () {
+                    context.setSearchValue($(this).val());
+                });
+            },
+            
+            //bind submit event to submitHandler
+            bindSubmitEvent: function () {
+                var context = this,
+                    id = this.getId(),
+                    $obj = $('#' + id),
+                    $submitObj = $obj.find('button'),
+                    searchValue,
+                    submitHandler = this.getSubmitHandler();
+                $submitObj.on('click', function () {
+                    searchValue = context.getSearchValue();
+                    submitHandler.call(context, searchValue);
+                });
+                
+                this.bindInputChangeEvent();
+            },
+
+            //initialize function
+            initialize: function (Id, Options) {
+                this.setId(Id);
+                this.setTemplate(['<div class="input-group input-group-sm" id="', '%ID%', '"><input type="text" class="form-control"><span class="input-group-btn"><button type="button" class="btn btn-info btn-flat">Go!</button></span></div>']);
+                this.render();
+                this.setSubmitHandler(Options.submitHandler);
             }
         });
 
