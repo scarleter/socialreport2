@@ -1005,7 +1005,7 @@ var jQuery = jQuery,
                     this.defaultValue = DefaultValue;
                     this.setCurrentValue(DefaultValue.toString());
                 } else {
-                    this.defaultValue = undefined;
+                    this.defaultValue = null;
                     Toolbox.assert('Function SocialReport.Select.setDefaultValue: `DefaultValue` is undefined');
                     return false;
                 }
@@ -2424,7 +2424,6 @@ var jQuery = jQuery,
                     postAttrArray = [],
                     interval = parseInt(Interval, 0) || 1,
                     previousYearMonthDay = '0000-00-00',
-                    previousHourMinuteSecond = '00:00:00',
                     thisYearMonthDay = '',
                     thisHour = '',
                     thisMinute = '',
@@ -2457,11 +2456,14 @@ var jQuery = jQuery,
                     postMinuteStart = Math.floor(parseInt(thisMinute, 0) / interval) * interval;
                     //calculate the start hour:minute:second
                     postMinuteEnd = postMinuteStart + interval - 1;
+                    //format `postMinuteStart` and `postMinuteEnd`
+                    postMinuteStart = postMinuteStart < 10 ? '0' + postMinuteStart : postMinuteStart;
+                    postMinuteEnd = postMinuteEnd < 10 ? '0' + postMinuteEnd : postMinuteEnd;
                     //set this post attribute to an array which will be added to the `data` array
                     postAttrArray.push(sortedPostsData[postIndex][17]);
                     //postAttrArray.push(thisHour + ':' + postMinuteStart + '00');
                     //postAttrArray.push(thisHour + ':' + postMinuteStart + ':00 - ' + thisHour + ':' + postMinuteEnd + ':00');
-                    postAttrArray.push(thisHour + ':' + (postMinuteStart < 10 ? '0' + postMinuteStart : postMinuteStart) + ':00');
+                    postAttrArray.push(thisHour + ':' + postMinuteStart + ' - ' + thisHour + ':' + postMinuteEnd);
                     postAttrArray.push(sortedPostsData[postIndex][1]);
                     postAttrArray.push(sortedPostsData[postIndex][2]);
                     postAttrArray.push(sortedPostsData[postIndex][7]);
