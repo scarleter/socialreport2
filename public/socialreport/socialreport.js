@@ -357,6 +357,15 @@ var jQuery = jQuery,
             View = SocialReport.View = function () {
 
             },
+            
+            
+            //SocialReport.Event
+            //------------------
+            
+            //By extending `Event` class, View's subclass can use Event api to manage its event
+            Event = SocialReport.Event = function () {
+
+            },
 
 
             //SocialReport.DateRangePicker
@@ -829,6 +838,79 @@ var jQuery = jQuery,
             render: function () {
 
             }
+        });
+        
+        //extend Event class prototype object
+        $.extend(Event.prototype, {
+            //an internal object to save different type of listeners
+            selfListeners: {},
+
+            //internal function to create event in `selfListeners`
+            createEventInSelfListeners: function (EventName) {
+                this.selfListeners[EventName] = [];
+                return this.selfListeners[EventName];
+            },
+
+            //internal function to delete event in `selfListeners`
+            deleteEventInSelfListeners: function (EventName, EventHandler) {
+                var eventArray = this.selfListeners[EventName],
+                    eventKey;
+
+                for (eventKey = 0; eventKey < eventArray.length; eventKey += 1) {
+                    if (EventHandler === eventArray[eventKey]) {
+                        this.selfListeners[EventName].splice(eventKey, 1);
+                        break;
+                    }
+                }
+            },
+
+            //check if `selfListeners` has event named `EventName`
+            hasEvent: function (EventName) {
+                return !!this.selfListeners[EventName];
+            },
+
+            //add event to `EventName` event
+            addEvent: function (EventName, EventHandler) {
+                if (Toolbox.isString(EventName) && Toolbox.isFunction(EventHandler)) {
+                    //if do not have event named `EventName`
+                    if (!this.hasEvent(EventName)) {
+                        this.createEventInSelfListeners(EventName);
+                    }
+                    this.selfListeners[EventName].push(EventHandler);
+                } else {
+                    Toolbox.assert('Function SocialReport.Event.addEvent: `EventName` is not a string or `EventHandler` is not a function');
+                    return false;
+                }
+            },
+
+            //remove event from `EventName` event
+            removeEvent: function (EventName, EventHandler) {
+                //check if parameter is valid and `EventName` event exist
+                if (Toolbox.isString(EventName) && Toolbox.isFunction(EventHandler) && this.hasEvent(EventName)) {
+                    this.deleteEventInSelfListeners(EventName, EventHandler);
+                } else {
+                    Toolbox.assert('Function SocialReport.Event.removeEvent: `EventName` is not a string or `EventHandler` is not a function');
+                    return false;
+                }
+            },
+            
+            //trigger event
+            triggerEvent: function (EventName) {
+                var eventArray = this.selfListeners[EventName],
+                    eventKey;
+
+                //check if parameter is valid and `EventName` event exist
+                if (Toolbox.isString(EventName) && this.hasEvent(EventName)) {
+
+                    for (eventKey = 0; eventKey < eventArray.length; eventKey += 1) {
+                        eventArray[eventKey]();
+                    }
+                } else {
+                    Toolbox.assert('Function SocialReport.Event.removeEvent: `EventName` is not a string');
+                    return false;
+                }
+            }
+
         });
 
         //extend DateRangePicker class prototype object
@@ -2465,7 +2547,7 @@ var jQuery = jQuery,
                     if ((thisHour + ':' + postMinuteStart) === previousHourMinute) {   //if is equal we show nothing
                         postTime = '';
                     } else {    //otherwise, we show the new time
-                        postTime = thisHour + ':' + postMinuteStart + ' - ' + thisHour + ':' + postMinuteEnd;
+                        postTime = '<div class="timeWrapper">' + thisHour + ':' + postMinuteStart + ':00' + ' - ' + thisHour + ':' + postMinuteEnd + ':59' + '</div>';
                         previousHourMinute = thisHour + ':' + postMinuteStart;
                     }
                     //set this post attribute to an array which will be added to the `data` array
