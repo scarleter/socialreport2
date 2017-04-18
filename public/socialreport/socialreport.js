@@ -2424,11 +2424,13 @@ var jQuery = jQuery,
                     postAttrArray = [],
                     interval = parseInt(Interval, 0) || 1,
                     previousYearMonthDay = '0000-00-00',
-                    thisYearMonthDay = '',
-                    thisHour = '',
-                    thisMinute = '',
+                    previousHourMinute = '00:00',
+                    thisYearMonthDay,
+                    thisHour,
+                    thisMinute,
                     postMinuteStart,
-                    postMinuteEnd;
+                    postMinuteEnd,
+                    postTime;
                 for (postIndex = dataSize - 1; postIndex >= 0; postIndex -= 1) {
                     thisYearMonthDay = moment(sortedPostsData[postIndex][4]).format("YYYY-MM-DD");
                     thisHour = moment(sortedPostsData[postIndex][4]).format("HH");
@@ -2459,11 +2461,18 @@ var jQuery = jQuery,
                     //format `postMinuteStart` and `postMinuteEnd`
                     postMinuteStart = postMinuteStart < 10 ? '0' + postMinuteStart : postMinuteStart;
                     postMinuteEnd = postMinuteEnd < 10 ? '0' + postMinuteEnd : postMinuteEnd;
+                    //check if `postMinuteStart` is equal with `previousHourMinute`
+                    if ((thisHour + ':' + postMinuteStart) === previousHourMinute) {   //if is equal we show nothing
+                        postTime = '';
+                    } else {    //otherwise, we show the new time
+                        postTime = thisHour + ':' + postMinuteStart + ' - ' + thisHour + ':' + postMinuteEnd;
+                        previousHourMinute = thisHour + ':' + postMinuteStart;
+                    }
                     //set this post attribute to an array which will be added to the `data` array
                     postAttrArray.push(sortedPostsData[postIndex][17]);
                     //postAttrArray.push(thisHour + ':' + postMinuteStart + '00');
                     //postAttrArray.push(thisHour + ':' + postMinuteStart + ':00 - ' + thisHour + ':' + postMinuteEnd + ':00');
-                    postAttrArray.push(thisHour + ':' + postMinuteStart + ' - ' + thisHour + ':' + postMinuteEnd);
+                    postAttrArray.push(postTime);
                     postAttrArray.push(sortedPostsData[postIndex][1]);
                     postAttrArray.push(sortedPostsData[postIndex][2]);
                     postAttrArray.push(sortedPostsData[postIndex][7]);
