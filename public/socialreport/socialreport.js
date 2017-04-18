@@ -396,6 +396,15 @@ var jQuery = jQuery,
             SearchBox = SocialReport.SearchBox = function (Id, Options) {
                 this.initialize(Id, Options);
             },
+            
+            
+            //SocialReport.Panel
+            //------------------
+            
+            //it just combined several View's subclass into one
+            Panel = SocialReport.Panel = function (Components, Options) {
+                this.initialize(Components, Options);
+            },
 
 
             //SocialReport.DateRangePickerSelectorPanel
@@ -1268,6 +1277,51 @@ var jQuery = jQuery,
                 this.render();
                 this.setSubmitHandler(Options.submitHandler);
             }
+        });
+        
+        //extend Panel class prototype object
+        $.extend(Panel.prototype, {
+            
+            //`componentsArray` is an array to save all component
+            componentsArray: [],
+
+            //get component from componentsArray
+            getComponent: function (ComponentId) {
+                //if `ComponentId` is undefined, we return the whole `componentsArray`
+                if (!ComponentId) {
+                    return this.componentsArray;
+                } else {
+                    return this.componentsArray[ComponentId];
+                }
+            },
+            
+            //set component to componentsArray
+            setComponent: function (Component) {
+                var componentId;
+                //only if Component inherit from View, we set `Component` to `componentsArray`
+                if (Toolbox.isInstance(Component, SocialReport.View)) {
+                    componentId = Component.getId();
+                    this.componentsArray[componentId] = Component;
+                    return this.componentsArray[componentId];
+                } else {
+                    Toolbox.assert('Function SocialReport.Panel.setComponent: `Component` is undefined or not inherit from SocialReport.View');
+                    return false;
+                }
+            },
+            
+            //it is an abstract function
+            //get components' current value when Panel change
+            getComponentsCurrentValue: function () {
+                return null;
+            },
+            
+            //it is an abstract function
+            //bind components change event to `Panel.changeHandler`
+            bindComponentsChangeEvent: function () {
+                return null;
+            }
+            
+            //initialize 
         });
 
         //extend DateRangePickerSelectorPanel class prototype object
