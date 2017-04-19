@@ -364,8 +364,6 @@ var jQuery = jQuery,
             
             //it just combined several View's subclass into one
             ComponentCombiner = SocialReport.ComponentCombiner = function (Components, Options) {
-                //make sure all instance has their `selfListeners` instead of using the selfListeners in Event prototype 
-                this.selfListeners = {};
                 //make sure all instance has their `componentsList` instead of using the componentsList in ComponentCombiner prototype
                 this.componentsList = {};
                 this.initialize(Components, Options);
@@ -411,6 +409,18 @@ var jQuery = jQuery,
             //SearchBox is inherited from View and Event
             //it containe a input and submit button
             SearchBox = SocialReport.SearchBox = function (Id, Options) {
+                //make sure all instance has their `selfListeners` instead of using the selfListeners in Event prototype 
+                this.selfListeners = {};
+                this.initialize(Id, Options);
+            },
+            
+            
+            //SocialReport.Panel
+            //------------------
+            
+            //it inherit from View and has a ComponentCombiner instance
+            //it is an abstract object
+            Panel = SocialReport.Panel = function (Id, Options) {
                 //make sure all instance has their `selfListeners` instead of using the selfListeners in Event prototype 
                 this.selfListeners = {};
                 this.initialize(Id, Options);
@@ -793,6 +803,12 @@ var jQuery = jQuery,
         $.extend(Event.prototype, {
             //an internal object to save different type of listeners, subclass should overwrite it 
             selfListeners: {},
+            
+            //default event handler
+            //use it when `EventHandler` is not a function when addEvent
+            defaultEventHandler: function () {
+                
+            },
 
             //check if event named `EventName` exist
             hasEvent: function (EventName) {
@@ -857,14 +873,16 @@ var jQuery = jQuery,
             
             //internal function to set handler to event
             setHandlerFromEvent: function (EventName, EventHandler) {
-                if (Toolbox.isString(EventName) && Toolbox.isFunction(EventHandler)) {
+                var defaultEventHandler = this.defaultEventHandler,
+                    eventHandler = (Toolbox.isFunction(EventHandler)) ? EventHandler : defaultEventHandler;
+                if (Toolbox.isString(EventName)) {
                     //if do not have event named `EventName`
                     if (!this.hasEvent(EventName)) {
                         this.createEvent(EventName);
                     }
-                    this.selfListeners[EventName].push(EventHandler);
+                    this.selfListeners[EventName].push(eventHandler);
                 } else {
-                    Toolbox.assert('Function SocialReport.Event.setHandlerFromEvent: `EventName` is not a string or `EventHandler` is not a function');
+                    Toolbox.assert('Function SocialReport.Event.setHandlerFromEvent: `EventName` is not a string');
                     return false;
                 }
             },
@@ -945,31 +963,10 @@ var jQuery = jQuery,
                 }
             },
             
-            //listen to component
-//            listenToComponents: function () {
-//                var components = this.getComponent(),
-//                    componentKey,
-//                    changeHandler = this.changeHandler;
-//                //loop to listen to component
-//                for (componentKey = 0; componentKey < components.size; componentKey += 1) {
-//                    components[componentKey].addEvent('change', changeHandler);
-//                }
-//            },
-            
-            //call this handler when one of the component is changed
-//            changeHandler: function () {
-//                var componentList = this.getComponent();
-//                this.triggerEvent('change', this, componentList);
-//            },
-            
             //initialize 
             //`Components` should be an array
             initialize: function (Components, Options) {
                 this.setComponent(Components);
-//                this.listenToComponents();
-//                if (Toolbox.isFunction(Options.changeHandler)) {
-//                    this.addEvent('change', Options.changeHandler);
-//                }
             }
         });
 
@@ -1173,11 +1170,7 @@ var jQuery = jQuery,
                 this.setId(Id);
                 this.setStart(Options.start || moment().subtract(6, 'days').hours(0).minutes(0).seconds(0));
                 this.setEnd(Options.end || moment().hours(23).minutes(59).seconds(59));
-                
-                //add `changeHandler` to change event
-                if (Toolbox.isFunction(Options.changeHandler)) {
-                    this.addEvent('change', Options.changeHandler);
-                }
+                this.addEvent('change', Options.changeHandler);
                 this.setTemplate(['<button type="button" class="btn btn-default pull-right" id="', '%ID%', '"><span><i class="fa fa-calendar"></i> Date range picker</span><i class="fa fa-caret-down"></i></button>']);
                 this.render();
                 this.setDateRangePicker();
@@ -1285,11 +1278,7 @@ var jQuery = jQuery,
                 this.setSelectOption(Options.option);
                 this.setTemplate(['<select class="form-control" id="', '%ID%', '"></select>']);
                 this.render();
-                
-                //add `changeHandler` to change event
-                if (Toolbox.isFunction(Options.changeHandler)) {
-                    this.addEvent('change', Options.changeHandler);
-                }
+                this.addEvent('change', Options.changeHandler);
                 this.bindChangeEvent();
             }
         });
@@ -1355,12 +1344,38 @@ var jQuery = jQuery,
                 this.setId(Id);
                 this.setTemplate(['<div class="input-group input-group-sm" id="', '%ID%', '"><input type="text" class="form-control"><span class="input-group-btn"><button type="button" class="btn btn-info btn-flat">Go!</button></span></div>']);
                 this.render();
-                
-                //add `submitHandler` to change event
-                if (Toolbox.isFunction(Options.submitHandler)) {
-                    this.addEvent('change', Options.submitHandler);
-                }
+                this.addEvent('change', Options.submitHandler);
                 this.bindSubmitEvent();
+            }
+        });
+        
+        //extend Panel class prototype object
+        $.extend(Panel.prototype, View.prototype, {
+            //listen to component
+            listenToComponents: function () {
+                var components = this.componentCombiner.getComponent(),
+                    context = this,
+                    changeHandler = function () {
+                        var componentList = context.componentCombiner.getComponent();
+                        context.triggerEvent('change', context, componentList);
+                    },
+                    componentKey;
+
+                //loop to listen to component
+                for (componentKey in components) {
+                    if (components.hasOwnProperty(componentKey)) {
+                        components[componentKey].addEvent('change', changeHandler);
+                    }
+                }
+            },
+            
+            //initialize
+            initialize: function (Id, Options) {
+                this.componentCombiner = new ComponentCombiner(Options.components);
+                this.listenToComponents();
+                if (Toolbox.isFunction(Options.changeHandler)) {
+                    this.addEvent('change', Options.changeHandler);
+                }
             }
         });
 
