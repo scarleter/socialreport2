@@ -357,6 +357,19 @@ var jQuery = jQuery,
             Event = SocialReport.Event = function () {
 
             },
+            
+            
+            //SocialReport.ComponentCombiner
+            //------------------------------
+            
+            //it just combined several View's subclass into one
+            ComponentCombiner = SocialReport.ComponentCombiner = function (Components, Options) {
+                //make sure all instance has their `selfListeners` instead of using the selfListeners in Event prototype 
+                this.selfListeners = {};
+                //make sure all instance has their `componentsList` instead of using the componentsList in ComponentCombiner prototype
+                this.componentsList = {};
+                this.initialize(Components, Options);
+            },
 
 
             //SocialReport.View
@@ -374,7 +387,7 @@ var jQuery = jQuery,
             //DateRangePicker is inherited from View and Event
             //It a dateRangePicker ui component (http://www.daterangepicker.com/)
             DateRangePicker = SocialReport.DateRangePicker = function (Id, Options) {
-                //make sure all instance has their `selfListeners` in case of use the selfListeners in Event prototype 
+                //make sure all instance has their `selfListeners` instead of using the selfListeners in Event prototype 
                 this.selfListeners = {};
                 this.initialize(Id, Options);
             },
@@ -386,7 +399,7 @@ var jQuery = jQuery,
             //Select is inherited from View and Event
             //just wrap select component
             Select = SocialReport.Select = function (Id, Options) {
-                //make sure all instance has their `selfListeners` in case of use the selfListeners in Event prototype 
+                //make sure all instance has their `selfListeners` instead of using the selfListeners in Event prototype 
                 this.selfListeners = {};
                 this.initialize(Id, Options);
             },
@@ -398,23 +411,14 @@ var jQuery = jQuery,
             //SearchBox is inherited from View and Event
             //it containe a input and submit button
             SearchBox = SocialReport.SearchBox = function (Id, Options) {
-                //make sure all instance has their `selfListeners` in case of use the selfListeners in Event prototype 
+                //make sure all instance has their `selfListeners` instead of using the selfListeners in Event prototype 
                 this.selfListeners = {};
                 this.initialize(Id, Options);
-            },
-            
-            
-            //SocialReport.Panel
-            //------------------
-            
-            //it just combined several View's subclass into one
-            Panel = SocialReport.Panel = function (Components, Options) {
-                this.initialize(Components, Options);
             },
 
 
             //SocialReport.DateRangePickerSelectorPanel
-            //-----------------------------
+            //-----------------------------------------
 
             //DateRangePickerSelectorPanel contains a DateRangePicker object and a Select object
             //just make DateRangePicker and Select become one class
@@ -430,7 +434,7 @@ var jQuery = jQuery,
             //It is a DataTables ui component (https://datatables.net/)
             //temporary add `Options` for further useage
             DataTables = SocialReport.DataTables = function (Id, TableData, TableAttrs, Options) {
-                //make sure all instance has their `selfListeners` in case of use the selfListeners in Event prototype 
+                //make sure all instance has their `selfListeners` instead of using the selfListeners in Event prototype 
                 this.selfListeners = {};
                 this.initialize(Id, TableData, TableAttrs, Options);
             },
@@ -444,7 +448,7 @@ var jQuery = jQuery,
             //`LineChartData` is an object contain three attributes: labelsArr, websiteDataArr and competitorDataArr
             //`LineChartOptions` is an object to edit LineChart default LineChartOptions
             LineChart = SocialReport.LineChart = function (Id, LineChartData, LineChartOptions, Options) {
-                //make sure all instance has their `selfListeners` in case of use the selfListeners in Event prototype 
+                //make sure all instance has their `selfListeners` instead of using the selfListeners in Event prototype 
                 this.selfListeners = {};
                 this.initialize(Id, LineChartData, LineChartOptions, Options);
             },
@@ -897,7 +901,76 @@ var jQuery = jQuery,
                     return false;
                 }
             }
+        });
+        
+        //extend ComponentCombiner class prototype object
+        $.extend(ComponentCombiner.prototype, {
+            
+            //`componentsList` is an object to save all component
+            componentsList: {},
 
+            //get component from componentsList
+            getComponent: function (ComponentId) {
+                //if `ComponentId` is undefined, we return the whole `componentsList`
+                if (!ComponentId) {
+                    return this.componentsList;
+                } else {
+                    return this.componentsList[ComponentId];
+                }
+            },
+            
+            //set components into componentsList
+            setComponent: function (Components) {
+                var componentsArray = Components,
+                    componentKey,
+                    component,
+                    componentId;
+
+                //make sure `componentsArray` is an array
+                if (!Toolbox.isArray(componentsArray)) {
+                    componentsArray = [Components];
+                }
+                
+                //loop to set components into `componentsList`
+                for (componentKey = 0; componentKey < componentsArray.length; componentKey += 1) {
+                    component = componentsArray[componentKey];
+                    //check if this component has getId function
+                    if (typeof (componentsArray[componentKey].getId) !== 'undefined') {
+                        componentId = componentsArray[componentKey].getId();
+                        this.componentsList[componentId] = component;
+                    } else {
+                        Toolbox.assert('Function SocialReport.Panel.setComponent: ' + component + ' whose Id is ' + componentId + ' does not have getId function');
+                        return false;
+                    }
+                }
+            },
+            
+            //listen to component
+//            listenToComponents: function () {
+//                var components = this.getComponent(),
+//                    componentKey,
+//                    changeHandler = this.changeHandler;
+//                //loop to listen to component
+//                for (componentKey = 0; componentKey < components.size; componentKey += 1) {
+//                    components[componentKey].addEvent('change', changeHandler);
+//                }
+//            },
+            
+            //call this handler when one of the component is changed
+//            changeHandler: function () {
+//                var componentList = this.getComponent();
+//                this.triggerEvent('change', this, componentList);
+//            },
+            
+            //initialize 
+            //`Components` should be an array
+            initialize: function (Components, Options) {
+                this.setComponent(Components);
+//                this.listenToComponents();
+//                if (Toolbox.isFunction(Options.changeHandler)) {
+//                    this.addEvent('change', Options.changeHandler);
+//                }
+            }
         });
 
         //extend View class prototype object
@@ -1289,51 +1362,6 @@ var jQuery = jQuery,
                 }
                 this.bindSubmitEvent();
             }
-        });
-        
-        //extend Panel class prototype object
-        $.extend(Panel.prototype, {
-            
-            //`componentsArray` is an array to save all component
-            componentsArray: [],
-
-            //get component from componentsArray
-            getComponent: function (ComponentId) {
-                //if `ComponentId` is undefined, we return the whole `componentsArray`
-                if (!ComponentId) {
-                    return this.componentsArray;
-                } else {
-                    return this.componentsArray[ComponentId];
-                }
-            },
-            
-            //set component to componentsArray
-            setComponent: function (Component) {
-                var componentId;
-                //only if Component inherit from View, we set `Component` to `componentsArray`
-                if (Toolbox.isInstance(Component, SocialReport.View)) {
-                    componentId = Component.getId();
-                    this.componentsArray[componentId] = Component;
-                    return this.componentsArray[componentId];
-                } else {
-                    Toolbox.assert('Function SocialReport.Panel.setComponent: `Component` is undefined or not inherit from SocialReport.View');
-                    return false;
-                }
-            },
-            
-            //it is an abstract function
-            //get components' current value when Panel change
-            getComponentsCurrentValue: function () {
-                return null;
-            },
-            
-            //it is an abstract function
-            //bind components change event to `Panel.changeHandler`
-            bindComponentsChangeEvent: function () {
-                return null;
-            }
-            
-            //initialize 
         });
 
         //extend DateRangePickerSelectorPanel class prototype object
