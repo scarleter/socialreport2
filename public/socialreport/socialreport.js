@@ -2099,6 +2099,8 @@ var jQuery = jQuery,
                         return this.getTopPostsDataInFacebookByType('video', 5);
                     case 'postlog':
                         return this.getPostLogDataInFacebookByDate(Options.interval || 1);
+                    case 'postnumberbyeditor':
+                        return this.getPostNumberByEditorDataInFacebookByDate();
                     default:
                         Toolbox.assert('Function SocialReport.Operation.getFormatDataFromTableType: go into the default branch');
                         return this.getData();
@@ -2632,6 +2634,45 @@ var jQuery = jQuery,
                     //push this post array into result array `data`
                     data.push(postAttrArray);
                 }
+                return {
+                    data: data,
+                    columnTitle: columnTitle
+                };
+            },
+            
+            ////build facebook post log data in datatable format
+            //return `columnTitle` and `data`
+            getPostNumberByEditorDataInFacebookByDate: function () {
+                var postsDataIn2D = this.getPostsDataIn2DArray(),
+                    dataSize = this.getSize(),
+                    columnTitle = [
+                        {
+                            title: "Editor"
+                        },
+                        {
+                            title: "Number Of Posts"
+                        }
+                    ],
+                    data = [],
+                    editorMemory = {},
+                    postIndex,
+                    editor;
+                //loop `postsDataIn2D` to save number of post to `editorMemory` sort by editor
+                for (postIndex = 0; postIndex < dataSize; postIndex += 1) {
+                    editor = postsDataIn2D[postIndex][17];
+                    //make sure `editorMemory` has attribute name `editor`
+                    editorMemory[editor] = (typeof (editorMemory[editor]) !== 'undefined') ? editorMemory[editor] : {
+                        postNumber: 0
+                    };
+                    editorMemory[editor].postNumber += 1;
+                }
+                //loop the `editorMemory` to set data
+                for (editor in editorMemory) {
+                    if (editorMemory.hasOwnProperty(editor)) {
+                        data.push([editor, editorMemory[editor].postNumber]);
+                    }
+                }
+
                 return {
                     data: data,
                     columnTitle: columnTitle

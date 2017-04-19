@@ -66,12 +66,30 @@
                         font-size: 18px;
                         white-space: nowrap;
                     }
+                    .timeWrapper{
+                        white-space: nowrap;
+                    }
                     /* can add border to datatable tr */
                     table.table-bordered.dataTable {
                         border-collapse: collapse !important;
                     }
                 </style>
-                <div class="box box-info topThreeBox">
+                <div class="box box-info">
+                    <div class="box-header">
+                        <h3 class="box-title text-aqua">Post Number By Editor</h3>
+                        <div class="box-tools pull-right">
+                            <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+                    </button>
+                        </div>
+                    </div>
+                    <!-- /.box-header -->
+                    <div class="box-body">
+                        <span id="postNumberByEditorDataTable"></span>
+                    </div>
+                    <!-- /.box-body -->
+                </div>
+                
+                <div class="box box-info">
                     <div class="box-header">
                         <h3 class="box-title text-aqua">Post Log Table</h3>
                         <div class="box-tools pull-right">
@@ -142,9 +160,30 @@
         layer.close(troperlaicos.websiteLoadingLayer);
         var facebookOperation = this;
         //build tables
+        buildpostNumberByEditorDataTable(facebookOperation);
         buildPostLogDataTable(facebookOperation);
     };
 
+    //build posts number by editor
+    function buildpostNumberByEditorDataTable(Operation){
+        var facebookOperation = Operation,
+            //it returan an object include attribute of `data` and `columnTitle`
+            data = facebookOperation.getFormatDataFromTableType('postnumberbyeditor'),
+            tableAttrs = {
+                ordering: false,
+                searching: false,
+                paging: false,
+                columns: data['columnTitle']
+            };
+        //if table is exist
+        if (troperlaicos.postNumberByEditorDataTable) {
+            //use repaint
+            troperlaicos.postNumberByEditorDataTable.repaint(data['data'], tableAttrs);
+        } else {
+            //build datatable object
+            troperlaicos.postNumberByEditorDataTable = new SocialReport.DataTables('postNumberByEditorDataTable', data['data'], tableAttrs);
+        }
+    }
 
     //build PostLogDataTable
     function buildPostLogDataTable(Operation) {
@@ -153,6 +192,7 @@
             data = facebookOperation.getFormatDataFromTableType('postlog', {interval: troperlaicos.interval}),
             tableAttrs = {
                 ordering: false,
+                searching: false,
                 columns: data['columnTitle'],
                 columnDefs: [{
                     "className": "longnumber",
