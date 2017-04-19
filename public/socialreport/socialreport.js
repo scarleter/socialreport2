@@ -348,15 +348,6 @@ var jQuery = jQuery,
                     SocialReport.DataInterface.ajax(data, options);
                 }
             },
-
-
-            //SocialReport.View
-            //-----------------
-
-            //View class is an Abstract Data Type
-            View = SocialReport.View = function () {
-
-            },
             
             
             //SocialReport.Event
@@ -368,12 +359,23 @@ var jQuery = jQuery,
             },
 
 
+            //SocialReport.View
+            //-----------------
+
+            //View class is an Abstract Data Type which inherit from Event
+            View = SocialReport.View = function () {
+
+            },
+
+
             //SocialReport.DateRangePicker
             //----------------------------
 
-            //DateRangePicker is inherited from View
+            //DateRangePicker is inherited from View and Event
             //It a dateRangePicker ui component (http://www.daterangepicker.com/)
             DateRangePicker = SocialReport.DateRangePicker = function (Id, Options) {
+                //make sure all instance has their `selfListeners` in case of use the selfListeners in Event prototype 
+                this.selfListeners = {};
                 this.initialize(Id, Options);
             },
 
@@ -381,9 +383,11 @@ var jQuery = jQuery,
             //SocialReport.Select
             //-------------------
 
-            //Select is inherited from View
+            //Select is inherited from View and Event
             //just wrap select component
             Select = SocialReport.Select = function (Id, Options) {
+                //make sure all instance has their `selfListeners` in case of use the selfListeners in Event prototype 
+                this.selfListeners = {};
                 this.initialize(Id, Options);
             },
             
@@ -391,9 +395,11 @@ var jQuery = jQuery,
             //SocialReport.SearchBox
             //----------------------
 
-            //SearchBox is inherited from View
+            //SearchBox is inherited from View and Event
             //it containe a input and submit button
             SearchBox = SocialReport.SearchBox = function (Id, Options) {
+                //make sure all instance has their `selfListeners` in case of use the selfListeners in Event prototype 
+                this.selfListeners = {};
                 this.initialize(Id, Options);
             },
             
@@ -424,6 +430,8 @@ var jQuery = jQuery,
             //It is a DataTables ui component (https://datatables.net/)
             //temporary add `Options` for further useage
             DataTables = SocialReport.DataTables = function (Id, TableData, TableAttrs, Options) {
+                //make sure all instance has their `selfListeners` in case of use the selfListeners in Event prototype 
+                this.selfListeners = {};
                 this.initialize(Id, TableData, TableAttrs, Options);
             },
             
@@ -436,6 +444,8 @@ var jQuery = jQuery,
             //`LineChartData` is an object contain three attributes: labelsArr, websiteDataArr and competitorDataArr
             //`LineChartOptions` is an object to edit LineChart default LineChartOptions
             LineChart = SocialReport.LineChart = function (Id, LineChartData, LineChartOptions, Options) {
+                //make sure all instance has their `selfListeners` in case of use the selfListeners in Event prototype 
+                this.selfListeners = {};
                 this.initialize(Id, LineChartData, LineChartOptions, Options);
             },
 
@@ -774,9 +784,83 @@ var jQuery = jQuery,
                     chart.draw(data, option);
                 }
             };
+        
+        //extend Event class prototype object
+        $.extend(Event.prototype, {
+            //an internal object to save different type of listeners
+            selfListeners: {},
+
+            //internal function to create event in `selfListeners`
+            createEventInSelfListeners: function (EventName) {
+                this.selfListeners[EventName] = [];
+                return this.selfListeners[EventName];
+            },
+
+            //internal function to delete event in `selfListeners`
+            deleteEventInSelfListeners: function (EventName, EventHandler) {
+                var eventArray = this.selfListeners[EventName],
+                    eventKey;
+
+                for (eventKey = 0; eventKey < eventArray.length; eventKey += 1) {
+                    if (EventHandler === eventArray[eventKey]) {
+                        this.selfListeners[EventName].splice(eventKey, 1);
+                        break;
+                    }
+                }
+            },
+
+            //check if `selfListeners` has event named `EventName`
+            hasEvent: function (EventName) {
+                return !!this.selfListeners[EventName];
+            },
+
+            //add event to `EventName` event
+            addEvent: function (EventName, EventHandler) {
+                if (Toolbox.isString(EventName) && Toolbox.isFunction(EventHandler)) {
+                    //if do not have event named `EventName`
+                    if (!this.hasEvent(EventName)) {
+                        this.createEventInSelfListeners(EventName);
+                    }
+                    this.selfListeners[EventName].push(EventHandler);
+                } else {
+                    Toolbox.assert('Function SocialReport.Event.addEvent: `EventName` is not a string or `EventHandler` is not a function');
+                    return false;
+                }
+            },
+
+            //remove event from `EventName` event
+            removeEvent: function (EventName, EventHandler) {
+                //check if parameter is valid and `EventName` event exist
+                if (Toolbox.isString(EventName) && Toolbox.isFunction(EventHandler) && this.hasEvent(EventName)) {
+                    this.deleteEventInSelfListeners(EventName, EventHandler);
+                } else {
+                    Toolbox.assert('Function SocialReport.Event.removeEvent: `EventName` is not a string or `EventHandler` is not a function');
+                    return false;
+                }
+            },
+            
+            //trigger event
+            triggerEvent: function (EventName, Context) {
+                var eventArray = this.selfListeners[EventName],
+                    eventKey,
+                    params = Array.prototype.slice.call(arguments, 2);  //get the other parameters except `EventName` and `context`
+
+                //check if parameter is valid and `EventName` event exist
+                if (Toolbox.isString(EventName) && this.hasEvent(EventName)) {
+
+                    for (eventKey = 0; eventKey < eventArray.length; eventKey += 1) {
+                        eventArray[eventKey].apply(Context, params);
+                    }
+                } else {
+                    Toolbox.assert('Function SocialReport.Event.removeEvent: `EventName` is not a string');
+                    return false;
+                }
+            }
+
+        });
 
         //extend View class prototype object
-        $.extend(View.prototype, {
+        $.extend(View.prototype, Event.prototype, {
             //set `id`
             setId: function (Id) {
                 //if `Id` is not undefined and not in de existInIdList then set to `this.id`
@@ -848,79 +932,6 @@ var jQuery = jQuery,
 
             }
         });
-        
-        //extend Event class prototype object
-        $.extend(Event.prototype, {
-            //an internal object to save different type of listeners
-            selfListeners: {},
-
-            //internal function to create event in `selfListeners`
-            createEventInSelfListeners: function (EventName) {
-                this.selfListeners[EventName] = [];
-                return this.selfListeners[EventName];
-            },
-
-            //internal function to delete event in `selfListeners`
-            deleteEventInSelfListeners: function (EventName, EventHandler) {
-                var eventArray = this.selfListeners[EventName],
-                    eventKey;
-
-                for (eventKey = 0; eventKey < eventArray.length; eventKey += 1) {
-                    if (EventHandler === eventArray[eventKey]) {
-                        this.selfListeners[EventName].splice(eventKey, 1);
-                        break;
-                    }
-                }
-            },
-
-            //check if `selfListeners` has event named `EventName`
-            hasEvent: function (EventName) {
-                return !!this.selfListeners[EventName];
-            },
-
-            //add event to `EventName` event
-            addEvent: function (EventName, EventHandler) {
-                if (Toolbox.isString(EventName) && Toolbox.isFunction(EventHandler)) {
-                    //if do not have event named `EventName`
-                    if (!this.hasEvent(EventName)) {
-                        this.createEventInSelfListeners(EventName);
-                    }
-                    this.selfListeners[EventName].push(EventHandler);
-                } else {
-                    Toolbox.assert('Function SocialReport.Event.addEvent: `EventName` is not a string or `EventHandler` is not a function');
-                    return false;
-                }
-            },
-
-            //remove event from `EventName` event
-            removeEvent: function (EventName, EventHandler) {
-                //check if parameter is valid and `EventName` event exist
-                if (Toolbox.isString(EventName) && Toolbox.isFunction(EventHandler) && this.hasEvent(EventName)) {
-                    this.deleteEventInSelfListeners(EventName, EventHandler);
-                } else {
-                    Toolbox.assert('Function SocialReport.Event.removeEvent: `EventName` is not a string or `EventHandler` is not a function');
-                    return false;
-                }
-            },
-            
-            //trigger event
-            triggerEvent: function (EventName) {
-                var eventArray = this.selfListeners[EventName],
-                    eventKey;
-
-                //check if parameter is valid and `EventName` event exist
-                if (Toolbox.isString(EventName) && this.hasEvent(EventName)) {
-
-                    for (eventKey = 0; eventKey < eventArray.length; eventKey += 1) {
-                        eventArray[eventKey]();
-                    }
-                } else {
-                    Toolbox.assert('Function SocialReport.Event.removeEvent: `EventName` is not a string');
-                    return false;
-                }
-            }
-
-        });
 
         //extend DateRangePicker class prototype object
         $.extend(DateRangePicker.prototype, View.prototype, {
@@ -969,27 +980,11 @@ var jQuery = jQuery,
                 return this.end;
             },
 
-            //set user customized change handler function
-            setChangeHandler: function (ChangeHandler) {
-                if (Toolbox.isFunction(ChangeHandler)) {
-                    this.changeHandler = ChangeHandler;
-                } else {
-                    Toolbox.assert('Function SocialReport.DateRangePicker.setChangeHandler: `ChangeHandler` is not a function');
-                    return false;
-                }
-            },
-
-            //get user customized change handler function
-            getChangeHandler: function () {
-                return this.changeHandler;
-            },
-
             //wrap user's change handler to generate dateRangePicker change handler
             genDateRangePickerHandler: function () {
                 var context = this,
                     id = this.getId(),
-                    $obj = $('#' + id),
-                    changeHandler = this.getChangeHandler();
+                    $obj = $('#' + id);
 
                 return function (Start, End) {
                     //set current `start` and `end`
@@ -997,8 +992,8 @@ var jQuery = jQuery,
                     context.setEnd(End);
                     //change the content of the daterangepicker
                     $obj.find('span').html(context.getDateRangeInText());
-                    //call user's change handler function
-                    changeHandler.call(context, context.getStart(), context.getEnd());
+                    //trigger change event
+                    context.triggerEvent('change', context, context.getStart(), context.getEnd());
                 };
             },
 
@@ -1064,7 +1059,11 @@ var jQuery = jQuery,
                 this.setId(Id);
                 this.setStart(Options.start || moment().subtract(6, 'days').hours(0).minutes(0).seconds(0));
                 this.setEnd(Options.end || moment().hours(23).minutes(59).seconds(59));
-                this.setChangeHandler(Options.changeHandler || '');
+                
+                //add `changeHandler` to change event
+                if (Toolbox.isFunction(Options.changeHandler)) {
+                    this.addEvent('change', Options.changeHandler);
+                }
                 this.setTemplate(['<button type="button" class="btn btn-default pull-right" id="', '%ID%', '"><span><i class="fa fa-calendar"></i> Date range picker</span><i class="fa fa-caret-down"></i></button>']);
                 this.render();
                 this.setDateRangePicker();
@@ -1138,34 +1137,13 @@ var jQuery = jQuery,
             bindChangeEvent: function () {
                 var context = this,
                     id = this.getId(),
-                    $obj = $('#' + id),
-                    changeHandler = this.getChangeHandler();
+                    $obj = $('#' + id);
                 $obj.change(function () {
                     var currentValue = $obj.find('option:selected').val();
                     context.setCurrentValue(currentValue);
-                    if (Toolbox.isFunction(changeHandler)) {
-                        changeHandler.call(context, currentValue);
-                    } else {
-                        Toolbox.assert('Function SocialReport.Select.bindChangeEvent: `changeHandler` is not a function');
-                        return false;
-                    }
+                    //trigger change event
+                    context.triggerEvent('change', context, currentValue);
                 });
-            },
-
-            //set user customized change handler function
-            setChangeHandler: function (ChangeHandler) {
-                if (Toolbox.isFunction(ChangeHandler)) {
-                    this.changeHandler = ChangeHandler;
-                    this.bindChangeEvent();
-                } else {
-                    Toolbox.assert('Function SocialReport.Select.setChangeHandler: `ChangeHandler` is not a function');
-                    return false;
-                }
-            },
-
-            //get user customized change handler function
-            getChangeHandler: function () {
-                return this.changeHandler;
             },
 
             //set currentValue
@@ -1193,7 +1171,12 @@ var jQuery = jQuery,
                 this.setSelectOption(Options.option);
                 this.setTemplate(['<select class="form-control" id="', '%ID%', '"></select>']);
                 this.render();
-                this.setChangeHandler(Options.changeHandler);
+                
+                //add `changeHandler` to change event
+                if (Toolbox.isFunction(Options.changeHandler)) {
+                    this.addEvent('change', Options.changeHandler);
+                }
+                this.bindChangeEvent();
             }
         });
         
@@ -1226,22 +1209,6 @@ var jQuery = jQuery,
             getSearchValue: function () {
                 return this.searchValue;
             },
-
-            //set user customized submit handler function
-            setSubmitHandler: function (SubmitHandler) {
-                if (Toolbox.isFunction(SubmitHandler)) {
-                    this.submitHandler = SubmitHandler;
-                    this.bindSubmitEvent();
-                } else {
-                    Toolbox.assert('Function SocialReport.SearchBox.setSubmitHandler: `SubmitHandler` is not a function');
-                    return false;
-                }
-            },
-
-            //get user customized submit handler function
-            getSubmitHandler: function () {
-                return this.submitHandler;
-            },
             
             //bind input change event
             bindInputChangeEvent: function () {
@@ -1260,11 +1227,10 @@ var jQuery = jQuery,
                     id = this.getId(),
                     $obj = $('#' + id),
                     $submitObj = $obj.find('button'),
-                    searchValue,
-                    submitHandler = this.getSubmitHandler();
+                    searchValue;
                 $submitObj.on('click', function () {
                     searchValue = context.getSearchValue();
-                    submitHandler.call(context, searchValue);
+                    context.triggerEvent('change', context, searchValue);
                 });
                 
                 this.bindInputChangeEvent();
@@ -1275,7 +1241,12 @@ var jQuery = jQuery,
                 this.setId(Id);
                 this.setTemplate(['<div class="input-group input-group-sm" id="', '%ID%', '"><input type="text" class="form-control"><span class="input-group-btn"><button type="button" class="btn btn-info btn-flat">Go!</button></span></div>']);
                 this.render();
-                this.setSubmitHandler(Options.submitHandler);
+                
+                //add `submitHandler` to change event
+                if (Toolbox.isFunction(Options.submitHandler)) {
+                    this.addEvent('change', Options.submitHandler);
+                }
+                this.bindSubmitEvent();
             }
         });
         
