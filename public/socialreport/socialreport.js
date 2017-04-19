@@ -1323,6 +1323,21 @@ var jQuery = jQuery,
                 });
             },
             
+            //bind input enter event
+            bindInputEnterEvent: function () {
+                var context = this,
+                    id = this.getId(),
+                    $obj = $('#' + id),
+                    $inputObj = $obj.find('input'),
+                    $submitObj = $obj.find('button');
+                $inputObj.bind('keypress', function (e) {
+                    if (e.keyCode === 13) {
+                        context.setSearchValue($inputObj.val());
+                        $submitObj.click();
+                    }
+                });
+            },
+            
             //bind submit event to submitHandler
             bindSubmitEvent: function () {
                 var context = this,
@@ -1335,7 +1350,6 @@ var jQuery = jQuery,
                     context.triggerEvent('change', context, searchValue);
                 });
                 
-                this.bindInputChangeEvent();
             },
 
             //initialize function
@@ -1345,6 +1359,8 @@ var jQuery = jQuery,
                 this.setTemplate(['<div class="input-group input-group-sm" id="', '%ID%', '"><input type="text" class="form-control"><span class="input-group-btn"><button type="button" class="btn btn-info btn-flat">Go!</button></span></div>']);
                 this.render();
                 this.addEvent('change', Options.submitHandler);
+                this.bindInputChangeEvent();
+                this.bindInputEnterEvent();
                 this.bindSubmitEvent();
             }
         });
