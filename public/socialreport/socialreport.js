@@ -950,15 +950,17 @@ var jQuery = jQuery,
                 }
                 
                 //loop to set components into `componentsList`
-                for (componentKey = 0; componentKey < componentsArray.length; componentKey += 1) {
-                    component = componentsArray[componentKey];
-                    //check if this component has getId function
-                    if (typeof (componentsArray[componentKey].getId) !== 'undefined') {
-                        componentId = componentsArray[componentKey].getId();
-                        this.componentsList[componentId] = component;
-                    } else {
-                        Toolbox.assert('Function SocialReport.Panel.setComponent: ' + component + ' whose Id is ' + componentId + ' does not have getId function');
-                        return false;
+                for (componentKey in componentsArray) {
+                    if (componentsArray.hasOwnProperty(componentKey)) {
+                        component = componentsArray[componentKey];
+                        //check if this component has getId function
+                        if (typeof (componentsArray[componentKey].getId) !== 'undefined') {
+                            componentId = componentsArray[componentKey].getId();
+                            this.componentsList[componentId] = component;
+                        } else {
+                            Toolbox.assert('Function SocialReport.Panel.setComponent: ' + component + ' whose Id is ' + componentId + ' does not have getId function');
+                            return false;
+                        }
                     }
                 }
             },
@@ -1167,6 +1169,7 @@ var jQuery = jQuery,
 
             //initialize the element obj
             initialize: function (Id, Options) {
+                Options = (typeof (Options) !== 'undefined') ? Options : {};
                 this.setId(Id);
                 this.setStart(Options.start || moment().subtract(6, 'days').hours(0).minutes(0).seconds(0));
                 this.setEnd(Options.end || moment().hours(23).minutes(59).seconds(59));
@@ -1271,6 +1274,7 @@ var jQuery = jQuery,
 
             //initialize function
             initialize: function (Id, Options) {
+                Options = (typeof (Options) !== 'undefined') ? Options : {};
                 this.setId(Id);
                 if (Options.defaultValue) {
                     this.setDefaultValue(Options.defaultValue);
@@ -1300,17 +1304,12 @@ var jQuery = jQuery,
 
             //set searchValue
             setSearchValue: function (SearchValue) {
-                if (SearchValue) {
-                    this.searchValue = SearchValue;
-                } else {
-                    Toolbox.assert('Function SocialReport.SearchBox.setSearchValue: `SearchValue` is undefined');
-                    return false;
-                }
+                this.searchValue = SearchValue || '';
             },
             
             //get searchValue
             getSearchValue: function () {
-                return this.searchValue;
+                return this.searchValue || '';
             },
             
             //bind input change event
@@ -1320,7 +1319,7 @@ var jQuery = jQuery,
                     $obj = $('#' + id),
                     $inputObj = $obj.find('input');
                 $inputObj.change(function () {
-                    context.setSearchValue($(this).val());
+                    context.setSearchValue($inputObj.val());
                 });
             },
             
@@ -1341,6 +1340,7 @@ var jQuery = jQuery,
 
             //initialize function
             initialize: function (Id, Options) {
+                Options = (typeof (Options) !== 'undefined') ? Options : {};
                 this.setId(Id);
                 this.setTemplate(['<div class="input-group input-group-sm" id="', '%ID%', '"><input type="text" class="form-control"><span class="input-group-btn"><button type="button" class="btn btn-info btn-flat">Go!</button></span></div>']);
                 this.render();
