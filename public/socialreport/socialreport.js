@@ -787,72 +787,113 @@ var jQuery = jQuery,
         
         //extend Event class prototype object
         $.extend(Event.prototype, {
-            //an internal object to save different type of listeners
+            //an internal object to save different type of listeners, subclass should overwrite it 
             selfListeners: {},
 
-            //internal function to create event in `selfListeners`
-            createEventInSelfListeners: function (EventName) {
-                this.selfListeners[EventName] = [];
-                return this.selfListeners[EventName];
-            },
-
-            //internal function to delete event in `selfListeners`
-            deleteEventInSelfListeners: function (EventName, EventHandler) {
-                var eventArray = this.selfListeners[EventName],
-                    eventKey;
-
-                for (eventKey = 0; eventKey < eventArray.length; eventKey += 1) {
-                    if (EventHandler === eventArray[eventKey]) {
-                        this.selfListeners[EventName].splice(eventKey, 1);
-                        break;
-                    }
+            //check if event named `EventName` exist
+            hasEvent: function (EventName) {
+                if (Toolbox.isString(EventName)) {
+                    return typeof (this.selfListeners[EventName]) !== 'undefined';
+                } else {
+                    Toolbox.assert('Function SocialReport.Event.hasEvent: `EventName` is not a string');
+                    return false;
                 }
             },
 
-            //check if `selfListeners` has event named `EventName`
-            hasEvent: function (EventName) {
-                return !!this.selfListeners[EventName];
+            //internal function to create event in `selfListeners`
+            createEvent: function (EventName) {
+                //check if `EventName` is valid and make sure this event does not exist
+                if (Toolbox.isString(EventName) && !this.hasEvent(EventName)) {
+                    this.selfListeners[EventName] = [];
+                    return this.selfListeners[EventName];
+                } else {
+                    Toolbox.assert('Function SocialReport.Event.createEvent: `EventName` is not a string or already exist');
+                    return false;
+                }
             },
 
-            //add event to `EventName` event
-            addEvent: function (EventName, EventHandler) {
+            //internal function to delete event name `EventName` in `selfListeners`
+            deleteEvent: function (EventName) {
+                //check if `EventName` is valid
+                if (Toolbox.isString(EventName) && this.hasEvent(EventName)) {
+                    delete this.selfListeners[EventName];
+                } else {
+                    Toolbox.assert('Function SocialReport.Event.deleteEvent: `EventName` is not a string or does not exist');
+                    return false;
+                }
+            },
+            
+            //internal function to delete handler in event name `EventName`
+            deleteHandlerInEvent: function (EventName, EventHandler) {
+                var handlersArray,
+                    handlerKey;
+
+                //make `EventName` and `EventHandler` is valid and event name `EventName` exist
+                if (Toolbox.isString(EventName) && this.hasEvent(EventName) && Toolbox.isFunction(EventHandler)) {
+                    handlersArray = this.selfListeners[EventName];
+                    //loop to search handler match `EventHandler` then delete it
+                    for (handlerKey = 0; handlerKey < handlersArray.length; handlerKey += 1) {
+                        if (EventHandler === handlersArray[handlerKey]) {
+                            this.selfListeners[EventName].splice(handlerKey, 1);
+                            break;
+                        }
+                    }
+                } else {
+                    Toolbox.assert('Function SocialReport.Event.deleteHandlerInEvent: `EventName` is not a string or does not exist or `EventHandler` is not a function');
+                    return false;
+                }
+            },
+            
+            //internal function to get handler from event
+            getHandlersFromEvent: function (EventName) {
+                if (Toolbox.isString(EventName) && this.hasEvent(EventName)) {
+                    return this.selfListeners[EventName];
+                }
+            },
+            
+            //internal function to set handler to event
+            setHandlerFromEvent: function (EventName, EventHandler) {
                 if (Toolbox.isString(EventName) && Toolbox.isFunction(EventHandler)) {
                     //if do not have event named `EventName`
                     if (!this.hasEvent(EventName)) {
-                        this.createEventInSelfListeners(EventName);
+                        this.createEvent(EventName);
                     }
                     this.selfListeners[EventName].push(EventHandler);
                 } else {
-                    Toolbox.assert('Function SocialReport.Event.addEvent: `EventName` is not a string or `EventHandler` is not a function');
+                    Toolbox.assert('Function SocialReport.Event.setHandlerFromEvent: `EventName` is not a string or `EventHandler` is not a function');
                     return false;
                 }
             },
 
+            //add event name `EventName` in `selfListeners`
+            addEvent: function (EventName, EventHandler) {
+                this.setHandlerFromEvent(EventName, EventHandler);
+            },
+
             //remove event from `EventName` event
+            //if `EventHandler` is a function we will remove the matched handler in event
             removeEvent: function (EventName, EventHandler) {
-                //check if parameter is valid and `EventName` event exist
-                if (Toolbox.isString(EventName) && Toolbox.isFunction(EventHandler) && this.hasEvent(EventName)) {
-                    this.deleteEventInSelfListeners(EventName, EventHandler);
+                if (Toolbox.isFunction(EventHandler)) {
+                    this.deleteHandlerInEvent(EventName, EventHandler);
                 } else {
-                    Toolbox.assert('Function SocialReport.Event.removeEvent: `EventName` is not a string or `EventHandler` is not a function');
-                    return false;
+                    this.deleteEvent(EventName);
                 }
             },
             
             //trigger event
             triggerEvent: function (EventName, Context) {
-                var eventArray = this.selfListeners[EventName],
-                    eventKey,
-                    params = Array.prototype.slice.call(arguments, 2);  //get the other parameters except `EventName` and `context`
+                var handlersArray = this.getHandlersFromEvent(EventName),
+                    handlerKey,
+                    paramsArray = Array.prototype.slice.call(arguments, 2);  //get the other parameters except `EventName` and `context`
 
                 //check if parameter is valid and `EventName` event exist
                 if (Toolbox.isString(EventName) && this.hasEvent(EventName)) {
-
-                    for (eventKey = 0; eventKey < eventArray.length; eventKey += 1) {
-                        eventArray[eventKey].apply(Context, params);
+                    //loop to apply handler in the event name `EventName`
+                    for (handlerKey = 0; handlerKey < handlersArray.length; handlerKey += 1) {
+                        handlersArray[handlerKey].apply(Context, paramsArray);
                     }
                 } else {
-                    Toolbox.assert('Function SocialReport.Event.removeEvent: `EventName` is not a string');
+                    Toolbox.assert('Function SocialReport.Event.triggerEvent: `EventName` is not a string or event does not exist');
                     return false;
                 }
             }
