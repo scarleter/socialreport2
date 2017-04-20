@@ -107,7 +107,9 @@
     <!-- /.content -->
 </div>
 <!-- /.content-wrapper -->
-<script>
+
+
+<script type="text/javascript">
     //set some request setting
     window.troperlaicos = {
         'facebook': {

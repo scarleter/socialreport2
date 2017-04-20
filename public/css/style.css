@@ -1,10 +1,12 @@
 /*login*/
+
 .content.login form {
     max-width: 800px;
 }
 
 
 /*############ icon ############*/
+
 .fb_icon {
     background: url(../images/RqQo1U5NOq1.png);
     height: 16px;
@@ -62,33 +64,54 @@
     background-size: cover;
     vertical-align: text-bottom;
 }
+
+
 /*############ icon ############*/
 
+
 /*############ dataTable ############*/
+
 .dt-responsive.table tr td.breakall {
     word-break: break-all;
 }
 
-/*---- hide sort icon start ----*/
+
+/*---- make tr counld border ----*/
+
+table.table-bordered.dataTable {
+    border-collapse: collapse !important;
+}
+
+
+/*==== hide sort icon start ====*/
+
 table.dataTable thead .sorting:after {
     opacity: 0;
 }
+
 table.dataTable thead .sorting:after,
 table.dataTable thead .sorting_asc:after,
 table.dataTable thead .sorting_desc:after {
     opacity: 0;
 }
-/*---- hide sort icon end ----*/
 
-/*---- fixed paginate button style start ----*/
+
+/*==== hide sort icon end ====*/
+
+
+/*==== fixed paginate button style start ====*/
+
 .dataTables_wrapper .dataTables_paginate .paginate_button {
     padding: 0;
 }
+
 .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
     border-color: #fff;
     background: none;
 }
-/*---- fixed paginate button style start ----*/
+
+
+/*==== fixed paginate button style end ====*/
 
 .dataTables_wrapper .post_message {
     max-width: 200px;
@@ -96,4 +119,20 @@ table.dataTable thead .sorting_desc:after {
     word-break: break-all;
     /*overflow-y: scroll;*/
 }
+
+#pageToWatchDataTable .pageContainer {
+    white-space: nowrap;
+    text-align: left;
+}
+
+#pageToWatchDataTable .pageContainer label {
+    padding-left: 10px;
+}
+
+#pageToWatchDataTable tbody th,
+#pageToWatchDataTable tbody td {
+    vertical-align: baseline;
+}
+
+
 /*############ dataTable ############*/
