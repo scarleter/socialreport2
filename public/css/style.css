@@ -134,5 +134,15 @@ table.dataTable thead .sorting_desc:after {
     vertical-align: baseline;
 }
 
+#postLogDataTable .dateHeader {
+    font-weight: bold;
+    font-size: 18px;
+    white-space: nowrap;
+}
+
+#postLogDataTable .timeWrapper {
+    white-space: nowrap;
+}
+
 
 /*############ dataTable ############*/
