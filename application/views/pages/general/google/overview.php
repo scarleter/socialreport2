@@ -38,7 +38,7 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label>Date range button:</label>
+                                    <label>Date range</label>
                                     <div class="input-group">
                                         <span id="dateRangePicker"></span>
                                     </div>
@@ -46,13 +46,13 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label>Page Search Box:</label>
+                                    <label>Search(Link)</label>
                                     <span id="pageSearchBox"></span>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label>Title Search Box:</label>
+                                    <label>Search(Title)</label>
                                     <span id="titleSearchBox"></span>
                                 </div>
                             </div>
@@ -185,13 +185,6 @@
             pageSearchBox = new SocialReport.SearchBox('pageSearchBox'),
             titleSearchBox = new SocialReport.SearchBox('titleSearchBox');
 
-        //data selector panel,change Property and dateRnage to get different data
-        //        troperlaicos.dataSelectorPanel = new SocialReport.DateRangePickerSelectorPanel('dataSelectorPanel', {
-        //            changeHandler: dataSelectorPanelChangeHandler,
-        //            option: troperlaicos.ids,
-        //            template: ['<div class="row"><div class="col-md-4"><div class="form-group"><label>Property</label><span id="', '%ID%Select"></span></div></div><div class="col-md-6"><div class="form-group"><label>Date range button:</label><div class="input-group"><span id="', '%ID%DateRangePicker"></span></div></div></div></div>']
-        //        });
-
         troperlaicos.dataSelectorPanel = new SocialReport.Panel('', {
             components: [propertySelect, dateRangePicker, pageSearchBox, titleSearchBox],
             changeHandler: dataSelectorPanelChangeHandler
@@ -215,7 +208,7 @@
                 'end-date': end.format("YYYY-MM-DD"),
                 'ids': currentProperty
             };
-        
+
         //build the filter string
         if (pageFilterString) {
             filterArray.push('ga:pagePath=@' + pageFilterString + '');

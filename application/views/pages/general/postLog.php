@@ -76,7 +76,7 @@
                 </style>
                 <div class="box box-info">
                     <div class="box-header">
-                        <h3 class="box-title text-aqua">Post Number By Editor</h3>
+                        <h3 class="box-title text-aqua">Post Log Summary</h3>
                         <div class="box-tools pull-right">
                             <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
                     </button>
@@ -170,7 +170,7 @@
             //it returan an object include attribute of `data` and `columnTitle`
             data = facebookOperation.getFormatDataFromTableType('postnumberbyeditor'),
             tableAttrs = {
-                ordering: false,
+                order: [1, 'des'],
                 searching: false,
                 paging: false,
                 columns: data['columnTitle']
