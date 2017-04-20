@@ -6,41 +6,45 @@ class Website extends MY_Controller {
         parent::__construct();
     }
 
-	public function postDataLegacyView(){
+    public function postDataLegacyView(){
+        $websiteFacebookId = FACEBOOK_WEBSITE_PAGEID;
+        $websiteFacebookAccessToken = FACEBOOK_WEBSITE_PAGE_ACCESS_TOKEN;
+        
         $data = array();
-        $data['pageId'] = FACEBOOK_WEBSITE_PAGEID;
-        $data['pageAccessToken'] = FACEBOOK_WEBSITE_PAGE_ACCESS_TOKEN;
-        $content = $this->load->view('pages/general/content/postDataLegacyView', $data, true);
+        $data['pageId'] = $websiteFacebookId;
+        $data['pageAccessToken'] = $websiteFacebookAccessToken;
+        $content = $this->load->view('pages/general/facebook/postDataLegacyView', $data, true);
 		$this->loadview($content);
 	}
     
-	public function dataCompare(){
+    public function dataCompare(){
+        $websiteName = FACEBOOK_WEBSITE_NAME;
+        $websiteFacebookId = FACEBOOK_WEBSITE_PAGEID;
+        $websiteFacebookAccessToken = FACEBOOK_WEBSITE_PAGE_ACCESS_TOKEN;
+        
         $data = array();
-        $data['websiteName'] = FACEBOOK_WEBSITE_NAME;
-        $data['pageId'] = FACEBOOK_WEBSITE_PAGEID;
-        $data['pageAccessToken'] = FACEBOOK_WEBSITE_PAGE_ACCESS_TOKEN;
+        $data['websiteName'] = $websiteName;
+        $data['pageId'] = $websiteFacebookId;
+        $data['pageAccessToken'] = $websiteFacebookAccessToken;
         $data['pagesToWatchList'] = array();
-        $data['pagesToWatchList'][FACEBOOK_WEBSITE_PAGEID] = FACEBOOK_WEBSITE_NAME;
-        $pagesToWatchList = $this->pagestowatch_model->getlistbytype(FACEBOOK_WEBSITE_NAME);
+        $data['pagesToWatchList'][$websiteFacebookId] = $websiteName;
+        $pagesToWatchList = $this->pagestowatch_model->getlistbytype($websiteName);
         foreach($pagesToWatchList as $key => $value){
             $data['pagesToWatchList'][$value['pageID']] = $value['name'];
         }
         $data['pagesToWatchList'] = json_encode($data['pagesToWatchList']);
-        $content = $this->load->view('pages/general/content/dataCompare', $data, true);
+        $content = $this->load->view('pages/general/facebook/dataCompare', $data, true);
 		$this->loadview($content);
 	}
     
-    public function overview()
-    {   
-        $accessToken = getGoogleAccessToken();
+    public function postlog(){
+        $websiteFacebookId = FACEBOOK_WEBSITE_PAGEID;
+        $websiteFacebookAccessToken = FACEBOOK_WEBSITE_PAGE_ACCESS_TOKEN;
         
-        //render page
         $data = array();
-        $data['websiteName'] = 'websiteName';
-        $data['accessToken'] = $accessToken;
-        $data['ids'] = array('idOne' => 'idOne','idTwo' => 'idTwo');
-        $data['ids'] = json_encode($data['ids']);
-        $content=$this->load->view('pages/general/google/overview', $data, true);
+        $data['pageId'] = $websiteFacebookId;
+        $data['pageAccessToken'] = $websiteFacebookAccessToken;
+        $content = $this->load->view('pages/general/facebook/postLog', $data, true);
 		$this->loadview($content);
-	}
+    }
 }
