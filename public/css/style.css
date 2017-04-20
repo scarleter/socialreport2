@@ -1,29 +1,99 @@
-
 /*login*/
-.content.login form{
-    max-width:800px;
+.content.login form {
+    max-width: 800px;
 }
-.fb_icon{
+
+
+/*############ icon ############*/
+.fb_icon {
     background: url(../images/RqQo1U5NOq1.png);
     height: 16px;
     width: 16px!important;
     vertical-align: text-bottom;
 }
-.fb_like{
+
+.fb_like {
     background-position: -34px -94px;
 }
-.fb_love{
+
+.fb_love {
     background-position: -51px -94px;
 }
-.fb_haha{
+
+.fb_haha {
     background-position: -17px -94px;
 }
-.fb_wow{
+
+.fb_wow {
     background-position: -102px -94px;
 }
-.fb_sad{
+
+.fb_sad {
     background-position: -85px -94px;
 }
-.fb_anger{
+
+.fb_anger {
     background-position: -119px -77px;
 }
+
+.icon_facebook {
+    display: inline-block;
+    background: url(../images/fb-art.png);
+    width: 15px;
+    height: 15px;
+    background-size: cover;
+    vertical-align: text-bottom;
+}
+
+.icon_google {
+    display: inline-block;
+    background: url(../images/google-search-icon-png-733.png);
+    width: 15px;
+    height: 15px;
+    background-size: cover;
+    vertical-align: text-bottom;
+}
+
+.icon_system {
+    display: inline-block;
+    background: url(../images/704_-_Tools-512.png);
+    width: 15px;
+    height: 15px;
+    background-size: cover;
+    vertical-align: text-bottom;
+}
+/*############ icon ############*/
+
+/*############ dataTable ############*/
+.dt-responsive.table tr td.breakall {
+    word-break: break-all;
+}
+
+/*---- hide sort icon start ----*/
+table.dataTable thead .sorting:after {
+    opacity: 0;
+}
+table.dataTable thead .sorting:after,
+table.dataTable thead .sorting_asc:after,
+table.dataTable thead .sorting_desc:after {
+    opacity: 0;
+}
+/*---- hide sort icon end ----*/
+
+/*---- fixed paginate button style start ----*/
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    padding: 0;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    border-color: #fff;
+    background: none;
+}
+/*---- fixed paginate button style start ----*/
+
+.dataTables_wrapper .post_message {
+    max-width: 200px;
+    max-height: 200px;
+    word-break: break-all;
+    /*overflow-y: scroll;*/
+}
+/*############ dataTable ############*/

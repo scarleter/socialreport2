@@ -21,8 +21,7 @@
                         <h3 class="box-title text-aqua">Date range:</h3>
 
                         <div class="box-tools pull-right">
-                            <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
-                </button>
+                            <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
                         </div>
                     </div>
                     <div class="box-body">
@@ -33,8 +32,6 @@
                                 <span id="dateRange"></span>
                             </div>
                         </div>
-
-
                     </div>
                     <!-- /.box-body -->
                 </div>
@@ -44,8 +41,7 @@
                     <div class="box-header">
                         <h3 class="box-title text-aqua">Frequency</h3>
                         <div class="box-tools pull-right">
-                            <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
-                </button>
+                            <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
                         </div>
                     </div>
                     <!-- /.box-header -->
@@ -59,54 +55,12 @@
                     <div class="box-header">
                         <h3 class="box-title text-aqua">Reach % </h3>
                         <div class="box-tools pull-right">
-                            <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
-                </button>
+                            <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
                         </div>
                     </div>
                     <!-- /.box-header -->
                     <div class="box-body">
-                        <style>
-                            .dt-responsive.table tr td.longnumber {
-                                word-break: break-all;
-                            }
-                            
-                            table.dataTable thead .sorting:after {
-                                opacity: 0;
-                            }
-                            
-                            table.dataTable thead .sorting:after,
-                            table.dataTable thead .sorting_asc:after,
-                            table.dataTable thead .sorting_desc:after {
-                                opacity: 0;
-                            }
-                            
-                            .dataTables_wrapper .dataTables_paginate .paginate_button {
-                                padding: 0;
-                            }
-                            
-                            .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-                                border-color: #fff;
-                                background: none;
-                            }
-                            
-                            #postsDataTable .post_message {
-                                max-width: 200px;
-                                max-height: 200px;
-                                word-break: break-all;
-                                /*overflow-y: scroll;*/
-                            }
-                            
-                            #postsDataTable label {
-                                margin-bottom: 0px;
-                                width: 95px;
-                                display: inline-block;
-                            }
-                            
-                            #postsDataTable p {
-                                margin-bottom: 2px;
-                            }
 
-                        </style>
                         <label>1. Posts Data Table</label>
                         <span id="postsDataTable"></span>
                         <br/><br/>
@@ -126,8 +80,7 @@
                     <div class="box-header">
                         <h3 class="box-title text-aqua">Top 5 by each type</h3>
                         <div class="box-tools pull-right">
-                            <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
-                    </button>
+                            <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
                         </div>
                     </div>
                     <!-- /.box-header -->
@@ -162,6 +115,7 @@
             'access_token': '<?php echo $pageAccessToken;?>'
         }
     };
+
 </script>
 
 <script src="<?= base_url() ?>public/js/postDataLegacyView.js"></script>
