@@ -18,7 +18,7 @@
                 <!-- LINE CHART -->
                 <div class="box box-info">
                     <div class="box-header">
-                        <h3 class="box-title text-aqua">Date range:</h3>
+                        <h3 class="box-title text-aqua">Data Seletor</h3>
 
                         <div class="box-tools pull-right">
                             <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
