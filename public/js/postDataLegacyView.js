@@ -64,7 +64,7 @@ var window = window,
                 order: [7, 'des'],
                 columns: data.columnTitle,
                 columnDefs: [{
-                    "className": "longnumber",
+                    "className": "breakall",
                     "targets": [0, 1]
                 }],
                 dom: 'Bfrtip',
@@ -177,7 +177,7 @@ var window = window,
                 autoWidth: false,
                 columns: data.columnTitle,
                 columnDefs: [{
-                    "className": "longnumber",
+                    "className": "breakall",
                     "targets": [0, 1]
                 }]
             };
@@ -205,7 +205,7 @@ var window = window,
                 autoWidth: false,
                 columns: data.columnTitle,
                 columnDefs: [{
-                    "className": "longnumber",
+                    "className": "breakall",
                     "targets": [0, 1]
                 }]
             };
@@ -233,7 +233,7 @@ var window = window,
                 autoWidth: false,
                 columns: data.columnTitle,
                 columnDefs: [{
-                    "className": "longnumber",
+                    "className": "breakall",
                     "targets": [0, 1]
                 }]
             };
