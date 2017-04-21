@@ -46,7 +46,7 @@
                     </div>
                     <!-- /.box-header -->
                     <div class="box-body">
-                        <span id="postNumberByEditorDataTable"></span>
+                        <span id="postLogSummaryDataTable"></span>
                     </div>
                     <!-- /.box-body -->
                 </div>
@@ -88,4 +88,4 @@
 
 </script>
 
-<script src="<?= base_url() ?>public/js/postLog.js"></script>
+<script src="<?= base_url() ?>public/js/postLog.js?version=63bb195890f3ea301de756f1aeeb7cc3"></script>

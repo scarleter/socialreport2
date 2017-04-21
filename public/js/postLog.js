@@ -9,11 +9,11 @@ var window = window,
     //set a gobal variable in this js file
     var gobal = {};
 
-    //build posts number by editor
-    function buildpostNumberByEditorDataTable(Operation) {
+    //build posts log summary table
+    function buildPostLogSummaryDataTable(Operation) {
         var facebookOperation = Operation,
             //it returan an object include attribute of `data` and `columnTitle`
-            data = facebookOperation.getFormatDataFromTableType('postnumberbyeditor'),
+            data = facebookOperation.getFormatDataFromTableType('postlogsummary'),
             tableAttrs = {
                 order: [1, 'des'],
                 searching: false,
@@ -21,12 +21,12 @@ var window = window,
                 columns: data.columnTitle
             };
         //if table is exist
-        if (gobal.postNumberByEditorDataTable) {
+        if (gobal.postLogSummaryDataTable) {
             //use repaint
-            gobal.postNumberByEditorDataTable.repaint(data.data, tableAttrs);
+            gobal.postLogSummaryDataTable.repaint(data.data, tableAttrs);
         } else {
             //build datatable object
-            gobal.postNumberByEditorDataTable = new SocialReport.DataTables('postNumberByEditorDataTable', data.data, tableAttrs);
+            gobal.postLogSummaryDataTable = new SocialReport.DataTables('postLogSummaryDataTable', data.data, tableAttrs);
         }
     }
 
@@ -91,7 +91,7 @@ var window = window,
             layer.close(gobal.websiteLoadingLayer);
             var facebookOperation = this;
             //build tables
-            buildpostNumberByEditorDataTable(facebookOperation);
+            buildPostLogSummaryDataTable(facebookOperation);
             buildPostLogDataTable(facebookOperation);
         });
     }
@@ -108,7 +108,7 @@ var window = window,
                 '60': '60 minutes'
             },
             defaultValue: '15',
-            template: ['<div class="row"><div class="col-md-4" style="max-width:180px;"><div class="form-group"><label>Interval</label><span id="', '%ID%Select"></span></div></div><div class="col-md-6"><div class="form-group"><label>Date range button:</label><div class="input-group"><span id="', '%ID%DateRangePicker"></span></div></div></div></div>']
+            template: ['<div class="row"><div class="col-md-4" style="max-width:180px;"><div class="form-group"><label>Interval</label><span id="', '%ID%Select"></span></div></div><div class="col-md-6"><div class="form-group"><label>Date range</label><div class="input-group"><span id="', '%ID%DateRangePicker"></span></div></div></div></div>']
         });
 
     });
