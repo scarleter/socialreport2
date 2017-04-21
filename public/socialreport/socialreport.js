@@ -35,6 +35,7 @@ var jQuery = jQuery,
                 assert: function (Msg) {
                     var msg = Msg || '';
                     window.console.warn(msg);
+                    //throw new Error(Msg);
                 },
 
                 //check if the Object is Array
@@ -2158,8 +2159,8 @@ var jQuery = jQuery,
                         return this.getTopPostsDataInFacebookByType('video', 5);
                     case 'postlog':
                         return this.getPostLogDataInFacebookByDate(Options.interval || 1);
-                    case 'postnumberbyeditor':
-                        return this.getPostNumberByEditorDataInFacebookByDate();
+                    case 'postlogsummary':
+                        return this.getPostLogSummaryDataInFacebookByDate();
                     default:
                         Toolbox.assert('Function SocialReport.Operation.getFormatDataFromTableType: go into the default branch');
                         return this.getData();
@@ -2701,7 +2702,7 @@ var jQuery = jQuery,
             
             ////build facebook post log data in datatable format
             //return `columnTitle` and `data`
-            getPostNumberByEditorDataInFacebookByDate: function () {
+            getPostLogSummaryDataInFacebookByDate: function () {
                 var postsDataIn2D = this.getPostsDataIn2DArray(),
                     dataSize = this.getSize(),
                     columnTitle = [
