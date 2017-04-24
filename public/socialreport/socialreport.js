@@ -1200,6 +1200,20 @@ var jQuery = jQuery,
                 return this.selectOpion;
             },
             
+            //check if Select has specified option by option's value and name
+            hasOption: function (Value, Name) {
+                var id = this.getId(),
+                    $obj = $('#' + id),
+                    value = Value || null,
+                    name = Name || '',
+                    optionExist = false;
+                $obj.find('option[value=' + value + ']').each(function () {
+                    if ($(this).html() === name) {
+                        optionExist = true;
+                    }
+                });
+                return optionExist;
+            },
             //set default value
             setDefaultValue: function (DefaultValue) {
                 if (DefaultValue) {
@@ -1234,8 +1248,8 @@ var jQuery = jQuery,
                 //get the new obj
                 $obj = $('#' + id);
                 //loop the selectOpion to render select
-                $.each(selectOpion, function (key, value) {
-                    opionHtml = opionHtml + '<option value="' + key + '" ' + ((key === defaultValue) ? 'selected' : '') + '>' + value + '</option>';
+                $.each(selectOpion, function (value, name) {
+                    opionHtml = opionHtml + '<option value="' + value + '" ' + ((value === defaultValue) ? 'selected' : '') + '>' + name + '</option>';
                 });
                 $obj.html(opionHtml);
                 //only when `defaultValue` is undefined, we set the first value to currentValue
