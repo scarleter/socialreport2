@@ -43,6 +43,23 @@ var jQuery = jQuery,
                     var obj = Obj || {};
                     return Object.prototype.toString.call(obj) === '[object Array]';
                 },
+                
+                //check if the Object is 2DArray
+                is2DArray: function (Arr) {
+                    var arr = Arr || {},
+                        is2DArray = true,
+                        key;
+                    if (Toolbox.isArray(arr)) {
+                        //check if each element of `arr` is array
+                        for (key = 0; key < arr.length; key += 1) {
+                            if (!Toolbox.isArray(arr[key])) {
+                                is2DArray = false;
+                                break;
+                            }
+                        }
+                    }
+                    return is2DArray;
+                },
 
                 //check if it is a function
                 isFunction: function (Obj) {
