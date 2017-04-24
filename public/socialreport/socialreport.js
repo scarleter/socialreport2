@@ -1200,20 +1200,79 @@ var jQuery = jQuery,
                 return this.selectOpion;
             },
             
+            //find specified option in Select
+            findOption: function (Value, Name) {
+                var id = this.getId(),
+                    $obj = $('#' + id),
+                    value = Value || null,
+                    name = Name || '',
+                    results = [];
+
+                $obj.find('option[value=' + value + ']').each(function () {
+                    if ($(this).html() === name) {
+                        results.push($(this));
+                    }
+                });
+                return results;
+            },
+            
             //check if Select has specified option by option's value and name
             hasOption: function (Value, Name) {
                 var id = this.getId(),
                     $obj = $('#' + id),
                     value = Value || null,
                     name = Name || '',
-                    optionExist = false;
-                $obj.find('option[value=' + value + ']').each(function () {
-                    if ($(this).html() === name) {
-                        optionExist = true;
-                    }
-                });
+                    optionExist = (this.findOption(value, name).length > 0) ? true : false;
                 return optionExist;
             },
+            
+            //add option to the select
+            //OptionObj is an object should be like this
+            //{
+            //    'valueOne': 'nameOne',
+            //    'valueTwo': 'nameTwo'
+            //}
+            addOption: function (OptionObj) {
+                var id = this.getId(),
+                    $obj = $('#' + id),
+                    options = Toolbox.isObject(OptionObj) ? OptionObj : {},
+                    optionValue;
+                for (optionValue in options) {
+                    if (options.hasOwnProperty(optionValue)) {
+                        //append this optionValue if Select does not have it
+                        if (!this.hasOption(optionValue, options[optionValue])) {
+                            $obj.append('<option value="' + optionValue + '">' + options[optionValue] + '</option>');
+                        }
+                    }
+                }
+            },
+            
+            //remove option from Select
+            //OptionObj is an object should be like this
+            //{
+            //    'valueOne': 'nameOne',
+            //    'valueTwo': 'nameTwo'
+            //}
+            removeOption: function (OptionObj) {
+                var id = this.getId(),
+                    $obj = $('#' + id),
+                    options = Toolbox.isObject(OptionObj) ? OptionObj : {},
+                    optionValue,
+                    matchedOption,
+                    matchedIndex;
+                
+                for (optionValue in options) {
+                    if (options.hasOwnProperty(optionValue)) {
+                        //find option
+                        matchedOption = this.findOption(optionValue, options[optionValue]);
+                        //loop to remove matched option
+                        for (matchedIndex = 0; matchedIndex < matchedOption.length; matchedIndex += 1) {
+                            matchedOption[matchedIndex].remove();
+                        }
+                    }
+                }
+            },
+            
             //set default value
             setDefaultValue: function (DefaultValue) {
                 if (DefaultValue) {
