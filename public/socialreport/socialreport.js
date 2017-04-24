@@ -2957,6 +2957,37 @@ var jQuery = jQuery,
                     avgPageFansLike: Math.round(pageFansSummary / dayRange)
                 };
             },
+            
+            //internal function to filter data of `origin2DArray` by specified element
+            //`FilterIndex` is the index of the specified element
+            //only return the data whose value is equal with `FilterKeyword`
+            //when `filterKeywork` is 'all', return the whole `origin2DArray`
+            filter2DArrayBySpecifiedElement: function (Origin2DArray, FilterIndex, FilterKeyword) {
+                var filterIndex = FilterIndex || 0,
+                    filterKeywork = FilterKeyword || 'all',
+                    origin2DArray = Origin2DArray,
+                    key,
+                    resultArr = [];
+
+                if (!Toolbox.is2DArray(origin2DArray)) {
+                    Toolbox.assert('Function SocialReport.Operation.filter2DArrayBySpecifiedElement： `Origin2DArray` is not a 2DArray');
+                    return origin2DArray;
+                }
+
+                //when `filterKeywork` is 'all', return the whole `origin2DArray`
+                if (filterKeywork === 'all') {
+                    return origin2DArray;
+                }
+
+                for (key = 0; key < origin2DArray.length; key += 1) {
+
+                    if (origin2DArray[key][filterIndex] === filterKeywork) {
+                        resultArr.push(origin2DArray[key]);
+                    }
+                }
+
+                return resultArr;
+            },
 
             //internal function to get postsData in two dimension array format
             getPostsDataIn2DArray: function () {
