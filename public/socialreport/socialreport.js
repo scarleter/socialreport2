@@ -1208,7 +1208,7 @@ var jQuery = jQuery,
                     name = Name || '',
                     results = [];
 
-                $obj.find('option[value=' + value + ']').each(function () {
+                $obj.find('option[value="' + value + '"]').each(function () {
                     if ($(this).html() === name) {
                         results.push($(this));
                     }
