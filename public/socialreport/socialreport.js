@@ -162,6 +162,24 @@ var jQuery = jQuery,
                             this.mapTable[key] = value;
                         }
                     };
+                    
+                    //Iterator should be a function like function(key, value){}
+                    this.map = function (Iterator, Context) {
+                        if (!Toolbox.isFunction(Iterator)) {
+                            Toolbox.assert('Function SocialReport.Toolbox.OrderedMapTable.each: `Iterator` is not a function');
+                            return false;
+                        }
+
+                        var index,
+                            keyList = this.keyList,
+                            mapTable = this.mapTable,
+                            iterator = Iterator,
+                            context = Context || [];
+
+                        for (index = 0; index < keyList.length; index += 1) {
+                            iterator.call(this, keyList[index], mapTable[keyList[index]], context);
+                        }
+                    };
                 }
             },
 
