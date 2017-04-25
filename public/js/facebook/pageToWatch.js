@@ -139,9 +139,9 @@ var window = window,
             item[4] = new Date(new Date(sourceObj[i].created_time).getTime()); //UTC base on created_time: XXX-XX-XXTXX:XX:XX+0000(GMT) 
             item[4] = item[4].getFullYear() + "-" + ("0" + (item[4].getMonth() + 1)).slice(-2) + "-" + ("0" + item[4].getDate()).slice(-2) + " " + ("0" + item[4].getHours()).slice(-2) + ":" + ("0" + item[4].getMinutes()).slice(-2) + ":" + ("0" + item[4].getSeconds()).slice(-2);
 
-            item[5] = (typeof (sourceObj[i].likes.summary.total_count) === 'undefined') ? sourceObj[i].likes.summary.total_count : 0;
-            item[6] = (typeof (sourceObj[i].shares) === 'undefined') ? sourceObj[i].shares.count : 0;
-            item[7] = (typeof (sourceObj[i].comments.summary.total_count) === 'undefined') ? sourceObj[i].comments.summary.total_count : 0;
+            item[5] = (typeof (sourceObj[i].likes.summary.total_count) !== 'undefined') ? sourceObj[i].likes.summary.total_count : 0;
+            item[6] = (typeof (sourceObj[i].shares) !== 'undefined') ? sourceObj[i].shares.count : 0;
+            item[7] = (typeof (sourceObj[i].comments.summary.total_count) !== 'undefined') ? sourceObj[i].comments.summary.total_count : 0;
             gobal.postAosSum[0].value = gobal.postAosSum[0].value + item[5];
             gobal.postAosSum[1].value = gobal.postAosSum[1].value + item[6];
             gobal.postAosSum[2].value = gobal.postAosSum[2].value + item[7];

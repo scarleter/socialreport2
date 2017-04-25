@@ -64,10 +64,11 @@
     window.troperlaicos = {
         'facebook': {
             'controllerName': '<?php echo $controllerName;?>',
-            'websiteName': '<?php echo $websiteName;?>'
+            'websiteName': '<?php echo $websiteName;?>',
+            'base_url': '<?= base_url() ?>'
         }
     };
-window.troperlaicos.facebook.controllerName
+
 </script>
 
-<script src="<?= base_url() ?>public/js/pageToWatchSetting.js"></script>
+<script src="<?= base_url() ?>public/js/facebook/pageToWatchSetting.js?version=826f05a9d45f3b3f06a826216264e468"></script>

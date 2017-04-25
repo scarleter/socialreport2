@@ -173,4 +173,4 @@
 
 </script>
 
-<script src="<?= base_url() ?>public/js/dataCompare.js"></script>
+<script src="<?= base_url() ?>public/js/facebook/dataCompare.js"></script>

@@ -2874,8 +2874,6 @@ var jQuery = jQuery,
                 
                 //iterator
                 function iterator(key, value, context) {
-                    
-
                     //empty data
                     if (value.length <= 0) {
 

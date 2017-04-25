@@ -118,4 +118,4 @@
 
 </script>
 
-<script src="<?= base_url() ?>public/js/postLog.js?version=f7e06e54cb82530fd8564f1cd599d1fa"></script>
+<script src="<?= base_url() ?>public/js/facebook/postLog.js?version=f7e06e54cb82530fd8564f1cd599d1fa"></script>

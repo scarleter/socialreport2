@@ -120,4 +120,4 @@
 
 </script>
 
-<script src="<?= base_url() ?>public/js/postDataLegacyView.js"></script>
+<script src="<?= base_url() ?>public/js/facebook/postDataLegacyView.js"></script>

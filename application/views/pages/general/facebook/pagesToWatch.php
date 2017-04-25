@@ -114,10 +114,10 @@
     window.troperlaicos = {
         'facebook': {
             'access_token': '<?php echo ACCESS_TOKEN_EASTTOUCH?>',
-            'pageID': <?php echo $pageID;?>
+            'pageID': '<?php echo $pageID;?>'
         }
     };
 
 </script>
 
-<script src="<?= base_url() ?>public/js/pageToWatch.js"></script>
+<script src="<?= base_url() ?>public/js/facebook/pageToWatch.js?version=f37562cc0a98c8ff7085d2e25c8ba30d"></script>

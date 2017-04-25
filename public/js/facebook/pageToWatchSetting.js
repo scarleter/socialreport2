@@ -8,7 +8,8 @@ var window = window,
     //set a gobal variable in this js file
     var gobal = {
         controllerName: window.troperlaicos.facebook.controllerName,
-        websiteName: window.troperlaicos.facebook.websiteName
+        websiteName: window.troperlaicos.facebook.websiteName,
+        base_url: window.troperlaicos.facebook.base_url
     };
 
     //build PagesToWatch data
@@ -63,7 +64,7 @@ var window = window,
     function getPagesToWatchList() {
         $.ajax({
             type: 'GET',
-            url: '<?= base_url() ?>' + gobal.controllerName + '/getPagesToWatchList',
+            url: gobal.base_url + gobal.controllerName + '/getPagesToWatchList',
             data: {
                 'type': gobal.websiteName
             },
@@ -101,7 +102,7 @@ var window = window,
         }
         $.ajax({
             type: 'GET',
-            url: '<?= base_url() ?>' + gobal.controllerName + '/addPage',
+            url: gobal.base_url + gobal.controllerName + '/addPage',
             data: $.param(data),
             dataType: 'json',
             success: function (data) {
@@ -129,7 +130,7 @@ var window = window,
             }
             $.ajax({
                 type: 'GET',
-                url: '<?= base_url() ?>' + gobal.controllerName + '/editPage',
+                url: gobal.base_url + gobal.controllerName + '/editPage',
                 data: $.param(data),
                 dataType: 'json',
                 success: function (data) {
@@ -152,7 +153,7 @@ var window = window,
         }, function () {
             $.ajax({
                 type: 'GET',
-                url: '<?= base_url() ?>' + gobal.controllerName + '/deletePage',
+                url: gobal.base_url + gobal.controllerName + '/deletePage',
                 data: {
                     'id': id
                 },
