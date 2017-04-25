@@ -12,7 +12,7 @@ var window = window,
     //build posts log summary table
     function buildPostLogSummaryDataTable(Operation) {
         var facebookOperation = Operation,
-            //it returan an object include attribute of `data` and `columnTitle`
+            //it returan an object include attribute of `data`, `columnTitle` and `editorList`
             data = facebookOperation.getFormatDataFromTableType('postlogsummary'),
             tableAttrs = {
                 order: [1, 'des'],
@@ -28,14 +28,18 @@ var window = window,
             //build datatable object
             gobal.postLogSummaryDataTable = new SocialReport.DataTables('postLogSummaryDataTable', data.data, tableAttrs);
         }
+        //update editorSelector editor list
+        gobal.dataSelectorPanel.componentCombiner.getComponent('editorSelector').addOption(data.editorList);
     }
 
     //build PostLogDataTable
-    function buildPostLogDataTable(Operation) {
+    function buildPostLogDataTable(Operation, ComponentList) {
         var facebookOperation = Operation,
             //it returan an object include attribute of `data` and `columnTitle`
             data = facebookOperation.getFormatDataFromTableType('postlog', {
-                interval: gobal.interval
+                interval: ComponentList.intervalSelector.getCurrentValue(),
+                searchEditor: ComponentList.editorSelector.getCurrentValue(),
+                emptySlot: ComponentList.emptySlotSelector.getCurrentValue()
             }),
             tableAttrs = {
                 ordering: false,
@@ -51,12 +55,12 @@ var window = window,
                     {
                         extend: 'copyHtml5',
                         text: 'Copy to clipboard',
-                        filename: 'Facebook PageId(' + window.troperlaicos.facebook.pageid + ') Post Log Report during ' + gobal.dataSelectorPanel.getDateRangeInText()
+                        filename: 'Facebook PageId(' + window.troperlaicos.facebook.pageid + ') Post Log Report during ' + gobal.dataSelectorPanel.componentCombiner.getComponent('dateRangePicker').getDateRangeInText()
                     },
                     {
                         extend: 'excelHtml5',
                         text: 'Save to XLSX file',
-                        filename: 'Facebook PageId(' + window.troperlaicos.facebook.pageid + ') Post Log Report during ' + gobal.dataSelectorPanel.getDateRangeInText()
+                        filename: 'Facebook PageId(' + window.troperlaicos.facebook.pageid + ') Post Log Report during ' + gobal.dataSelectorPanel.componentCombiner.getComponent('dateRangePicker').getDateRangeInText()
                     }
                 ]
             };
@@ -71,16 +75,14 @@ var window = window,
     }
 
     //data selector panel change will trigger this function
-    function dataSelectorPanelChangeHandler(currentInterval, start, end) {
+    function dataSelectorPanelChangeHandler(ComponentList) {
         //set paras for getting facebook data
         var params = {
-            since: start.unix(),
-            until: end.unix(),
+            since: ComponentList.dateRangePicker.getStart().unix(),
+            until: ComponentList.dateRangePicker.getEnd().unix(),
             pageid: window.troperlaicos.facebook.pageid,
             access_token: window.troperlaicos.facebook.access_token
         };
-        //set current interval to gobal
-        gobal.interval = currentInterval;
         //set a new one ajax loading layer
         gobal.websiteLoadingLayer = layer.load(2, {
             shade: [0.1, '#000']
@@ -92,25 +94,41 @@ var window = window,
             var facebookOperation = this;
             //build tables
             buildPostLogSummaryDataTable(facebookOperation);
-            buildPostLogDataTable(facebookOperation);
+            buildPostLogDataTable(facebookOperation, ComponentList);
         });
     }
 
     $(function () {
-
-        //data selector panel,change Property and dateRnage to get different data
-        gobal.dataSelectorPanel = new SocialReport.DateRangePickerSelectorPanel('dataSelectorPanel', {
-            changeHandler: dataSelectorPanelChangeHandler,
-            option: {
-                '1': '1 minutes',
-                '15': '15 minutes',
-                '30': '30 minutes',
-                '60': '60 minutes'
-            },
-            defaultValue: '15',
-            template: ['<div class="row"><div class="col-md-4" style="max-width:180px;"><div class="form-group"><label>Interval</label><span id="', '%ID%Select"></span></div></div><div class="col-md-6"><div class="form-group"><label>Date range</label><div class="input-group"><span id="', '%ID%DateRangePicker"></span></div></div></div></div>']
+        //build panel component
+        var intervalSelector = new SocialReport.Select('intervalSelector', {
+                option: {
+                    '1': '1 minutes',
+                    '15': '15 minutes',
+                    '30': '30 minutes',
+                    '60': '60 minutes'
+                },
+                defaultValue: '15'
+            }),
+            dateRangePicker = new SocialReport.DateRangePicker('dateRangePicker'),
+            editorSelector = new SocialReport.Select('editorSelector', {
+                option: {
+                    all: 'all'
+                }
+            }),
+            emptySlotSelector = new SocialReport.Select('emptySlotSelector', {
+                option: {
+                    disable: 'disable',
+                    enable: 'enable'
+                }
+            });
+        //build panel
+        window.dataSelectorPanel = gobal.dataSelectorPanel = new SocialReport.Panel('', {
+            components: [intervalSelector, dateRangePicker, editorSelector, emptySlotSelector],
+            changeHandler: dataSelectorPanelChangeHandler
         });
-
+        //start the dateRangePicker component
+        dateRangePicker.triggerChangeEvent();
+        
     });
 
 }(window, jQuery, SocialReport, layer));

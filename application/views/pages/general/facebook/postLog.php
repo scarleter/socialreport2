@@ -25,12 +25,42 @@
                         </div>
                     </div>
                     <div class="box-body">
+<!--
                         <div class="form-group">
-                            <!--<label>Date range button:</label>-->
+                            <label>Date range button:</label>
 
                             <span id="dataSelectorPanel"></span>
+                            <span id="editorSelector"></span>
                         </div>
-
+-->
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Interval</label>
+                                    <span id="intervalSelector"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Date range</label>
+                                    <div class="input-group">
+                                        <span id="dateRangePicker"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Search(Editor)</label>
+                                    <span id="editorSelector"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Empty Slot</label>
+                                    <span id="emptySlotSelector"></span>
+                                </div>
+                            </div>
+                        </div>
 
                     </div>
                     <!-- /.box-body -->
@@ -88,4 +118,4 @@
 
 </script>
 
-<script src="<?= base_url() ?>public/js/postLog.js?version=63bb195890f3ea301de756f1aeeb7cc3"></script>
+<script src="<?= base_url() ?>public/js/postLog.js?version=f7e06e54cb82530fd8564f1cd599d1fa"></script>
