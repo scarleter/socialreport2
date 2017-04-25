@@ -2922,8 +2922,8 @@ var jQuery = jQuery,
                 };
             },
             
-            ////build facebook post log data in datatable format
-            //return `columnTitle` and `data`
+            //build facebook post log data in datatable format
+            //return `columnTitle`, `data` and `editorList`
             getPostLogSummaryDataInFacebookByDate: function () {
                 var postsDataIn2D = this.getPostsDataIn2DArray(),
                     dataSize = this.getSize(),
@@ -2937,6 +2937,7 @@ var jQuery = jQuery,
                     ],
                     data = [],
                     editorMemory = {},
+                    editorList = {},
                     postIndex,
                     editor;
                 //loop `postsDataIn2D` to save number of post to `editorMemory` sort by editor
@@ -2952,12 +2953,14 @@ var jQuery = jQuery,
                 for (editor in editorMemory) {
                     if (editorMemory.hasOwnProperty(editor)) {
                         data.push([editor, editorMemory[editor].postNumber]);
+                        editorList[editor] = editor;
                     }
                 }
 
                 return {
                     data: data,
-                    columnTitle: columnTitle
+                    columnTitle: columnTitle,
+                    editorList: editorList
                 };
             },
             
