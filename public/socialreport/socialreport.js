@@ -2325,7 +2325,7 @@ var jQuery = jQuery,
                     case 'topvideos':
                         return this.getTopPostsDataInFacebookByType('video', 5);
                     case 'postlog':
-                        return this.getPostLogDataInFacebookByDate(Options.interval || 1);
+                        return this.getPostLogDataInFacebookByDate(Options);
                     case 'postlogsummary':
                         return this.getPostLogSummaryDataInFacebookByDate();
                     default:
@@ -2765,11 +2765,14 @@ var jQuery = jQuery,
             
             //build facebook post log data in datatable format
             //return `columnTitle` and `data`
-            getPostLogDataInFacebookByDate: function (Interval) {
-                //set the variable for looping
-                //4 mean sort by posted time
+            getPostLogDataInFacebookByDate: function (Options) {
+                //var postsDataIn2DArray = this.getPostsDataIn2DArray(),
                 var sortedPostsData = this.sortPostsData(4),
-                    dataSize = this.getSize(),
+                    interval = parseInt(Options.interval, 0) || 1,
+                    searchEditor = Options.searchEditor || 'all',
+                    emptySlot = Options.emptySlot || 'disable',
+                    requiredPostsData = this.filter2DArrayBySpecifiedElement(sortedPostsData, 17, searchEditor), //filter post data by `searchEditor`
+                    dataSize = requiredPostsData.length,
                     columnTitle = [
                         {
                             title: "Editor"
@@ -2797,70 +2800,122 @@ var jQuery = jQuery,
                         }
                     ],
                     data = [],
-                    postIndex = 0,
-                    postAttrArray = [],
-                    interval = parseInt(Interval, 0) || 1,
-                    previousYearMonthDay = '0000-00-00',
-                    previousHourMinute = '--:--',
-                    thisYearMonthDay,
-                    thisHour,
-                    thisMinute,
-                    postMinuteStart,
-                    postMinuteEnd,
-                    postTime;
-                for (postIndex = dataSize - 1; postIndex >= 0; postIndex -= 1) {
-                    thisYearMonthDay = moment(sortedPostsData[postIndex][4]).format("YYYY-MM-DD");
-                    thisHour = moment(sortedPostsData[postIndex][4]).format("HH");
-                    thisMinute = moment(sortedPostsData[postIndex][4]).format("mm");
-                    //check if `currentYearMonthDay` is change, we will open a new row for showing new date
-                    if (previousYearMonthDay !== thisYearMonthDay) {
-                        //initialize the `postAttrArray` for saving new attribute of post
-                        postAttrArray = [];
-                        //save thisYearMonthDay to previousYearMonthDay
-                        previousYearMonthDay = thisYearMonthDay;
-                        postAttrArray.push('');
-                        postAttrArray.push('<div class="dateHeader">' + thisYearMonthDay + '</div>');
-                        postAttrArray.push('');
-                        postAttrArray.push('');
-                        postAttrArray.push('');
-                        postAttrArray.push('');
-                        postAttrArray.push('');
-                        postAttrArray.push('');
-                        //push this post array into result array `data`
-                        data.push(postAttrArray);
-                    }
-                    //initialize the `postAttrArray` for saving new attribute of post
-                    postAttrArray = [];
-                    //calculate the start hour:minute:second
-                    postMinuteStart = Math.floor(parseInt(thisMinute, 0) / interval) * interval;
-                    //calculate the start hour:minute:second
-                    postMinuteEnd = postMinuteStart + interval - 1;
-                    //format `postMinuteStart` and `postMinuteEnd`
-                    postMinuteStart = postMinuteStart < 10 ? '0' + postMinuteStart : postMinuteStart;
-                    postMinuteEnd = postMinuteEnd < 10 ? '0' + postMinuteEnd : postMinuteEnd;
-                    //check if `postMinuteStart` is equal with `previousHourMinute`
-                    if ((thisHour + ':' + postMinuteStart) === previousHourMinute) {   //if is equal we show nothing
-                        postTime = '';
-                    } else {    //otherwise, we show the new time
-                        postTime = '<div class="timeWrapper">' + thisHour + ':' + postMinuteStart + ':00' + ' - ' + thisHour + ':' + postMinuteEnd + ':59' + '</div>';
-                        previousHourMinute = thisHour + ':' + postMinuteStart;
-                    }
-                    //set this post attribute to an array which will be added to the `data` array
-                    postAttrArray.push(sortedPostsData[postIndex][17]);
-                    //postAttrArray.push(thisHour + ':' + postMinuteStart + '00');
-                    //postAttrArray.push(thisHour + ':' + postMinuteStart + ':00 - ' + thisHour + ':' + postMinuteEnd + ':00');
-                    postAttrArray.push(postTime);
-                    postAttrArray.push(sortedPostsData[postIndex][1]);
-                    postAttrArray.push(sortedPostsData[postIndex][2]);
-                    postAttrArray.push(sortedPostsData[postIndex][7]);
-                    postAttrArray.push(sortedPostsData[postIndex][8]);
-                    postAttrArray.push(sortedPostsData[postIndex][9]);
-                    postAttrArray.push(sortedPostsData[postIndex][10]);
+                    orderedMapTable = new Toolbox.OrderedMapTable(), //it is an order map table.key is post's time in format like '00:00:00-00:15:59' and value is a 2DArray which contain post
+                    eachDayPosts = {},
+                    //previousYearMonthDay = '0000-00-00',    //save the last post's time in format like "YYYY-MM-DD"
+                    postIndex,
+                    postYearMonthDay, //save current post's time in format like "YYYY-MM-DD"
+                    postPeriod, //save current post's time in format like "00:00:00-00:15:59"
+                    orderedMapTableValue,
+                    eachDayPostsKey,
+                    eachPostPeriodKey;
 
 
-                    //push this post array into result array `data`
-                    data.push(postAttrArray);
+                //use `interval` to generate all time period in one day and add this time period to `orderedMapTable`
+                function formatOrderedMapTable(OrderedMapTable, Interval) {
+
+                    //check if `OrderedMapTable` is build by constructor `Toolbox.OrderedMapTable`
+                    if (!OrderedMapTable instanceof Toolbox.OrderedMapTable) {
+                        Toolbox.assert('Function SocialReport.Operation.getNewPostLogDataInFacebookByDate formatOrderedMapTable: `OrderedMapTable` is not build by ToolBox.OrderMapTable');
+                        return false;
+                    }
+
+                    var orderedMapTable = OrderedMapTable,
+                        interval = parseInt(Interval, 0) || 1, //number of minutes
+                        minutesInOneDay = 24 * 60, //the total minutes in one day
+                        currentMinutes = 0,
+                        mapAttribute = '00:00:00', //"HH:mm:ss"
+                        hour,
+                        minuteStart,
+                        minuteEnd;
+
+
+                    for (currentMinutes = 0; currentMinutes < minutesInOneDay; currentMinutes += interval) {
+                        hour = Math.floor(currentMinutes / 60);
+                        minuteStart = currentMinutes % 60;
+                        minuteEnd = minuteStart + interval - 1;
+                        //format `hour`, `minuteStart` and `minuteEnd`
+                        hour = hour < 10 ? '0' + hour : String('') + hour;
+                        minuteStart = minuteStart < 10 ? '0' + minuteStart : String('') + minuteStart;
+                        minuteEnd = minuteEnd < 10 ? '0' + minuteEnd : String('') + minuteEnd;
+                        mapAttribute = hour + ':' + minuteStart + ':' + '00' + ' - ' + hour + ':' + minuteEnd + ':' + '59';
+                        //save mapAttribute to `orderedMapTable`
+                        OrderedMapTable.add(mapAttribute, []);
+                    }
                 }
+
+                //a function parse post time to format like 'HH:mm:ss - HH:mm:ss'
+                //`PostTime` should be a string like '2017-04-20 19:04:28'
+                function parsePostTime(PostTime, Interval) {
+                    var postTime = PostTime || null,
+                        interval = parseInt(Interval, 0) || 1, //number of minutes
+                        hour,
+                        minute,
+                        minuteStart,
+                        minuteEnd,
+                        parsedPostTime;
+
+                    if (!Toolbox.isString(postTime)) {
+                        Toolbox.assert('Function SocialReport.Operation.getNewPostLogDataInFacebookByDate parsePostTime: `PostTime` is not a string');
+                        return false;
+                    }
+
+                    hour = moment(postTime).format("HH");
+                    minute = moment(postTime).format("mm");
+                    minuteStart = Math.floor(parseInt(minute, 0) / interval) * interval;
+                    minuteEnd = minuteStart + interval - 1;
+                    //format `minuteStart` and `minuteEnd`
+                    minuteStart = minuteStart < 10 ? '0' + minuteStart : String('') + minuteStart;
+                    minuteEnd = minuteEnd < 10 ? '0' + minuteEnd : String('') + minuteEnd;
+                    parsedPostTime = hour + ':' + minuteStart + ':' + '00' + ' - ' + hour + ':' + minuteEnd + ':' + '59';
+
+                    return parsedPostTime;
+                }
+                
+                //iterator
+                function iterator(key, value, context) {
+                    
+
+                    //empty data
+                    if (value.length <= 0) {
+
+                        //if `emptySlot` is enable, we create an empty slot
+                        if (emptySlot === 'enable') {
+                            context.push(['', '<div class="timeWrapper">' + key + '</div>', '', '', '', '', '', '']);
+                        }
+                    } else {
+                        for (eachPostPeriodKey = 0; eachPostPeriodKey < value.length; eachPostPeriodKey += 1) {
+                            context.push([value[eachPostPeriodKey][17], (eachPostPeriodKey === 0) ? '<div class="timeWrapper">' + key + '</div>' : '', value[eachPostPeriodKey][1], value[eachPostPeriodKey][2], value[eachPostPeriodKey][7], value[eachPostPeriodKey][8], value[eachPostPeriodKey][9], value[eachPostPeriodKey][10]]);
+                        }
+                    }
+                }
+
+                //format `orderedMapTable`
+                formatOrderedMapTable(orderedMapTable, interval);
+
+                //loop the `requiredPostsData` to save post to `eachDayPosts`
+                for (postIndex = dataSize - 1; postIndex >= 0; postIndex -= 1) {
+                    postYearMonthDay = moment(requiredPostsData[postIndex][4]).format("YYYY-MM-DD");
+
+                    //if `eachDayPosts` does not have attribute whose name is `orderedMapTable` then create it
+                    if (!eachDayPosts.hasOwnProperty(postYearMonthDay)) {
+                        eachDayPosts[postYearMonthDay] = $.extend(true, {}, orderedMapTable); //deecopy
+                    }
+
+                    postPeriod = parsePostTime(requiredPostsData[postIndex][4], interval);
+                    orderedMapTableValue = eachDayPosts[postYearMonthDay].getAttribute(postPeriod);
+                    orderedMapTableValue = orderedMapTableValue.concat([requiredPostsData[postIndex]]);
+                    eachDayPosts[postYearMonthDay].setAttribute(postPeriod, orderedMapTableValue);
+                }
+
+                //loop to format data in datatable format
+                for (eachDayPostsKey in eachDayPosts) {
+                    if (eachDayPosts.hasOwnProperty(eachDayPostsKey)) {
+                        data.push(['', '<div class="dateHeader">' + eachDayPostsKey + '</div>', '', '', '', '', '', '']);
+                        eachDayPosts[eachDayPostsKey].map(iterator, data);
+                    }
+                }
+
                 return {
                     data: data,
                     columnTitle: columnTitle
