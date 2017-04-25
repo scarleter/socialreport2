@@ -103,6 +103,65 @@ var jQuery = jQuery,
                         }
                     }
                     return size;
+                },
+                
+                //it is a constructor for building an ordered map table
+                OrderedMapTable: function () {
+                    this.keyList = [];
+                    this.mapTable = {};
+
+                    //check if has `Key`
+                    this.hasKey = function (Key) {
+                        var key = Key || '',
+                            hasKey = false;
+
+                        if (this.mapTable.hasOwnProperty(key)) {
+                            hasKey = true;
+                        }
+                        return hasKey;
+                    };
+
+                    //add attribute
+                    this.add = function (Key, Value) {
+                        var key = Key || '',
+                            value = Value || '';
+
+                        if (!this.hasKey(key)) {
+                            this.keyList.push(key);
+                            this.mapTable[key] = value;
+                        }
+                    };
+
+                    //remove attribute
+                    this.remove = function (Key) {
+                        var key = Key || '',
+                            index;
+
+                        if (this.hasKey(key)) {
+                            index = this.keyList.indexOf(key);
+                            if (index !== -1) {
+                                this.keyList.splice(index, 1);
+                            }
+                            //this.keyList.push(key);
+                            delete this.mapTable[key];
+                        }
+                    };
+
+                    //get attribute
+                    this.getAttribute = function (Key) {
+                        var key = Key || '';
+                        return this.mapTable[key];
+                    };
+
+                    //set attribute
+                    this.setAttribute = function (Key, Value) {
+                        var key = Key || '',
+                            value = Value || '';
+
+                        if (this.hasKey(key)) {
+                            this.mapTable[key] = value;
+                        }
+                    };
                 }
             },
 
