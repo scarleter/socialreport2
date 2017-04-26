@@ -859,7 +859,7 @@ var jQuery = jQuery,
                                     fontSize: 12
                                 }
                             }
-                        }, ChartData.option);
+                        }, Optioins || {});
                     //loop columnData
                     for (columnDataKey in ChartData.columnData) {
                         if (ChartData.columnData.hasOwnProperty(columnDataKey)) {
