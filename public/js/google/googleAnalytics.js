@@ -167,8 +167,6 @@ var window = window,
             'sort': '-ga:pageviews'
         }, Params);
         SocialReport.GoogleAnalytics.getGoogleAnalyticsData(params, function (resp) {
-            //close google request loading layer
-            layer.close(gobal.googleRequestloadingLayer);
 
             var chartData = [],
                 dataArr = [],
@@ -272,6 +270,9 @@ var window = window,
         buildPageviewsLineChart(params);
         buildAvgSessionDurationLineChart(params);
         buildBehaviorAllPageDataTable(params);
+
+        //close google request loading layer
+        layer.close(gobal.googleRequestloadingLayer);
     }
 
     $(function () {
