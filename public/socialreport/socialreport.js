@@ -2783,6 +2783,8 @@ var jQuery = jQuery,
                     interval = parseInt(Options.interval, 0) || 1,
                     searchEditor = Options.searchEditor || 'all',
                     emptySlot = Options.emptySlot || 'disable',
+                    startDate = Options.startDate || null,
+                    endDate = Options.endDate || null,
                     requiredPostsData = this.filter2DArrayBySpecifiedElement(sortedPostsData, 17, searchEditor), //filter post data by `searchEditor`
                     dataSize = requiredPostsData.length,
                     columnTitle = [
@@ -2820,7 +2822,8 @@ var jQuery = jQuery,
                     postPeriod, //save current post's time in format like "00:00:00-00:15:59"
                     orderedMapTableValue,
                     eachDayPostsKey,
-                    eachPostPeriodKey;
+                    eachPostPeriodKey,
+                    weeklyReportData;
 
 
                 //use `interval` to generate all time period in one day and add this time period to `orderedMapTable`
@@ -2828,7 +2831,7 @@ var jQuery = jQuery,
 
                     //check if `OrderedMapTable` is build by constructor `Toolbox.OrderedMapTable`
                     if (!OrderedMapTable instanceof Toolbox.OrderedMapTable) {
-                        Toolbox.assert('Function SocialReport.Operation.getNewPostLogDataInFacebookByDate formatOrderedMapTable: `OrderedMapTable` is not build by ToolBox.OrderMapTable');
+                        Toolbox.assert('Function SocialReport.Operation.getPostLogDataInFacebookByDate formatOrderedMapTable: `OrderedMapTable` is not build by ToolBox.OrderMapTable');
                         return false;
                     }
 
@@ -2868,7 +2871,7 @@ var jQuery = jQuery,
                         parsedPostTime;
 
                     if (!Toolbox.isString(postTime)) {
-                        Toolbox.assert('Function SocialReport.Operation.getNewPostLogDataInFacebookByDate parsePostTime: `PostTime` is not a string');
+                        Toolbox.assert('Function SocialReport.Operation.getPostLogDataInFacebookByDate parsePostTime: `PostTime` is not a string');
                         return false;
                     }
 
@@ -2925,11 +2928,271 @@ var jQuery = jQuery,
                         eachDayPosts[eachDayPostsKey].map(iterator, data);
                     }
                 }
+                
+                //generate weekly report data
+                weeklyReportData = this.generateDataForWeeklyReport(eachDayPosts, startDate, endDate);
 
                 return {
                     data: data,
-                    columnTitle: columnTitle
+                    columnTitle: columnTitle,
+                    weeklyReportData: weeklyReportData
                 };
+            },
+            
+            //generate data in weekly report format
+            generateDataForWeeklyReport: function (EachDayPosts, StartDate, EndDate) {
+                var startDate = StartDate || null,
+                    endDate = EndDate || null,
+                    eachDayPosts = EachDayPosts || null,
+                    weeklyReportData = [],
+                    defaultPlaceholder = '--',
+                    oneWeekDataInitObj = {
+                        header: {},
+                        postLogData: {
+                            'summary': {
+                                feeds: {
+                                    'SUN': 0,
+                                    'MON': 0,
+                                    'TUE': 0,
+                                    'WED': 0,
+                                    'THU': 0,
+                                    'FRI': 0,
+                                    'SAT': 0
+                                },
+                                reach: {
+                                    'SUN': 0,
+                                    'MON': 0,
+                                    'TUE': 0,
+                                    'WED': 0,
+                                    'THU': 0,
+                                    'FRI': 0,
+                                    'SAT': 0
+                                }
+                            }
+                        },
+                        footer: {}
+                    },
+                    periodDataInitObj = {
+                        '%PERIOD%': defaultPlaceholder,
+                        '%MON_EDITOR%': defaultPlaceholder,
+                        '%MON_DESCRIPTION%': defaultPlaceholder,
+                        '%MON_REACH%': defaultPlaceholder,
+                        '%TUE_EDITOR%': defaultPlaceholder,
+                        '%TUE_DESCRIPTION%': defaultPlaceholder,
+                        '%TUE_REACH%': defaultPlaceholder,
+                        '%WED_EDITOR%': defaultPlaceholder,
+                        '%WED_DESCRIPTION%': defaultPlaceholder,
+                        '%WED_REACH%': defaultPlaceholder,
+                        '%THU_EDITOR%': defaultPlaceholder,
+                        '%THU_DESCRIPTION%': defaultPlaceholder,
+                        '%THU_REACH%': defaultPlaceholder,
+                        '%FRI_EDITOR%': defaultPlaceholder,
+                        '%FRI_DESCRIPTION%': defaultPlaceholder,
+                        '%FRI_REACH%': defaultPlaceholder,
+                        '%SAT_EDITOR%': defaultPlaceholder,
+                        '%SAT_DESCRIPTION%': defaultPlaceholder,
+                        '%SAT_REACH%': defaultPlaceholder,
+                        '%SUN_EDITOR%': defaultPlaceholder,
+                        '%SUN_DESCRIPTION%': defaultPlaceholder,
+                        '%SUN_REACH%': defaultPlaceholder
+                    },
+                    formatedPostLogData = [],
+                    dayStringArray = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
+                    reportHeaderText = 'TOUCH Facebook\'s Weekly Report ',
+                    weeklyReportDataKey,
+                    postLogDataKey,
+                    periodKey;
+                
+                //iterator
+                function iterator(key, value, context) {
+                    var eachPostPeriodKey = 0,
+                        dayIndex;
+                    context[key] = Toolbox.isUndefined(context[key]) ? [] : context[key];
+
+                    //loop every post in this period
+                    for (eachPostPeriodKey = 0; eachPostPeriodKey < value.length; eachPostPeriodKey += 1) {
+                        //large than exist period post number, create a new period post
+                        if (eachPostPeriodKey >= context[key].length) {
+                            context[key].push($.extend(true, {}, periodDataInitObj));
+                        }
+
+                        dayIndex = moment(value[eachPostPeriodKey][4]).day();
+                        context[key][eachPostPeriodKey]['%PERIOD%'] = key;
+                        context[key][eachPostPeriodKey]['%' + dayStringArray[dayIndex] + '_EDITOR%'] = value[eachPostPeriodKey][17];
+                        context[key][eachPostPeriodKey]['%' + dayStringArray[dayIndex] + '_DESCRIPTION%'] = value[eachPostPeriodKey][2].replace('<div class="post_message">', '').replace('</div>', '');
+                        context[key][eachPostPeriodKey]['%' + dayStringArray[dayIndex] + '_REACH%'] = value[eachPostPeriodKey][7];
+                        //calculate and save every day summary
+                        context.summary.feeds[dayStringArray[dayIndex]] += 1;
+                        context.summary.reach[dayStringArray[dayIndex]] += parseInt(value[eachPostPeriodKey][7].replace(',', ''), 0);
+                    }
+                }
+                
+                //divide the dayRange up into several weeks, `DayIndex` is the index of the first day of the week
+                //weeksArray:[
+                //    ["2017-04-28", "2017-04-29", "2017-04-30"],
+                //    ["2017-05-01", "2017-05-02", "2017-05-03", "2017-05-04"]
+                //]
+                function divideDayRangeIntoWeeks(StartDate, EndDate, DayIndex) {
+                    var startDate = StartDate || null,
+                        endDate = EndDate || null,
+                        dayIndex = DayIndex || 1,
+                        weeksArray = [],
+                        oneWeekArray = [],
+                        currentDay;
+                    
+                    //loop all day between `startDate` and `endDate`
+                    for (currentDay = moment(startDate.format("YYYY-MM-DD")); !currentDay.isAfter(endDate); currentDay.add(1, 'days')) {
+                        
+                        //check if `currentDay` reach the new week
+                        if (currentDay.day() === dayIndex && !currentDay.isSame(startDate)) {
+                            weeksArray.push(oneWeekArray);
+                            oneWeekArray = [];
+                        }
+                        
+                        oneWeekArray.push(currentDay.format("YYYY-MM-DD"));
+                    }
+                    weeksArray.push(oneWeekArray);
+                    
+                    return weeksArray;
+                }
+                
+                //build `weeklyReportData`
+                //
+                function buildWeeklyReportData(StartDate, EndDate, DayIndex) {
+                    var startDate = StartDate || null,
+                        endDate = EndDate || null,
+                        dayIndex = DayIndex || 1,
+                        weeksArray = [],
+                        weeksIndex = 0,
+                        oneWeekData = $.extend(true, {}, oneWeekDataInitObj),
+                        daysIndex = 0,
+                        currentYearMonthDay = '',
+                        currentDay = '',
+                        dayStringIndex = '',
+                        dayString = '',
+                        weeklyReportData = [];
+                        
+                    //get weeksArray
+                    weeksArray = divideDayRangeIntoWeeks(startDate, endDate, dayIndex);
+
+                    //loop all weeks to save data to `weeklyReportData`
+                    for (weeksIndex = 0; weeksIndex < weeksArray.length; weeksIndex += 1) {
+                        //initialize `oneWeekData`
+                        oneWeekData = $.extend(true, {}, oneWeekDataInitObj);
+
+                        //loop all days in one week
+                        for (daysIndex = 0; daysIndex < weeksArray[weeksIndex].length; daysIndex += 1) {
+                            currentYearMonthDay = weeksArray[weeksIndex][daysIndex];
+                            currentDay = moment(currentYearMonthDay);
+                            dayStringIndex = currentDay.day();
+                            dayString = dayStringArray[dayStringIndex];
+
+                            //save header
+                            oneWeekData.header['%REPORT_HEADER_TEXT%'] = reportHeaderText + weeksArray[weeksIndex][0] + ' to ' + weeksArray[weeksIndex][weeksArray[weeksIndex].length - 1];
+                            oneWeekData.header['%WEEKS%'] = currentDay.week();
+                            oneWeekData.header['%' + dayString + '_DATE%'] = currentYearMonthDay;
+
+                            //save postLogData
+                            if (eachDayPosts.hasOwnProperty(currentYearMonthDay)) {
+
+                                //loop every post in this day
+                                eachDayPosts[currentYearMonthDay].map(iterator, oneWeekData.postLogData);
+                            }
+                        }
+
+                        //save one week data to `weeklyReportData`
+                        weeklyReportData.push(oneWeekData);
+                    }
+                    return weeklyReportData;
+                }
+                
+                //save footer to weeklyReport
+                function saveWeeklyReportFooter(OneWeekData, PostLogSummary) {
+                    var postLogSummary = PostLogSummary;
+
+                    OneWeekData.footer['%SUN_TOTAL_FEEDS%'] = postLogSummary.feeds.SUN;
+                    OneWeekData.footer['%MON_TOTAL_FEEDS%'] = postLogSummary.feeds.MON;
+                    OneWeekData.footer['%TUE_TOTAL_FEEDS%'] = postLogSummary.feeds.TUE;
+                    OneWeekData.footer['%WED_TOTAL_FEEDS%'] = postLogSummary.feeds.WED;
+                    OneWeekData.footer['%THU_TOTAL_FEEDS%'] = postLogSummary.feeds.THU;
+                    OneWeekData.footer['%FRI_TOTAL_FEEDS%'] = postLogSummary.feeds.FRI;
+                    OneWeekData.footer['%SAT_TOTAL_FEEDS%'] = postLogSummary.feeds.SAT;
+                    OneWeekData.footer['%WEEK_TOTAL_FEEDS%'] = postLogSummary.feeds.SUN + postLogSummary.feeds.MON + postLogSummary.feeds.TUE + postLogSummary.feeds.WED + postLogSummary.feeds.THU + postLogSummary.feeds.FRI + postLogSummary.feeds.SAT;
+                    //total reach
+                    OneWeekData.footer['%SUN_TOTAL_REACH%'] = postLogSummary.reach.SUN;
+                    OneWeekData.footer['%MON_TOTAL_REACH%'] = postLogSummary.reach.MON;
+                    OneWeekData.footer['%TUE_TOTAL_REACH%'] = postLogSummary.reach.TUE;
+                    OneWeekData.footer['%WED_TOTAL_REACH%'] = postLogSummary.reach.WED;
+                    OneWeekData.footer['%THU_TOTAL_REACH%'] = postLogSummary.reach.THU;
+                    OneWeekData.footer['%FRI_TOTAL_REACH%'] = postLogSummary.reach.FRI;
+                    OneWeekData.footer['%SAT_TOTAL_REACH%'] = postLogSummary.reach.SAT;
+                    OneWeekData.footer['%WEEK_TOTAL_REACH%'] = postLogSummary.reach.SUN + postLogSummary.reach.MON + postLogSummary.reach.TUE + postLogSummary.reach.WED + postLogSummary.reach.THU + postLogSummary.reach.FRI + postLogSummary.reach.SAT;
+                }
+                
+                //format weeklyReportData's postLogData
+                function formatPostLogData(WeeklyReportData) {
+                    var weeklyReportDataKey = '',
+                        postLogDataKey = '',
+                        feedKey = '',
+                        originalPostLogData = {},
+                        formatedPostLogData = [];
+
+                    //loop weeklyReportDataKey
+                    for (weeklyReportDataKey in WeeklyReportData) {
+                        if (WeeklyReportData.hasOwnProperty(weeklyReportDataKey)) {
+                            originalPostLogData = WeeklyReportData[weeklyReportDataKey].postLogData;
+                            formatedPostLogData = [];
+
+                            //loop postLogData
+                            for (postLogDataKey in originalPostLogData) {
+                                if (originalPostLogData.hasOwnProperty(postLogDataKey)) {
+
+                                    //ignore `summary` attribute
+                                    if (postLogDataKey !== 'summary') {
+
+                                        //output empty slot
+                                        if (originalPostLogData[postLogDataKey].length === 0) {
+                                            formatedPostLogData.push({
+                                                '%PERIOD%': postLogDataKey
+                                            });
+                                        }
+
+                                        //loop every period
+                                        for (feedKey in originalPostLogData[postLogDataKey]) {
+                                            if (originalPostLogData[postLogDataKey].hasOwnProperty(feedKey)) {
+
+                                                //set empty if has more than one feed in the same period
+                                                if (feedKey > 0) {
+                                                    originalPostLogData[postLogDataKey][feedKey]['%PERIOD%'] = '';
+                                                }
+                                                formatedPostLogData.push(originalPostLogData[postLogDataKey][feedKey]);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            //save footer
+                            saveWeeklyReportFooter(WeeklyReportData[weeklyReportDataKey], originalPostLogData.summary);
+                            //modify postLogData
+                            WeeklyReportData[weeklyReportDataKey].postLogData = $.extend(true, {}, formatedPostLogData);
+                        }
+                    }
+                }
+
+                //check if param valid
+                if (Toolbox.isNull(startDate) || Toolbox.isNull(endDate) || Toolbox.isNull(eachDayPosts)) {
+                    Toolbox.assert('Function SocialReport.Operation.getPostLogDataInFacebookByDate generateDataForWeeklyReport: `EachDayPosts` or `StartDate` or `EndDate` is undefined');
+                    return false;
+                }
+                
+                //build `weeklyReportData`
+                weeklyReportData = buildWeeklyReportData(moment(startDate), moment(endDate), 1);
+                
+                //change postLogData format and save footer
+                formatPostLogData(weeklyReportData);
+                
+                return weeklyReportData;
             },
             
             //build facebook post log data in datatable format
