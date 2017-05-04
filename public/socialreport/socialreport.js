@@ -44,6 +44,18 @@ var jQuery = jQuery,
                     return Object.prototype.toString.call(obj) === '[object Array]';
                 },
                 
+                //check if the object is null
+                isNull: function (Obj) {
+                    var obj = Obj;
+                    return obj === null;
+                },
+                
+                //check if undefined
+                isUndefined: function (Obj) {
+                    var obj = Obj;
+                    return typeof obj === "undefined";
+                },
+                
                 //check if the Object is 2DArray
                 is2DArray: function (Arr) {
                     var arr = Arr || {},
