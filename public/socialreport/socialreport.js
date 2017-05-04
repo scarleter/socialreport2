@@ -3091,6 +3091,8 @@ var jQuery = jQuery,
                             oneWeekData.header['%REPORT_HEADER_TEXT%'] = reportHeaderText + weeksArray[weeksIndex][0] + ' to ' + weeksArray[weeksIndex][weeksArray[weeksIndex].length - 1];
                             oneWeekData.header['%WEEKS%'] = currentDay.week();
                             oneWeekData.header['%' + dayString + '_DATE%'] = currentYearMonthDay;
+                            //save number of day in this week to footer
+                            oneWeekData.header.daysNum = weeksArray[weeksIndex].length;
 
                             //save postLogData
                             if (eachDayPosts.hasOwnProperty(currentYearMonthDay)) {
@@ -3107,26 +3109,30 @@ var jQuery = jQuery,
                 }
                 
                 //save footer to weeklyReport
-                function saveWeeklyReportFooter(OneWeekData, PostLogSummary) {
+                function saveWeeklyReportFooter(OneWeekData, PostLogSummary, daysNum) {
                     var postLogSummary = PostLogSummary;
 
-                    OneWeekData.footer['%SUN_TOTAL_FEEDS%'] = postLogSummary.feeds.SUN;
-                    OneWeekData.footer['%MON_TOTAL_FEEDS%'] = postLogSummary.feeds.MON;
-                    OneWeekData.footer['%TUE_TOTAL_FEEDS%'] = postLogSummary.feeds.TUE;
-                    OneWeekData.footer['%WED_TOTAL_FEEDS%'] = postLogSummary.feeds.WED;
-                    OneWeekData.footer['%THU_TOTAL_FEEDS%'] = postLogSummary.feeds.THU;
-                    OneWeekData.footer['%FRI_TOTAL_FEEDS%'] = postLogSummary.feeds.FRI;
-                    OneWeekData.footer['%SAT_TOTAL_FEEDS%'] = postLogSummary.feeds.SAT;
+                    OneWeekData.footer['%SUN_TOTAL_FEEDS%'] = postLogSummary.feeds.SUN.toLocaleString();
+                    OneWeekData.footer['%MON_TOTAL_FEEDS%'] = postLogSummary.feeds.MON.toLocaleString();
+                    OneWeekData.footer['%TUE_TOTAL_FEEDS%'] = postLogSummary.feeds.TUE.toLocaleString();
+                    OneWeekData.footer['%WED_TOTAL_FEEDS%'] = postLogSummary.feeds.WED.toLocaleString();
+                    OneWeekData.footer['%THU_TOTAL_FEEDS%'] = postLogSummary.feeds.THU.toLocaleString();
+                    OneWeekData.footer['%FRI_TOTAL_FEEDS%'] = postLogSummary.feeds.FRI.toLocaleString();
+                    OneWeekData.footer['%SAT_TOTAL_FEEDS%'] = postLogSummary.feeds.SAT.toLocaleString();
                     OneWeekData.footer['%WEEK_TOTAL_FEEDS%'] = postLogSummary.feeds.SUN + postLogSummary.feeds.MON + postLogSummary.feeds.TUE + postLogSummary.feeds.WED + postLogSummary.feeds.THU + postLogSummary.feeds.FRI + postLogSummary.feeds.SAT;
+                    OneWeekData.footer['%WEEK_AVG_FEEDS%'] = Math.round(OneWeekData.footer['%WEEK_TOTAL_FEEDS%'] / parseInt(daysNum, 0)).toLocaleString();
+                    OneWeekData.footer['%WEEK_TOTAL_FEEDS%'] = OneWeekData.footer['%WEEK_TOTAL_FEEDS%'].toLocaleString();
                     //total reach
-                    OneWeekData.footer['%SUN_TOTAL_REACH%'] = postLogSummary.reach.SUN;
-                    OneWeekData.footer['%MON_TOTAL_REACH%'] = postLogSummary.reach.MON;
-                    OneWeekData.footer['%TUE_TOTAL_REACH%'] = postLogSummary.reach.TUE;
-                    OneWeekData.footer['%WED_TOTAL_REACH%'] = postLogSummary.reach.WED;
-                    OneWeekData.footer['%THU_TOTAL_REACH%'] = postLogSummary.reach.THU;
-                    OneWeekData.footer['%FRI_TOTAL_REACH%'] = postLogSummary.reach.FRI;
-                    OneWeekData.footer['%SAT_TOTAL_REACH%'] = postLogSummary.reach.SAT;
+                    OneWeekData.footer['%SUN_TOTAL_REACH%'] = postLogSummary.reach.SUN.toLocaleString();
+                    OneWeekData.footer['%MON_TOTAL_REACH%'] = postLogSummary.reach.MON.toLocaleString();
+                    OneWeekData.footer['%TUE_TOTAL_REACH%'] = postLogSummary.reach.TUE.toLocaleString();
+                    OneWeekData.footer['%WED_TOTAL_REACH%'] = postLogSummary.reach.WED.toLocaleString();
+                    OneWeekData.footer['%THU_TOTAL_REACH%'] = postLogSummary.reach.THU.toLocaleString();
+                    OneWeekData.footer['%FRI_TOTAL_REACH%'] = postLogSummary.reach.FRI.toLocaleString();
+                    OneWeekData.footer['%SAT_TOTAL_REACH%'] = postLogSummary.reach.SAT.toLocaleString();
                     OneWeekData.footer['%WEEK_TOTAL_REACH%'] = postLogSummary.reach.SUN + postLogSummary.reach.MON + postLogSummary.reach.TUE + postLogSummary.reach.WED + postLogSummary.reach.THU + postLogSummary.reach.FRI + postLogSummary.reach.SAT;
+                    OneWeekData.footer['%WEEK_AVG_REACH%'] = Math.round(OneWeekData.footer['%WEEK_TOTAL_REACH%'] / parseInt(daysNum, 0)).toLocaleString();
+                    OneWeekData.footer['%WEEK_TOTAL_REACH%'] = OneWeekData.footer['%WEEK_TOTAL_REACH%'].toLocaleString();
                 }
                 
                 //format weeklyReportData's postLogData
@@ -3173,7 +3179,7 @@ var jQuery = jQuery,
                             }
 
                             //save footer
-                            saveWeeklyReportFooter(WeeklyReportData[weeklyReportDataKey], originalPostLogData.summary);
+                            saveWeeklyReportFooter(WeeklyReportData[weeklyReportDataKey], originalPostLogData.summary, WeeklyReportData[weeklyReportDataKey].header.daysNum);
                             //modify postLogData
                             WeeklyReportData[weeklyReportDataKey].postLogData = $.extend(true, {}, formatedPostLogData);
                         }
