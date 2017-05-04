@@ -39,7 +39,9 @@ var window = window,
             data = facebookOperation.getFormatDataFromTableType('postlog', {
                 interval: ComponentList.intervalSelector.getCurrentValue(),
                 searchEditor: ComponentList.editorSelector.getCurrentValue(),
-                emptySlot: ComponentList.emptySlotSelector.getCurrentValue()
+                emptySlot: ComponentList.emptySlotSelector.getCurrentValue(),
+                startDate: ComponentList.dateRangePicker.getStart(),
+                endDate: ComponentList.dateRangePicker.getEnd()
             }),
             tableAttrs = {
                 ordering: false,
@@ -64,6 +66,10 @@ var window = window,
                     }
                 ]
             };
+        
+        //save `weeklyReportData` to gobal
+        gobal.weeklyReportData = data.weeklyReportData;
+        
         //if table is exist
         if (gobal.postLogDataTable) {
             //use repaint
@@ -97,6 +103,36 @@ var window = window,
             buildPostLogDataTable(facebookOperation, ComponentList);
         });
     }
+    
+    //generate weekly repport on server
+    window.generateWeeklyReportExcel = function () {
+        //set a new one ajax loading layer
+        gobal.genWeeklyReportLayer = layer.load(2, {
+            shade: [0.1, '#000']
+        });
+
+        $.ajax({
+            type: 'POST',
+            url: window.troperlaicos.facebook.base_url + window.troperlaicos.facebook.controllerName + '/generateWeeklyReportExcel',
+            data: {
+                'weeklyReportData': JSON.stringify(gobal.weeklyReportData),
+                'excelName': 'TOUCH Facebook\'s Weekly Report ' + gobal.dataSelectorPanel.componentCombiner.getComponent('dateRangePicker').getDateRangeInText()
+            },
+            dataType: 'json',
+            success: function (data) {
+                //close loadding layer
+                layer.close(gobal.genWeeklyReportLayer);
+                if (data.hasOwnProperty('downloadUrl')) {
+                    window.location.href = data.downloadUrl;
+                }
+            },
+            error: function (error) {
+                //close loadding layer
+                layer.close(gobal.genWeeklyReportLayer);
+                SocialReport.Toolbox.assert(error);
+            }
+        });
+    };
 
     $(function () {
         //build panel component

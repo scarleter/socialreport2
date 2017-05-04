@@ -25,7 +25,7 @@
                         </div>
                     </div>
                     <div class="box-body">
-<!--
+                        <!--
                         <div class="form-group">
                             <label>Date range button:</label>
 
@@ -90,7 +90,12 @@
                     </div>
                     <!-- /.box-header -->
                     <div class="box-body">
-                        <span id="postLogDataTable"></span>
+                        <?php if(isset($showWeeklyReportButton)&&$showWeeklyReportButton){?>
+                        <button id="downloadWeeklyReport" style="display:none;width: 232px;font-size: 14px;margin-bottom: 10px;border: 1px solid #999;" type="button" class="btn btn-block btn-default btn-lg" onclick="javascript:generateWeeklyReportExcel();"><i class="fa fa-download"></i>&nbsp;Weekly Report Download</button>
+                        <?php
+                        }
+                    ?>
+                            <span id="postLogDataTable"></span>
                     </div>
                     <!-- /.box-body -->
                 </div>
@@ -112,7 +117,10 @@
     window.troperlaicos = {
         'facebook': {
             'pageid': '<?php echo $pageId;?>',
-            'access_token': '<?php echo $pageAccessToken;?>'
+            'access_token': '<?php echo $pageAccessToken;?>',
+            'base_url': '<?= base_url() ?>',
+            'controllerName': '<?php if(isset($controllerName)) echo $controllerName;?>',
+            'showWeeklyReportButton': '<?php if(isset($showWeeklyReportButton)) echo $showWeeklyReportButton;?>'
         }
     };
 
