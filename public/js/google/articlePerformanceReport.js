@@ -15,42 +15,68 @@ var window = window,
         accessToken: window.troperlaicos.google.accessToken,
         editorsSummaryObj: {}
     };
-    
-    //calculate editor total posts number and post reach
-    function calcuateEditorPostsAndReach(Editor, Reach) {
-        var editor = Editor || null,
-            reach = Reach || null;
 
-        //make sure `editor` and `reach` is not null
-        if (SocialReport.Toolbox.isNull(editor) || SocialReport.Toolbox.isNull(reach)) {
-            SocialReport.Toolbox.assert('Function articlePerformanceReport.js calcuateEditorPostsAndReach: `editor` or `reach` is undefined');
-            return false;
+    //build detailReport
+    function buildDetailReport(ChartData, Start, End) {
+        var chartData = ChartData || [],
+            start = Start || '',
+            end = End || '';
+
+        //if table is exist
+        if (gobal.detailReport) {
+            //use repaint function to 
+            gobal.detailReport.repaint(chartData);
+        } else {
+            gobal.detailReport = new SocialReport.DataTables('detailReport', chartData, {
+                lengthChange: false,
+                searching: false,
+                order: [3, 'des'],
+                info: false,
+                autoWidth: false,
+                border: false,
+                columnDefs: [
+                    {
+                        "className": "breakall",
+                        "targets": [0]
+                    }
+                ],
+                columns: [
+                    {
+                        title: "Editor"
+                    },
+                    {
+                        title: "Post Link"
+                    },
+                    {
+                        title: "Post Title"
+                    },
+                    {
+                        title: "Date"
+                    },
+                    {
+                        title: "State"
+                    }
+                ],
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        extend: 'copyHtml5',
+                        text: 'Copy to clipboard',
+                        filename: 'Article Performance Report during ' + start.substring(0, 10) + ' to ' + end.substring(0, 10)
+                    },
+                    {
+                        extend: 'excelHtml5',
+                        text: 'Save to XLSX file',
+                        filename: 'Article Performance Report during ' + start.substring(0, 10) + ' to ' + end.substring(0, 10)
+                    }
+                ]
+            });
         }
-
-        gobal.editorsSummaryObj[editor] = (gobal.editorsSummaryObj.hasOwnProperty(editor)) ? gobal.editorsSummaryObj[editor] : {
-            postsNum: 0,
-            reach: 0
-        };
-        gobal.editorsSummaryObj[editor].postsNum += 1;
-        gobal.editorsSummaryObj[editor].reach += reach;
     }
-    
-    //build summary report
-    function buildSummaryReportDataTable() {
-        var chartData = [],
-            editor,
-            editorArray = [];
 
-        //loop to set chartData
-        for (editor in gobal.editorsSummaryObj) {
-            if (gobal.editorsSummaryObj.hasOwnProperty(editor)) {
-                editorArray = [];
-                editorArray.push(editor);
-                editorArray.push(gobal.editorsSummaryObj[editor].postsNum);
-                editorArray.push(gobal.editorsSummaryObj[editor].reach);
-                chartData.push(editorArray);
-            }
-        }
+    //build summary report
+    function buildSummaryReport(ChartData) {
+        var chartData = ChartData || [];
 
         //if table is exist
         if (gobal.summaryReport) {
@@ -62,7 +88,7 @@ var window = window,
                 paging: false,
                 lengthChange: false,
                 searching: false,
-                order: [2, 'des'],
+                order: [1, 'des'],
                 info: false,
                 autoWidth: false,
                 border: false,
@@ -72,129 +98,126 @@ var window = window,
                     },
                     {
                         title: "Posts"
-                    },
-                    {
-                        title: "Pages Views"
                     }
                 ]
             });
         }
     }
 
-    //build detailReport data table
-    function buildDetailReportDataTable(Params) {
-        var params = $.extend({}, {
-            'metrics': 'ga:pageviews',
-            'dimensions': 'ga:dimension1,ga:pagePath,ga:pageTitle,ga:dimension2',
-            'max-results': 30,
-            'sort': '-ga:pageviews'
-        }, Params);
-        SocialReport.GoogleAnalytics.getGoogleAnalyticsData(params, function (resp) {
+    //build data tables
+    function buildDataTables(Start, End, DateType) {
+        var start = Start || null,
+            end = End || null,
+            dateType = DateType || null;
 
-            //close google request loading layer
-            layer.close(gobal.googleRequestloadingLayer);
+        //format cms data
+        function formatCmsData(Data) {
+            var eachArticleData = [],
+                data = Data || {},
+                formatedDetailData = [],
+                summaryData = {},
+                formatedSummaryData = [],
+                url = '',
+                dataKey,
+                summaryKey;
 
-            var chartData = [],
-                dataArr = [],
-                rowKey,
-                url,
-                dateSource = resp.rows || [];
+            //loop `data`
+            for (dataKey in data) {
+                if (data.hasOwnProperty(dataKey)) {
+                    eachArticleData = [];
+                    url = 'http://easttouch.my-magazine.me/main/' + data[dataKey].articles.category + '/view/' + data[dataKey].articles.articleid;
 
-            //loop to set data to chartData
-            for (rowKey in dateSource) {
-                if (dateSource.hasOwnProperty(rowKey)) {
-                    dataArr = [];
-                    dataArr.push(dateSource[rowKey][0]);
-                    url = 'http://eastweek.my-magazine.me' + dateSource[rowKey][1];
-                    dataArr.push('<a href="' + url + '" target="_blank">' + url + '</a>');
-                    dataArr.push(dateSource[rowKey][2]);
-                    dataArr.push(dateSource[rowKey][3]);
-                    dataArr.push(parseInt(dateSource[rowKey][4], 0).toLocaleString());
-                    chartData.push(dataArr);
-                    
-                    //calculate editor posts number and total reach
-                    calcuateEditorPostsAndReach(dateSource[rowKey][0], parseInt(dateSource[rowKey][4], 0));
+                    eachArticleData.push(data[dataKey].articles.author);
+                    eachArticleData.push('<a href="' + url + '" target="_blank">' + url + '</a>');
+                    eachArticleData.push(data[dataKey].articles.title);
+                    eachArticleData.push(data[dataKey].articles[DateType]);
+                    eachArticleData.push(data[dataKey].articles.state);
+                    formatedDetailData.push(eachArticleData);
+
+                    //get summary data
+                    //create one object name `author` if `summaryData` does not have one
+                    summaryData[data[dataKey].articles.author] = (summaryData.hasOwnProperty(data[dataKey].articles.author)) ? summaryData[data[dataKey].articles.author] : {
+                        postNum: 0,
+                        reach: 0
+                    };
+                    summaryData[data[dataKey].articles.author].postNum += 1;
                 }
             }
-            //if table is exist
-            if (gobal.detailReport) {
-                //use repaint function to 
-                gobal.detailReport.repaint(chartData);
-            } else {
-                //build datatable object
-                gobal.detailReport = new SocialReport.DataTables('detailReport', chartData, {
-                    paging: false,
-                    lengthChange: false,
-                    searching: false,
-                    order: [4, 'des'],
-                    info: false,
-                    autoWidth: false,
-                    border: false,
-                    columnDefs: [{
-                        "className": "breakall",
-                        "targets": [0]
-                    }],
-                    columns: [
-                        {
-                            title: "Editor"
-                        },
-                        {
-                            title: "Post Link"
-                        },
-                        {
-                            title: "Post Title"
-                        },
-                        {
-                            title: "Date"
-                        },
-                        {
-                            title: "GA Pageviews"
-                        }
-                    ]
-                });
-            }
-            
-            //build Summary Report
-            buildSummaryReportDataTable();
 
-        });
+            //loop `summaryData`
+            for (summaryKey in summaryData) {
+                if (summaryData.hasOwnProperty(summaryKey)) {
+                    formatedSummaryData.push([summaryKey, summaryData[summaryKey].postNum]);
+                }
+            }
+
+            //build detail report
+            buildDetailReport(formatedDetailData, start, end);
+            //build summary report
+            buildSummaryReport(formatedSummaryData);
+        }
+
+        //get cms data between dayrange
+        function getCmsDataBetweenDayRange(start, end, dateType) {
+            $.ajax({
+                type: 'GET',
+                url: 'http://easttouch.my-magazine.me/main/home/getArticleFromDayRange',
+                data: {
+                    'startDateTime': start,
+                    'endDateTime': end,
+                    type: dateType
+                },
+                dataType: 'jsonp',
+                jsonp: 'callback',
+                jsonpCallback: 'getName',
+                success: function (data) {
+                    //close google request loading layer
+                    layer.close(gobal.googleRequestloadingLayer);
+
+                    formatCmsData(data);
+                },
+                error: function (error) {
+                    //close google request loading layer
+                    layer.close(gobal.googleRequestloadingLayer);
+
+                    SocialReport.Toolbox.assert('Function articlePerformanceReport.js buildDataTables: ' + error);
+                }
+            });
+        }
+
+        //make sure `start`, `end` or `dateType` is not null
+        if (SocialReport.Toolbox.isNull(start) || SocialReport.Toolbox.isNull(end) || SocialReport.Toolbox.isNull(dateType)) {
+            SocialReport.Toolbox.assert('Function articlePerformanceReport.js buildDataTables: `start`, `end` or `dateType` is undefined');
+            return false;
+        }
+
+        getCmsDataBetweenDayRange(start, end, dateType);
+
     }
 
     //##################################################
     //dataSelectorPanel change will trigger this handler
     //##################################################
     function dataSelectorPanelChangeHandler(ComponentList) {
-        var currentProperty = ComponentList.propertySelect.getCurrentValue(),
+        var currentProperty = ComponentList.dateTypeSelect.getCurrentValue(),
             start = ComponentList.dateRangePicker.getStart(),
-            end = ComponentList.dateRangePicker.getEnd(),
-            pageFilterString = ComponentList.pageSearchBox.getSearchValue(),
-            titleFilterString = ComponentList.titleSearchBox.getSearchValue(),
-            filterArray = [],
-            params = {
-                'start-date': start.format("YYYY-MM-DD"),
-                'end-date': end.format("YYYY-MM-DD"),
-                'ids': currentProperty
-            };
-
-        //build the filter string
-        if (pageFilterString) {
-            filterArray.push('ga:pagePath=@' + pageFilterString);
-        }
-        if (titleFilterString) {
-            filterArray.push('ga:PageTitle=@' + titleFilterString);
-        }
-        //only when filterArray not empty, we add `filters` to params
-        if (filterArray.length > 0) {
-            params.filters = filterArray.join(';');
-        }
+            end = ComponentList.dateRangePicker.getEnd();
+        //            params = {
+        //                'start-date': start.format("YYYY-MM-DD"),
+        //                'end-date': end.format("YYYY-MM-DD"),
+        //                'ids': currentProperty
+        //            };
 
         //set google request loading layer
         gobal.googleRequestloadingLayer = layer.load(2, {
             shade: [0.1, '#000']
         });
 
+        //get cms article
+        buildDataTables(start.format("YYYY-MM-DD HH:mm:ss"), end.format("YYYY-MM-DD HH:mm:ss"), currentProperty);
+
         //build google analytics chart
-        buildDetailReportDataTable(params);
+        //buildDetailReportDataTable(params);
     }
 
     $(function () {
@@ -208,15 +231,16 @@ var window = window,
             //close google loading layer
             layer.close(gobal.googleLoadingLayer);
             var googleAnalytics = this,
-                propertySelect = new SocialReport.Select('propertySelect', {
-                    option: gobal.ids
+                dateTypeSelect = new SocialReport.Select('dateTypeSelect', {
+                    option: {
+                        'start': 'Publish Date',
+                        'created': 'Create Date'
+                    }
                 }),
-                dateRangePicker = new SocialReport.DateRangePicker('dateRangePicker'),
-                pageSearchBox = new SocialReport.SearchBox('pageSearchBox'),
-                titleSearchBox = new SocialReport.SearchBox('titleSearchBox');
+                dateRangePicker = new SocialReport.DateRangePicker('dateRangePicker');
 
             gobal.dataSelectorPanel = new SocialReport.Panel('', {
-                components: [propertySelect, dateRangePicker, pageSearchBox, titleSearchBox],
+                components: [dateTypeSelect, dateRangePicker],
                 changeHandler: dataSelectorPanelChangeHandler
             });
             //start the dateRangePicker component

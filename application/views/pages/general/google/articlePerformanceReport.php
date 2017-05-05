@@ -31,8 +31,8 @@
                         <div class="row">
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label>Property</label>
-                                    <span id="propertySelect"></span>
+                                    <label>Date Type</label>
+                                    <span id="dateTypeSelect"></span>
                                 </div>
                             </div>
                             <div class="col-md-3">
@@ -41,18 +41,6 @@
                                     <div class="input-group">
                                         <span id="dateRangePicker"></span>
                                     </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label>Search(Link)</label>
-                                    <span id="pageSearchBox"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label>Search(Title)</label>
-                                    <span id="titleSearchBox"></span>
                                 </div>
                             </div>
                         </div>
@@ -109,4 +97,4 @@
 
 </script>
 
-<script src="<?= base_url() ?>public/js/google/articlePerformanceReport.js?version=660a44da241e6da46616d0be245458ea"></script>
+<script src="<?= base_url() ?>public/js/google/articlePerformanceReport.js?version=9731d4fe79f34fb0621cf7c73ebac7aa"></script>
