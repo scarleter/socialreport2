@@ -2998,7 +2998,7 @@ var jQuery = jQuery,
                     },
                     formatedPostLogData = [],
                     dayStringArray = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
-                    reportHeaderText = 'TOUCH Facebook\'s Weekly Report ',
+                    reportHeaderText = 'TOUCH Facebook\'s Writing Schedule ',
                     weeklyReportDataKey,
                     postLogDataKey,
                     periodKey;
@@ -3168,9 +3168,9 @@ var jQuery = jQuery,
                                             if (originalPostLogData[postLogDataKey].hasOwnProperty(feedKey)) {
 
                                                 //set empty if has more than one feed in the same period
-                                                if (feedKey > 0) {
-                                                    originalPostLogData[postLogDataKey][feedKey]['%PERIOD%'] = '';
-                                                }
+//                                                if (feedKey > 0) {
+//                                                    originalPostLogData[postLogDataKey][feedKey]['%PERIOD%'] = '';
+//                                                }
                                                 formatedPostLogData.push(originalPostLogData[postLogDataKey][feedKey]);
                                             }
                                         }

@@ -91,7 +91,7 @@
                     <!-- /.box-header -->
                     <div class="box-body">
                         <?php if(isset($showWeeklyReportButton)&&$showWeeklyReportButton){?>
-                        <button id="downloadWeeklyReport" style="display:none;width: 232px;font-size: 14px;margin-bottom: 10px;border: 1px solid #999;" type="button" class="btn btn-block btn-default btn-lg" onclick="javascript:generateWeeklyReportExcel();"><i class="fa fa-download"></i>&nbsp;Weekly Report Download</button>
+                        <button id="downloadWeeklyReport" style="display:none;width: 232px;font-size: 14px;margin-bottom: 10px;border: 1px solid #999;" type="button" class="btn btn-block btn-default btn-lg" onclick="javascript:generateWeeklyReportExcel();"><i class="fa fa-download"></i>&nbsp;Download Writing Schedule</button>
                         <?php
                         }
                     ?>
