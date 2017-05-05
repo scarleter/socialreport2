@@ -72,12 +72,12 @@ var window = window,
                     {
                         extend: 'copyHtml5',
                         text: 'Copy to clipboard',
-                        filename: 'Facebook PageId(<?php echo $pageId;?>) PostDataLegacyView Report during ' + gobal.dateRange.getDateRangeInText()
+                        filename: 'Facebook PageId(' + window.troperlaicos.facebook.pageid + ') PostDataLegacyView Report during ' + gobal.dateRange.getDateRangeInText()
                     },
                     {
                         extend: 'excelHtml5',
                         text: 'Save to XLSX file',
-                        filename: 'Facebook PageId(<?php echo $pageId;?>) PostDataLegacyView Report during ' + gobal.dateRange.getDateRangeInText()
+                        filename: 'Facebook PageId(' + window.troperlaicos.facebook.pageid + ') PostDataLegacyView Report during ' + gobal.dateRange.getDateRangeInText()
                     }
                 ]
             };

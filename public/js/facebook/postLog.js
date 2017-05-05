@@ -116,7 +116,7 @@ var window = window,
             url: window.troperlaicos.facebook.base_url + window.troperlaicos.facebook.controllerName + '/generateWeeklyReportExcel',
             data: {
                 'weeklyReportData': JSON.stringify(gobal.weeklyReportData),
-                'excelName': 'TOUCH Facebook\'s Weekly Report ' + gobal.dataSelectorPanel.componentCombiner.getComponent('dateRangePicker').getDateRangeInText()
+                'excelName': 'TOUCH Facebook\'s Writing Schedule ' + gobal.dataSelectorPanel.componentCombiner.getComponent('dateRangePicker').getDateRangeInText()
             },
             dataType: 'json',
             success: function (data) {
