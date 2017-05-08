@@ -43,6 +43,12 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Property</label>
+                                    <span id="propertySelect"></span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <!-- /.box-body -->
@@ -97,4 +103,4 @@
 
 </script>
 
-<script src="<?= base_url() ?>public/js/google/articlePerformanceReport.js?version=9731d4fe79f34fb0621cf7c73ebac7aa"></script>
+<script src="<?= base_url() ?>public/js/google/articlePerformanceReport.js?version=5b937478610cca2f1de2d4f2aaac6460"></script>

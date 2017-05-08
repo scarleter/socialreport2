@@ -13,8 +13,38 @@ var window = window,
         googleRequestloadingLayer: '',
         googleLoadingLayer: '',
         accessToken: window.troperlaicos.google.accessToken,
-        editorsSummaryObj: {}
+        editorsSummaryObj: {},
+        articlePageviews: {}
     };
+
+    //get google pageviews
+    function getGooglePageviews(Params, Callback) {
+        var params = $.extend({}, {
+            'metrics': 'ga:pageviews',
+            'dimensions': 'ga:dimension3',
+            'sort': '-ga:pageviews'
+        }, Params);
+
+        SocialReport.GoogleAnalytics.getGoogleAnalyticsData(params, function (resp) {
+            var articleKey,
+                articleId;
+            //init `articlePageviews`
+            gobal.articlePageviews = {};
+
+            //loop resp.rows
+            for (articleKey in resp.rows) {
+                if (resp.rows.hasOwnProperty(articleKey)) {
+                    articleId = resp.rows[articleKey][0];
+                    gobal.articlePageviews[articleId] = (gobal.articlePageviews.hasOwnProperty(articleId)) ? gobal.articlePageviews[articleId] : {
+                        pageviews: 0
+                    };
+                    gobal.articlePageviews[articleId].pageviews += parseInt(resp.rows[articleKey][1], 0);
+                }
+            }
+
+            Callback.call(gobal.articlePageviews);
+        });
+    }
 
     //build detailReport
     function buildDetailReport(ChartData, Start, End) {
@@ -54,6 +84,9 @@ var window = window,
                         title: "Date"
                     },
                     {
+                        title: "Pageviews"
+                    },
+                    {
                         title: "State"
                     }
                 ],
@@ -88,7 +121,7 @@ var window = window,
                 paging: false,
                 lengthChange: false,
                 searching: false,
-                order: [1, 'des'],
+                order: [2, 'des'],
                 info: false,
                 autoWidth: false,
                 border: false,
@@ -98,6 +131,9 @@ var window = window,
                     },
                     {
                         title: "Posts"
+                    },
+                    {
+                        title: "Pageviews"
                     }
                 ]
             });
@@ -105,10 +141,11 @@ var window = window,
     }
 
     //build data tables
-    function buildDataTables(Start, End, DateType) {
+    function buildDataTables(Start, End, DateType, ArticlePageviews) {
         var start = Start || null,
             end = End || null,
-            dateType = DateType || null;
+            dateType = DateType || null,
+            articlePageviews = ArticlePageviews || null;
 
         //format cms data
         function formatCmsData(Data) {
@@ -119,18 +156,23 @@ var window = window,
                 formatedSummaryData = [],
                 url = '',
                 dataKey,
-                summaryKey;
+                summaryKey,
+                articleid,
+                pageviews;
 
             //loop `data`
             for (dataKey in data) {
                 if (data.hasOwnProperty(dataKey)) {
                     eachArticleData = [];
+                    articleid = data[dataKey].articles.articleid;
+                    pageviews = SocialReport.Toolbox.isUndefined(articlePageviews[articleid]) ? 0 : articlePageviews[articleid].pageviews;
                     url = 'http://easttouch.my-magazine.me/main/' + data[dataKey].articles.category + '/view/' + data[dataKey].articles.articleid;
 
                     eachArticleData.push(data[dataKey].articles.author);
                     eachArticleData.push('<a href="' + url + '" target="_blank">' + url + '</a>');
                     eachArticleData.push(data[dataKey].articles.title);
                     eachArticleData.push(data[dataKey].articles[DateType]);
+                    eachArticleData.push(pageviews);
                     eachArticleData.push(data[dataKey].articles.state);
                     formatedDetailData.push(eachArticleData);
 
@@ -138,16 +180,17 @@ var window = window,
                     //create one object name `author` if `summaryData` does not have one
                     summaryData[data[dataKey].articles.author] = (summaryData.hasOwnProperty(data[dataKey].articles.author)) ? summaryData[data[dataKey].articles.author] : {
                         postNum: 0,
-                        reach: 0
+                        pageviews: 0
                     };
                     summaryData[data[dataKey].articles.author].postNum += 1;
+                    summaryData[data[dataKey].articles.author].pageviews += pageviews;
                 }
             }
 
             //loop `summaryData`
             for (summaryKey in summaryData) {
                 if (summaryData.hasOwnProperty(summaryKey)) {
-                    formatedSummaryData.push([summaryKey, summaryData[summaryKey].postNum]);
+                    formatedSummaryData.push([summaryKey, summaryData[summaryKey].postNum, summaryData[summaryKey].pageviews]);
                 }
             }
 
@@ -199,22 +242,32 @@ var window = window,
     //dataSelectorPanel change will trigger this handler
     //##################################################
     function dataSelectorPanelChangeHandler(ComponentList) {
-        var currentProperty = ComponentList.dateTypeSelect.getCurrentValue(),
+        var currentDateType = ComponentList.dateTypeSelect.getCurrentValue(),
             start = ComponentList.dateRangePicker.getStart(),
-            end = ComponentList.dateRangePicker.getEnd();
-        //            params = {
-        //                'start-date': start.format("YYYY-MM-DD"),
-        //                'end-date': end.format("YYYY-MM-DD"),
-        //                'ids': currentProperty
-        //            };
+            end = ComponentList.dateRangePicker.getEnd(),
+            currentProperty = ComponentList.propertySelect.getCurrentValue(),
+            params = {
+                'start-date': start.format("YYYY-MM-DD"),
+                'end-date': end.format("YYYY-MM-DD"),
+                'ids': currentProperty
+            };
+
+        gobal.start = start;
+        gobal.end = end;
 
         //set google request loading layer
-        gobal.googleRequestloadingLayer = layer.load(2, {
-            shade: [0.1, '#000']
+        //        gobal.googleRequestloadingLayer = layer.load(2, {
+        //            shade: [0.1, '#000']
+        //        });
+
+        //get google pageviews
+        getGooglePageviews(params, function () {
+            var articlePageviews = this;
+            
+            //get cms article
+            buildDataTables(start.format("YYYY-MM-DD HH:mm:ss"), end.format("YYYY-MM-DD HH:mm:ss"), currentDateType, articlePageviews);
         });
 
-        //get cms article
-        buildDataTables(start.format("YYYY-MM-DD HH:mm:ss"), end.format("YYYY-MM-DD HH:mm:ss"), currentProperty);
 
         //build google analytics chart
         //buildDetailReportDataTable(params);
@@ -231,6 +284,9 @@ var window = window,
             //close google loading layer
             layer.close(gobal.googleLoadingLayer);
             var googleAnalytics = this,
+                propertySelect = new SocialReport.Select('propertySelect', {
+                    option: gobal.ids
+                }),
                 dateTypeSelect = new SocialReport.Select('dateTypeSelect', {
                     option: {
                         'start': 'Publish Date',
@@ -240,7 +296,7 @@ var window = window,
                 dateRangePicker = new SocialReport.DateRangePicker('dateRangePicker');
 
             gobal.dataSelectorPanel = new SocialReport.Panel('', {
-                components: [dateTypeSelect, dateRangePicker],
+                components: [dateTypeSelect, dateRangePicker, propertySelect],
                 changeHandler: dataSelectorPanelChangeHandler
             });
             //start the dateRangePicker component
