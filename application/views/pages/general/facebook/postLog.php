@@ -90,9 +90,9 @@
                     </div>
                     <!-- /.box-header -->
                     <div class="box-body">
-                        <?php if(isset($showWeeklyReportButton)&&$showWeeklyReportButton){?>
+                    <?php if(isset($showWeeklyReportButton)&&$showWeeklyReportButton){?>
                         <button id="downloadWeeklyReport" style="display:none;width: 232px;font-size: 14px;margin-bottom: 10px;border: 1px solid #999;" type="button" class="btn btn-block btn-default btn-lg" onclick="javascript:generateWeeklyReportExcel();"><i class="fa fa-download"></i>&nbsp;Download Writing Schedule</button>
-                        <?php
+                    <?php
                         }
                     ?>
                             <span id="postLogDataTable"></span>
@@ -126,4 +126,4 @@
 
 </script>
 
-<script src="<?= base_url() ?>public/js/facebook/postLog.js?version=f7e06e54cb82530fd8564f1cd599d1fa"></script>
+<script src="<?= base_url() ?>public/js/facebook/postLog.js?version=cfe446b1499d391f62f153ec1c58f86c"></script>
