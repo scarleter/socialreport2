@@ -29,13 +29,19 @@
 -->
 
                         <div class="row">
-                            <div class="col-md-3">
+                           <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>Interval</label>
+                                    <span id="intervalSelector"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
                                 <div class="form-group">
                                     <label>Date Type</label>
                                     <span id="dateTypeSelect"></span>
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-3" style="max-width:212px;">
                                 <div class="form-group">
                                     <label>Date range</label>
                                     <div class="input-group">
@@ -43,10 +49,22 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2" style="display:none;">
                                 <div class="form-group">
                                     <label>Property</label>
                                     <span id="propertySelect"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>Search(Editor)</label>
+                                    <span id="editorSelector"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>Empty Slot</label>
+                                    <span id="emptySlotSelector"></span>
                                 </div>
                             </div>
                         </div>
@@ -65,6 +83,11 @@
                     </div>
                     <!-- /.box-header -->
                     <div class="box-body">
+                    <?php if(isset($showWeeklyReportButton)&&$showWeeklyReportButton){?>
+                        <button id="downloadWeeklyReport" style="width: 232px;font-size: 14px;margin-bottom: 10px;border: 1px solid #999;" type="button" class="btn btn-block btn-default btn-lg" onclick="javascript:generateWeeklyReportExcel();"><i class="fa fa-download"></i>&nbsp;Download Writing Schedule</button>
+                    <?php
+                        }
+                    ?>
                         <table id="detailReport" class="table table-striped table-bordered dt-responsive" cellspacing="0" width="100%"></table>
                     </div>
                     <!-- /.box-body -->
@@ -97,7 +120,10 @@
     window.troperlaicos = {
         'google': {
             'ids': '<?php echo $ids;?>',
-            'accessToken': '<?php echo $accessToken;?>'
+            'accessToken': '<?php echo $accessToken;?>',
+            'base_url': '<?= base_url() ?>',
+            'controllerName': '<?php if(isset($controllerName)) echo $controllerName;?>',
+            'showWeeklyReportButton': '<?php if(isset($showWeeklyReportButton)) echo $showWeeklyReportButton;?>'
         }
     };
 

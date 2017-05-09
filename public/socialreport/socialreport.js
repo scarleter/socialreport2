@@ -2778,15 +2778,15 @@ var jQuery = jQuery,
             //build facebook post log data in datatable format
             //return `columnTitle` and `data`
             getPostLogDataInFacebookByDate: function (Options) {
-                //var postsDataIn2DArray = this.getPostsDataIn2DArray(),
-                var sortedPostsData = this.sortPostsData(4),
+                var timeKeyInSourceData = 4,
+                    editorKeyInSourceData = 17,
                     interval = parseInt(Options.interval, 0) || 1,
-                    searchEditor = Options.searchEditor || 'all',
-                    emptySlot = Options.emptySlot || 'disable',
+                    reservedEditor = Options.reservedEditor || 'all',
+                    showEmptySlot = (Options.showEmptySlot === 'enable') || false,
                     startDate = Options.startDate || null,
                     endDate = Options.endDate || null,
-                    requiredPostsData = this.filter2DArrayBySpecifiedElement(sortedPostsData, 17, searchEditor), //filter post data by `searchEditor`
-                    dataSize = requiredPostsData.length,
+                    sortedPostsData = this.sortPostsData(timeKeyInSourceData),
+                    requiredPostsData = this.filter2DArrayBySpecifiedElement(sortedPostsData, editorKeyInSourceData, reservedEditor), //reserve specified post data by `reservedEditor`
                     columnTitle = [
                         {
                             title: "Editor"
@@ -2814,28 +2814,101 @@ var jQuery = jQuery,
                         }
                     ],
                     data = [],
-                    orderedMapTable = new Toolbox.OrderedMapTable(), //it is an order map table.key is post's time in format like '00:00:00-00:15:59' and value is a 2DArray which contain post
-                    eachDayPosts = {},
-                    //previousYearMonthDay = '0000-00-00',    //save the last post's time in format like "YYYY-MM-DD"
+                    writingScheduleData = {},
+                    writingScheduleDataKey,
+                    writingScheduleExcelData = {};
+                    
+                //iterator
+                function iterator(key, value, context) {
+                    var postKeyDuringPeriod = 0;
+                    
+                    //empty data
+                    if (value.length <= 0) {
+
+                        //if `showEmptySlot` is true, we create an empty slot
+                        if (showEmptySlot) {
+                            context.push(['', '<div class="timeWrapper">' + key + '</div>', '', '', '', '', '', '']);
+                        }
+                    } else {
+                        for (postKeyDuringPeriod = 0; postKeyDuringPeriod < value.length; postKeyDuringPeriod += 1) {
+                            context.push([value[postKeyDuringPeriod][editorKeyInSourceData], (postKeyDuringPeriod === 0) ? '<div class="timeWrapper">' + key + '</div>' : '', value[postKeyDuringPeriod][1], value[postKeyDuringPeriod][2], value[postKeyDuringPeriod][7], value[postKeyDuringPeriod][8], value[postKeyDuringPeriod][9], value[postKeyDuringPeriod][10]]);
+                        }
+                    }
+                }
+                
+                //generate `writingScheduleData` between `startDate` and `endDate` 
+                writingScheduleData = this.generateWritingScheduleData(requiredPostsData, timeKeyInSourceData, editorKeyInSourceData, {
+                    interval: interval,
+                    reservedEditor: reservedEditor,
+                    showEmptySlot: showEmptySlot
+                });
+
+                //loop to format data in datatable format
+                for (writingScheduleDataKey in writingScheduleData) {
+                    if (writingScheduleData.hasOwnProperty(writingScheduleDataKey)) {
+                        data.push(['', '<div class="dateHeader">' + writingScheduleDataKey + '</div>', '', '', '', '', '', '']);
+                        writingScheduleData[writingScheduleDataKey].map(iterator, data);
+                    }
+                }
+                
+                //generate `writingScheduleExcelData`
+                writingScheduleExcelData = this.generateWritingScheduleExcelData(writingScheduleData, startDate, endDate);
+
+                return {
+                    data: data,
+                    columnTitle: columnTitle,
+                    writingScheduleExcelData: writingScheduleExcelData
+                };
+            },
+            
+            //generate writingScheduleData from 2D array(data table format)
+            //writingScheduleData = {
+            //    'YYYY-MM-DD': oneDayDataMap,
+            //    'YYYY-MM-DD': oneDayDataMap,
+            //    ...
+            //    'YYYY-MM-DD': oneDayDataMap,
+            //}
+            //oneDayDataMap = {
+            //    '00:00:00-00:14:59': [[Editor, Time, Permalink, Short Description, Reach, ...],[],...,[]],
+            //    '00:15:00-00:29:59': [[],[],...,[]],
+            //    ...
+            //    '23:45:00-23:59:59': [[],[],...,[]],
+            //}
+            generateWritingScheduleData: function (SourceData, TimeKeyInSourceData, EditorKeyInSourceData, Opinions) {
+
+                //make sure params is valid
+                if (!Toolbox.is2DArray(SourceData) || Toolbox.isUndefined(TimeKeyInSourceData) || Toolbox.isUndefined(EditorKeyInSourceData)) {
+                    Toolbox.assert('Function SocialReport.Operation.generateWritingScheduleData: `SourceData` is not a 2D array or `TimeKeyInSourceData` is undefined or `EditorKeyInSourceData` is undefined');
+                    return false;
+                }
+                
+                var sourceData = SourceData,
+                    timeKeyInSourceData = parseInt(TimeKeyInSourceData, 0),
+                    editorKeyInSourceData = parseInt(EditorKeyInSourceData, 0),
+                    opinions = Opinions || {},
+                    interval = parseInt((opinions.interval || 1), 0),
+                    reservedEditor = opinions.reservedEditor || 'all',
+                    showEmptySlot = opinions.showEmptySlot || false,
+                    dataSize = sourceData.length,
+                    oneDayDataMap = new Toolbox.OrderedMapTable(), //it is an order map whose key is post's time in format like '00:00:00-00:15:59' and value is a 2DArray which contain post
+                    postDataDuringPeriod,
+                    writingScheduleData = {},
+                    writingScheduleDatKey,
                     postIndex,
                     postYearMonthDay, //save current post's time in format like "YYYY-MM-DD"
-                    postPeriod, //save current post's time in format like "00:00:00-00:15:59"
-                    orderedMapTableValue,
-                    eachDayPostsKey,
-                    eachPostPeriodKey,
-                    weeklyReportData;
+                    postPeriod; //save current post's time in format like "00:00:00-00:15:59"
 
 
-                //use `interval` to generate all time period in one day and add this time period to `orderedMapTable`
-                function formatOrderedMapTable(OrderedMapTable, Interval) {
+                //use `interval` to generate all time period in one day and add this time period to `oneDayDataMap`
+                function formatOneDayDataMap(OneDayDataMap, Interval) {
 
-                    //check if `OrderedMapTable` is build by constructor `Toolbox.OrderedMapTable`
-                    if (!OrderedMapTable instanceof Toolbox.OrderedMapTable) {
-                        Toolbox.assert('Function SocialReport.Operation.getPostLogDataInFacebookByDate formatOrderedMapTable: `OrderedMapTable` is not build by ToolBox.OrderMapTable');
+                    //check if `OneDayDataMap` is build by constructor `Toolbox.OrderedMapTable`
+                    if (!OneDayDataMap instanceof Toolbox.OrderedMapTable) {
+                        Toolbox.assert('Function SocialReport.Operation.generateWritingScheduleData formatOneDayDataMap: `OneDayDataMap` is not build by ToolBox.OrderMapTable');
                         return false;
                     }
 
-                    var orderedMapTable = OrderedMapTable,
+                    var oneDayDataMap = OneDayDataMap,
                         interval = parseInt(Interval, 0) || 1, //number of minutes
                         minutesInOneDay = 24 * 60, //the total minutes in one day
                         currentMinutes = 0,
@@ -2854,8 +2927,8 @@ var jQuery = jQuery,
                         minuteStart = minuteStart < 10 ? '0' + minuteStart : String('') + minuteStart;
                         minuteEnd = minuteEnd < 10 ? '0' + minuteEnd : String('') + minuteEnd;
                         mapAttribute = hour + ':' + minuteStart + ':' + '00' + ' - ' + hour + ':' + minuteEnd + ':' + '59';
-                        //save mapAttribute to `orderedMapTable`
-                        OrderedMapTable.add(mapAttribute, []);
+                        //save mapAttribute to `oneDayDataMap`
+                        oneDayDataMap.add(mapAttribute, []);
                     }
                 }
 
@@ -2886,61 +2959,30 @@ var jQuery = jQuery,
 
                     return parsedPostTime;
                 }
-                
-                //iterator
-                function iterator(key, value, context) {
-                    //empty data
-                    if (value.length <= 0) {
 
-                        //if `emptySlot` is enable, we create an empty slot
-                        if (emptySlot === 'enable') {
-                            context.push(['', '<div class="timeWrapper">' + key + '</div>', '', '', '', '', '', '']);
-                        }
-                    } else {
-                        for (eachPostPeriodKey = 0; eachPostPeriodKey < value.length; eachPostPeriodKey += 1) {
-                            context.push([value[eachPostPeriodKey][17], (eachPostPeriodKey === 0) ? '<div class="timeWrapper">' + key + '</div>' : '', value[eachPostPeriodKey][1], value[eachPostPeriodKey][2], value[eachPostPeriodKey][7], value[eachPostPeriodKey][8], value[eachPostPeriodKey][9], value[eachPostPeriodKey][10]]);
-                        }
-                    }
-                }
+                //format `oneDayDataMap`
+                formatOneDayDataMap(oneDayDataMap, interval);
 
-                //format `orderedMapTable`
-                formatOrderedMapTable(orderedMapTable, interval);
-
-                //loop the `requiredPostsData` to save post to `eachDayPosts`
+                //loop the `sourceData` to save post to `writingScheduleData`
                 for (postIndex = dataSize - 1; postIndex >= 0; postIndex -= 1) {
-                    postYearMonthDay = moment(requiredPostsData[postIndex][4]).format("YYYY-MM-DD");
+                    postYearMonthDay = moment(sourceData[postIndex][timeKeyInSourceData]).format("YYYY-MM-DD");
 
-                    //if `eachDayPosts` does not have attribute whose name is `orderedMapTable` then create it
-                    if (!eachDayPosts.hasOwnProperty(postYearMonthDay)) {
-                        eachDayPosts[postYearMonthDay] = $.extend(true, {}, orderedMapTable); //deecopy
+                    //if `writingScheduleData` does not have attribute whose name is `oneDayDataMap` then create it
+                    if (!writingScheduleData.hasOwnProperty(postYearMonthDay)) {
+                        writingScheduleData[postYearMonthDay] = $.extend(true, {}, oneDayDataMap); //deecopy
                     }
 
-                    postPeriod = parsePostTime(requiredPostsData[postIndex][4], interval);
-                    orderedMapTableValue = eachDayPosts[postYearMonthDay].getAttribute(postPeriod);
-                    orderedMapTableValue = orderedMapTableValue.concat([requiredPostsData[postIndex]]);
-                    eachDayPosts[postYearMonthDay].setAttribute(postPeriod, orderedMapTableValue);
-                }
-
-                //loop to format data in datatable format
-                for (eachDayPostsKey in eachDayPosts) {
-                    if (eachDayPosts.hasOwnProperty(eachDayPostsKey)) {
-                        data.push(['', '<div class="dateHeader">' + eachDayPostsKey + '</div>', '', '', '', '', '', '']);
-                        eachDayPosts[eachDayPostsKey].map(iterator, data);
-                    }
+                    postPeriod = parsePostTime(sourceData[postIndex][timeKeyInSourceData], interval);
+                    postDataDuringPeriod = writingScheduleData[postYearMonthDay].getAttribute(postPeriod);
+                    postDataDuringPeriod = postDataDuringPeriod.concat([sourceData[postIndex]]);
+                    writingScheduleData[postYearMonthDay].setAttribute(postPeriod, postDataDuringPeriod);
                 }
                 
-                //generate weekly report data
-                weeklyReportData = this.generateDataForWeeklyReport(eachDayPosts, startDate, endDate);
-
-                return {
-                    data: data,
-                    columnTitle: columnTitle,
-                    weeklyReportData: weeklyReportData
-                };
+                return writingScheduleData;
             },
             
             //generate data in weekly report format
-            generateDataForWeeklyReport: function (EachDayPosts, StartDate, EndDate) {
+            generateWritingScheduleExcelData: function (EachDayPosts, StartDate, EndDate) {
                 var startDate = StartDate || null,
                     endDate = EndDate || null,
                     eachDayPosts = EachDayPosts || null,
@@ -3188,7 +3230,7 @@ var jQuery = jQuery,
 
                 //check if param valid
                 if (Toolbox.isNull(startDate) || Toolbox.isNull(endDate) || Toolbox.isNull(eachDayPosts)) {
-                    Toolbox.assert('Function SocialReport.Operation.getPostLogDataInFacebookByDate generateDataForWeeklyReport: `EachDayPosts` or `StartDate` or `EndDate` is undefined');
+                    Toolbox.assert('Function SocialReport.Operation.getPostLogDataInFacebookByDate generateWritingScheduleExcelData: `EachDayPosts` or `StartDate` or `EndDate` is undefined');
                     return false;
                 }
                 

@@ -38,8 +38,8 @@ var window = window,
             //it returan an object include attribute of `data` and `columnTitle`
             data = facebookOperation.getFormatDataFromTableType('postlog', {
                 interval: ComponentList.intervalSelector.getCurrentValue(),
-                searchEditor: ComponentList.editorSelector.getCurrentValue(),
-                emptySlot: ComponentList.emptySlotSelector.getCurrentValue(),
+                reservedEditor: ComponentList.editorSelector.getCurrentValue(),
+                showEmptySlot: ComponentList.emptySlotSelector.getCurrentValue(),
                 startDate: ComponentList.dateRangePicker.getStart(),
                 endDate: ComponentList.dateRangePicker.getEnd()
             }),
@@ -67,8 +67,8 @@ var window = window,
                 ]
             };
         
-        //save `weeklyReportData` to gobal
-        gobal.weeklyReportData = data.weeklyReportData;
+        //save `writingScheduleExcelData` to gobal
+        gobal.writingScheduleExcelData = data.writingScheduleExcelData;
         
         //if table is exist
         if (gobal.postLogDataTable) {
@@ -115,7 +115,7 @@ var window = window,
             type: 'POST',
             url: window.troperlaicos.facebook.base_url + window.troperlaicos.facebook.controllerName + '/generateWeeklyReportExcel',
             data: {
-                'weeklyReportData': JSON.stringify(gobal.weeklyReportData),
+                'writingScheduleExcelData': JSON.stringify(gobal.writingScheduleExcelData),
                 'excelName': 'TOUCH Facebook\'s Writing Schedule ' + gobal.dataSelectorPanel.componentCombiner.getComponent('dateRangePicker').getDateRangeInText()
             },
             dataType: 'json',
