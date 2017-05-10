@@ -120,10 +120,11 @@
             'access_token': '<?php echo $pageAccessToken;?>',
             'base_url': '<?= base_url() ?>',
             'controllerName': '<?php if(isset($controllerName)) echo $controllerName;?>',
+            'websiteName': '<?php if(isset($websiteName)) echo $websiteName;?>',
             'showWeeklyReportButton': '<?php if(isset($showWeeklyReportButton)) echo $showWeeklyReportButton;?>'
         }
     };
 
 </script>
 
-<script src="<?= base_url() ?>public/js/facebook/postLog.js?version=cfe446b1499d391f62f153ec1c58f86c"></script>
+<script src="<?= base_url() ?>public/js/facebook/postLog.js?version=d33ea4ce2f87858fbbf0d93ea0b6f64c"></script>

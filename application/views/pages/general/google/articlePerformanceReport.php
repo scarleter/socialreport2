@@ -123,10 +123,11 @@
             'accessToken': '<?php echo $accessToken;?>',
             'base_url': '<?= base_url() ?>',
             'controllerName': '<?php if(isset($controllerName)) echo $controllerName;?>',
+            'websiteName': '<?php if(isset($websiteName)) echo $websiteName;?>',
             'showWeeklyReportButton': '<?php if(isset($showWeeklyReportButton)) echo $showWeeklyReportButton;?>'
         }
     };
 
 </script>
 
-<script src="<?= base_url() ?>public/js/google/articlePerformanceReport.js?version=191a08ef850061c471eef029058a3409"></script>
+<script src="<?= base_url() ?>public/js/google/articlePerformanceReport.js?version=cb336b6247539552ab4e160bca7ee8d6"></script>

@@ -7,7 +7,9 @@ var window = window,
     'use strict';
 
     //set a gobal variable in this js file
-    var gobal = {};
+    var gobal = {
+        websiteName: window.troperlaicos.facebook.websiteName
+    };
 
     //build posts log summary table
     function buildPostLogSummaryDataTable(Operation) {
@@ -41,7 +43,8 @@ var window = window,
                 reservedEditor: ComponentList.editorSelector.getCurrentValue(),
                 showEmptySlot: ComponentList.emptySlotSelector.getCurrentValue(),
                 startDate: ComponentList.dateRangePicker.getStart(),
-                endDate: ComponentList.dateRangePicker.getEnd()
+                endDate: ComponentList.dateRangePicker.getEnd(),
+                websiteName: gobal.websiteName
             }),
             tableAttrs = {
                 ordering: false,
@@ -116,7 +119,7 @@ var window = window,
             url: window.troperlaicos.facebook.base_url + window.troperlaicos.facebook.controllerName + '/generateWeeklyReportExcel',
             data: {
                 'writingScheduleExcelData': JSON.stringify(gobal.writingScheduleExcelData),
-                'excelName': 'TOUCH Facebook\'s Writing Schedule ' + gobal.dataSelectorPanel.componentCombiner.getComponent('dateRangePicker').getDateRangeInText()
+                'excelName': gobal.websiteName + ' Facebook\'s Writing Schedule ' + gobal.dataSelectorPanel.componentCombiner.getComponent('dateRangePicker').getDateRangeInText()
             },
             dataType: 'json',
             success: function (data) {

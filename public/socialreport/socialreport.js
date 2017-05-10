@@ -2785,6 +2785,7 @@ var jQuery = jQuery,
                     showEmptySlot = (Options.showEmptySlot === 'enable') || false,
                     startDate = Options.startDate || null,
                     endDate = Options.endDate || null,
+                    websiteName = Options.websiteName || '',
                     sortedPostsData = this.sortPostsData(timeKeyInSourceData),
                     requiredPostsData = this.filter2DArrayBySpecifiedElement(sortedPostsData, editorKeyInSourceData, reservedEditor), //reserve specified post data by `reservedEditor`
                     columnTitle = [
@@ -2856,7 +2857,8 @@ var jQuery = jQuery,
                     timeKeyInPostData: 4,
                     editorKeyInPostData: 17,
                     descriptioinKeyInPostData: 2,
-                    metricsKeyInPostData: 7
+                    metricsKeyInPostData: 7,
+                    reportHeaderText: websiteName + ' Facebook\'s Writing Schedule '
                 });
 
                 return {
@@ -3000,7 +3002,7 @@ var jQuery = jQuery,
                     },
                     formatedPostLogData = [],
                     weekdayStringArray = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
-                    reportHeaderText = 'TOUCH Facebook\'s Writing Schedule ',
+                    reportHeaderText = opinions.reportHeaderText || 'Writing Schedule ',
                     writingScheduleExcelDataKey,
                     postLogDataKey,
                     periodKey,
@@ -3183,7 +3185,8 @@ var jQuery = jQuery,
 
                             //save header
                             oneWeekData.header['%REPORT_HEADER_TEXT%'] = reportHeaderText + weeksArray[weeksIndex][0] + ' to ' + weeksArray[weeksIndex][weeksArray[weeksIndex].length - 1];
-                            oneWeekData.header['%WEEKS%'] = moment(weeksArray[weeksIndex][0]).week();
+                            //use Math.min because when sunday is the last one,it would shoud the wrong  week of the year
+                            oneWeekData.header['%WEEKS%'] = Math.min(moment(weeksArray[weeksIndex][0]).week(), moment(weeksArray[weeksIndex][weeksArray[weeksIndex].length - 1]).week());
                             oneWeekData.header['%' + currentWeekdayString + '_DATE%'] = currentDateInYearMonthDay;
                             //save number of day in this week to footer
                             oneWeekData.header.daysNum = weeksArray[weeksIndex].length;
@@ -3193,10 +3196,10 @@ var jQuery = jQuery,
 
                                 //loop every post in this day
                                 writingScheduleData[currentDateInYearMonthDay].map(iterator, oneWeekData);
-                                
+
                             }
                         }
-                        
+
                         //convert postLogData
                         oneWeekData.postLogData = getPostLogDataForExcel(oneWeekData.postLogData);
 

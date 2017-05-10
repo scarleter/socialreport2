@@ -15,6 +15,7 @@ var window = window,
         accessToken: window.troperlaicos.google.accessToken,
         base_url: window.troperlaicos.google.base_url,
         controllerName: window.troperlaicos.google.controllerName,
+        websiteName: window.troperlaicos.google.websiteName,
         editorsSummaryObj: {},
         articlePageviews: {}
     };
@@ -190,6 +191,7 @@ var window = window,
             editorKeyInSourceData = 0,
             descriptioinKeyInSourceData = 3,
             metricsKeyInSourceData = 4,
+            reportHeaderText = gobal.websiteName + ' CMS\'s Writing Schedule ',
             detailReportData = [],
             editorList = {};
 
@@ -270,7 +272,8 @@ var window = window,
             timeKeyInPostData: timeKeyInSourceData,
             editorKeyInPostData: editorKeyInSourceData,
             descriptioinKeyInPostData: descriptioinKeyInSourceData,
-            metricsKeyInPostData: metricsKeyInSourceData
+            metricsKeyInPostData: metricsKeyInSourceData,
+            reportHeaderText: reportHeaderText
         });
 
         Callback.call(null, {
@@ -329,7 +332,7 @@ var window = window,
             url: gobal.base_url + gobal.controllerName + '/generateWeeklyReportExcel',
             data: {
                 'writingScheduleExcelData': JSON.stringify(gobal.writingScheduleExcelData),
-                'excelName': 'TOUCH Facebook\'s Writing Schedule ' + gobal.dataSelectorPanel.componentCombiner.getComponent('dateRangePicker').getDateRangeInText()
+                'excelName': gobal.websiteName + ' CMS\'s Writing Schedule ' + gobal.dataSelectorPanel.componentCombiner.getComponent('dateRangePicker').getDateRangeInText()
             },
             dataType: 'json',
             success: function (data) {
