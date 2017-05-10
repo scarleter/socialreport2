@@ -49,12 +49,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-2" style="display:none;">
-                                <div class="form-group">
-                                    <label>Property</label>
-                                    <span id="propertySelect"></span>
-                                </div>
-                            </div>
                             <div class="col-md-2">
                                 <div class="form-group">
                                     <label>Search(Editor)</label>
@@ -130,4 +124,4 @@
 
 </script>
 
-<script src="<?= base_url() ?>public/js/google/articlePerformanceReport.js?version=cb336b6247539552ab4e160bca7ee8d6"></script>
+<script src="<?= base_url() ?>public/js/google/articlePerformanceReport.js?version=199952e093c67b8ad59916caf5aa4455"></script>

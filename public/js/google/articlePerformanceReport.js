@@ -23,30 +23,56 @@ var window = window,
     //get google pageviews
     function getGooglePageviews(Params, Callback) {
         var params = $.extend({}, {
-            'metrics': 'ga:pageviews',
-            'dimensions': 'ga:dimension3',
-            'sort': '-ga:pageviews'
-        }, Params);
+                'metrics': 'ga:pageviews',
+                'dimensions': 'ga:dimension3',
+                'sort': '-ga:pageviews'
+            }, Params),
+            requestDoneTimes = 0,
+            ids = gobal.ids,
+            id,
+            idNums = window.SocialReport.Toolbox.getObjectSize(ids);
 
-        SocialReport.GoogleAnalytics.getGoogleAnalyticsData(params, function (resp) {
-            var articleKey,
-                articleId;
-            //init `articlePageviews`
-            gobal.articlePageviews = {};
+        //init `articlePageviews`
+        gobal.articlePageviews = {};
 
-            //loop resp.rows
-            for (articleKey in resp.rows) {
-                if (resp.rows.hasOwnProperty(articleKey)) {
-                    articleId = resp.rows[articleKey][0];
-                    gobal.articlePageviews[articleId] = (gobal.articlePageviews.hasOwnProperty(articleId)) ? gobal.articlePageviews[articleId] : {
-                        pageviews: 0
-                    };
-                    gobal.articlePageviews[articleId].pageviews += parseInt(resp.rows[articleKey][1], 0);
+        //request pageview
+        function requestGAPageviews(Params) {
+            var params = Params || {};
+
+            SocialReport.GoogleAnalytics.getGoogleAnalyticsData(params, function (resp) {
+                var articleKey,
+                    articleId;
+
+                //loop resp.rows
+                for (articleKey in resp.rows) {
+                    if (resp.rows.hasOwnProperty(articleKey)) {
+                        articleId = resp.rows[articleKey][0];
+                        gobal.articlePageviews[articleId] = (gobal.articlePageviews.hasOwnProperty(articleId)) ? gobal.articlePageviews[articleId] : {
+                            pageviews: 0
+                        };
+                        gobal.articlePageviews[articleId].pageviews += parseInt(resp.rows[articleKey][1], 0);
+                    }
                 }
-            }
 
-            Callback.call(gobal.articlePageviews);
-        });
+                //record request done
+                requestDoneTimes += 1;
+
+                if (requestDoneTimes >= idNums) {
+                    Callback.call(gobal.articlePageviews);
+                }
+            });
+        }
+
+        //loop ids to request pageviews
+        for (id in ids) {
+            if (ids.hasOwnProperty(id)) {
+                params = $.extend({}, params, {
+                    'ids': id
+                });
+
+                requestGAPageviews(params);
+            }
+        }
     }
 
     //build detailReport
@@ -360,11 +386,9 @@ var window = window,
             showEmptySlot = ComponentList.emptySlotSelector.getCurrentValue(),
             start = ComponentList.dateRangePicker.getStart(),
             end = ComponentList.dateRangePicker.getEnd(),
-            currentProperty = ComponentList.propertySelect.getCurrentValue(),
             params = {
                 'start-date': start.format("YYYY-MM-DD"),
-                'end-date': end.format("YYYY-MM-DD"),
-                'ids': currentProperty
+                'end-date': end.format("YYYY-MM-DD")
             };
 
         gobal.start = start;
@@ -412,9 +436,6 @@ var window = window,
                     },
                     defaultValue: '15'
                 }),
-                propertySelect = new SocialReport.Select('propertySelect', {
-                    option: gobal.ids
-                }),
                 dateTypeSelect = new SocialReport.Select('dateTypeSelect', {
                     option: {
                         'start': 'Publish Date',
@@ -435,7 +456,7 @@ var window = window,
                 });
 
             gobal.dataSelectorPanel = new SocialReport.Panel('', {
-                components: [intervalSelector, dateTypeSelect, dateRangePicker, propertySelect, editorSelector, emptySlotSelector],
+                components: [intervalSelector, dateTypeSelect, dateRangePicker, editorSelector, emptySlotSelector],
                 changeHandler: dataSelectorPanelChangeHandler
             });
             //start the dateRangePicker component
