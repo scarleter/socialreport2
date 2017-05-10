@@ -129,4 +129,4 @@
 
 </script>
 
-<script src="<?= base_url() ?>public/js/google/articlePerformanceReport.js?version=5b937478610cca2f1de2d4f2aaac6460"></script>
+<script src="<?= base_url() ?>public/js/google/articlePerformanceReport.js?version=191a08ef850061c471eef029058a3409"></script>

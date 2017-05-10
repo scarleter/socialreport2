@@ -157,4 +157,4 @@
 
 </script>
 
-<script src="<?= base_url() ?>public/js/googleAnalytics.js"></script>
+<script src="<?= base_url() ?>public/js/google/googleAnalytics.js?version=660a44da241e6da46616d0be245458ea"></script>

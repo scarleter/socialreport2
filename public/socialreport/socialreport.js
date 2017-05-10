@@ -2852,7 +2852,12 @@ var jQuery = jQuery,
                 }
                 
                 //generate `writingScheduleExcelData`
-                writingScheduleExcelData = this.generateWritingScheduleExcelData(writingScheduleData, startDate, endDate);
+                writingScheduleExcelData = this.generateWritingScheduleExcelData(writingScheduleData, startDate, endDate, {
+                    timeKeyInPostData: 4,
+                    editorKeyInPostData: 17,
+                    descriptioinKeyInPostData: 2,
+                    metricsKeyInPostData: 7
+                });
 
                 return {
                     data: data,
@@ -2982,90 +2987,99 @@ var jQuery = jQuery,
             },
             
             //generate data in weekly report format
-            generateWritingScheduleExcelData: function (EachDayPosts, StartDate, EndDate) {
+            generateWritingScheduleExcelData: function (WritingScheduleData, StartDate, EndDate, Opinions) {
                 var startDate = StartDate || null,
                     endDate = EndDate || null,
-                    eachDayPosts = EachDayPosts || null,
-                    weeklyReportData = [],
-                    defaultPlaceholder = '--',
+                    writingScheduleData = WritingScheduleData || null,
+                    opinions = Opinions || {},
+                    writingScheduleExcelData = [],
                     oneWeekDataInitObj = {
                         header: {},
-                        postLogData: {
-                            'summary': {
-                                feeds: {
-                                    'SUN': 0,
-                                    'MON': 0,
-                                    'TUE': 0,
-                                    'WED': 0,
-                                    'THU': 0,
-                                    'FRI': 0,
-                                    'SAT': 0
-                                },
-                                reach: {
-                                    'SUN': 0,
-                                    'MON': 0,
-                                    'TUE': 0,
-                                    'WED': 0,
-                                    'THU': 0,
-                                    'FRI': 0,
-                                    'SAT': 0
-                                }
-                            }
-                        },
+                        postLogData: {},
                         footer: {}
                     },
-                    periodDataInitObj = {
-                        '%PERIOD%': defaultPlaceholder,
-                        '%MON_EDITOR%': defaultPlaceholder,
-                        '%MON_DESCRIPTION%': defaultPlaceholder,
-                        '%MON_REACH%': defaultPlaceholder,
-                        '%TUE_EDITOR%': defaultPlaceholder,
-                        '%TUE_DESCRIPTION%': defaultPlaceholder,
-                        '%TUE_REACH%': defaultPlaceholder,
-                        '%WED_EDITOR%': defaultPlaceholder,
-                        '%WED_DESCRIPTION%': defaultPlaceholder,
-                        '%WED_REACH%': defaultPlaceholder,
-                        '%THU_EDITOR%': defaultPlaceholder,
-                        '%THU_DESCRIPTION%': defaultPlaceholder,
-                        '%THU_REACH%': defaultPlaceholder,
-                        '%FRI_EDITOR%': defaultPlaceholder,
-                        '%FRI_DESCRIPTION%': defaultPlaceholder,
-                        '%FRI_REACH%': defaultPlaceholder,
-                        '%SAT_EDITOR%': defaultPlaceholder,
-                        '%SAT_DESCRIPTION%': defaultPlaceholder,
-                        '%SAT_REACH%': defaultPlaceholder,
-                        '%SUN_EDITOR%': defaultPlaceholder,
-                        '%SUN_DESCRIPTION%': defaultPlaceholder,
-                        '%SUN_REACH%': defaultPlaceholder
-                    },
                     formatedPostLogData = [],
-                    dayStringArray = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
+                    weekdayStringArray = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
                     reportHeaderText = 'TOUCH Facebook\'s Writing Schedule ',
-                    weeklyReportDataKey,
+                    writingScheduleExcelDataKey,
                     postLogDataKey,
-                    periodKey;
-                
+                    periodKey,
+                    timeKeyInPostData = opinions.hasOwnProperty('timeKeyInPostData') ? opinions.timeKeyInPostData : 4,
+                    editorKeyInPostData = opinions.hasOwnProperty('editorKeyInPostData') ? opinions.editorKeyInPostData : 17,
+                    descriptioinKeyInPostData = opinions.hasOwnProperty('descriptioinKeyInPostData') ? opinions.descriptioinKeyInPostData : 2,
+                    metricsKeyInPostData = opinions.hasOwnProperty('metricsKeyInPostData') ? opinions.metricsKeyInPostData : 7;
+
                 //iterator
-                function iterator(key, value, context) {
-                    var eachPostPeriodKey = 0,
-                        dayIndex;
-                    context[key] = Toolbox.isUndefined(context[key]) ? [] : context[key];
+                //context.postLogData = {
+                //    '00:00:00-00:14:59': periodDataInitObj,
+                //    ...
+                //    '23:45:00-23:59:59': periodDataInitObj
+                //};
+                function iterator(postPeriod, postsDataInPeriod, context) {
+                    var postDataIndex = 0,
+                        currentWeekdayIndex,
+                        defaultPlaceholder = '--',
+                        periodDataInitObj = {
+                            '%PERIOD%': defaultPlaceholder,
+                            '%MON_EDITOR%': defaultPlaceholder,
+                            '%MON_DESCRIPTION%': defaultPlaceholder,
+                            '%MON_METRICS%': defaultPlaceholder,
+                            '%TUE_EDITOR%': defaultPlaceholder,
+                            '%TUE_DESCRIPTION%': defaultPlaceholder,
+                            '%TUE_METRICS%': defaultPlaceholder,
+                            '%WED_EDITOR%': defaultPlaceholder,
+                            '%WED_DESCRIPTION%': defaultPlaceholder,
+                            '%WED_METRICS%': defaultPlaceholder,
+                            '%THU_EDITOR%': defaultPlaceholder,
+                            '%THU_DESCRIPTION%': defaultPlaceholder,
+                            '%THU_METRICS%': defaultPlaceholder,
+                            '%FRI_EDITOR%': defaultPlaceholder,
+                            '%FRI_DESCRIPTION%': defaultPlaceholder,
+                            '%FRI_METRICS%': defaultPlaceholder,
+                            '%SAT_EDITOR%': defaultPlaceholder,
+                            '%SAT_DESCRIPTION%': defaultPlaceholder,
+                            '%SAT_METRICS%': defaultPlaceholder,
+                            '%SUN_EDITOR%': defaultPlaceholder,
+                            '%SUN_DESCRIPTION%': defaultPlaceholder,
+                            '%SUN_METRICS%': defaultPlaceholder
+                        };
+                    
+                    //create `postPeriod` as context.postLogData attribute if it does not have any
+                    context.postLogData[postPeriod] = Toolbox.isUndefined(context.postLogData[postPeriod]) ? [] : context.postLogData[postPeriod];
 
                     //loop every post in this period
-                    for (eachPostPeriodKey = 0; eachPostPeriodKey < value.length; eachPostPeriodKey += 1) {
+                    for (postDataIndex = 0; postDataIndex < postsDataInPeriod.length; postDataIndex += 1) {
                         //large than exist period post number, create a new period post
-                        if (eachPostPeriodKey >= context[key].length) {
-                            context[key].push($.extend(true, {}, periodDataInitObj));
+                        if (postDataIndex >= context.postLogData[postPeriod].length) {
+                            context.postLogData[postPeriod].push($.extend(true, {}, periodDataInitObj));
                         }
 
-                        dayIndex = moment(value[eachPostPeriodKey][4]).day();
-                        context[key][eachPostPeriodKey]['%PERIOD%'] = key;
-                        context[key][eachPostPeriodKey]['%' + dayStringArray[dayIndex] + '_EDITOR%'] = value[eachPostPeriodKey][17];
-                        context[key][eachPostPeriodKey]['%' + dayStringArray[dayIndex] + '_DESCRIPTION%'] = value[eachPostPeriodKey][2].replace('<div class="post_message">', '').replace('</div>', '');
-                        context[key][eachPostPeriodKey]['%' + dayStringArray[dayIndex] + '_REACH%'] = value[eachPostPeriodKey][7];
-                        //calculate and save every day summary
-                        context.summary.feeds[dayStringArray[dayIndex]] += 1;
-                        context.summary.reach[dayStringArray[dayIndex]] += parseInt(value[eachPostPeriodKey][7].replace(',', ''), 0);
+                        currentWeekdayIndex = moment(postsDataInPeriod[postDataIndex][timeKeyInPostData]).day();
+                        context.postLogData[postPeriod][postDataIndex]['%PERIOD%'] = postPeriod;
+                        context.postLogData[postPeriod][postDataIndex]['%' + weekdayStringArray[currentWeekdayIndex] + '_EDITOR%'] = postsDataInPeriod[postDataIndex][editorKeyInPostData];
+                        context.postLogData[postPeriod][postDataIndex]['%' + weekdayStringArray[currentWeekdayIndex] + '_DESCRIPTION%'] = postsDataInPeriod[postDataIndex][descriptioinKeyInPostData].replace('<div class="post_message">', '').replace('</div>', '');
+                        context.postLogData[postPeriod][postDataIndex]['%' + weekdayStringArray[currentWeekdayIndex] + '_METRICS%'] = postsDataInPeriod[postDataIndex][metricsKeyInPostData];
+
+                        //init footer variable if do not create it
+                        //feeds
+                        context.footer[weekdayStringArray[currentWeekdayIndex] + '_TOTAL_FEEDS'] = (context.footer.hasOwnProperty(weekdayStringArray[currentWeekdayIndex] + '_TOTAL_FEEDS')) ? context.footer[weekdayStringArray[currentWeekdayIndex] + '_TOTAL_FEEDS'] : 0;
+                        context.footer.WEEK_TOTAL_FEEDS = (context.footer.hasOwnProperty('WEEK_TOTAL_FEEDS')) ? context.footer.WEEK_TOTAL_FEEDS : 0;
+                        //reach
+                        context.footer[weekdayStringArray[currentWeekdayIndex] + '_TOTAL_METRICS'] = (context.footer.hasOwnProperty(weekdayStringArray[currentWeekdayIndex] + '_TOTAL_METRICS')) ? context.footer[weekdayStringArray[currentWeekdayIndex] + '_TOTAL_METRICS'] : 0;
+                        context.footer.WEEK_TOTAL_METRICS = (context.footer.hasOwnProperty('WEEK_TOTAL_METRICS')) ? context.footer.WEEK_TOTAL_METRICS : 0;
+                        //do summary
+                        //feeds
+                        context.footer[weekdayStringArray[currentWeekdayIndex] + '_TOTAL_FEEDS'] += 1;
+                        context.footer.WEEK_TOTAL_FEEDS += 1;
+                        context.footer['%' + weekdayStringArray[currentWeekdayIndex] + '_TOTAL_FEEDS%'] = context.footer[weekdayStringArray[currentWeekdayIndex] + '_TOTAL_FEEDS'].toLocaleString();
+                        context.footer['%WEEK_TOTAL_FEEDS%'] = context.footer.WEEK_TOTAL_FEEDS.toLocaleString();
+                        context.footer['%WEEK_AVG_FEEDS%'] = Math.round(context.footer.WEEK_TOTAL_FEEDS / parseInt(context.header.daysNum, 0)).toLocaleString();
+                        //METRICS
+                        context.footer[weekdayStringArray[currentWeekdayIndex] + '_TOTAL_METRICS'] += parseInt(postsDataInPeriod[postDataIndex][metricsKeyInPostData].toString().replace(',', ''), 0);
+                        context.footer.WEEK_TOTAL_METRICS += parseInt(postsDataInPeriod[postDataIndex][metricsKeyInPostData].toString().replace(',', ''), 0);
+                        context.footer['%' + weekdayStringArray[currentWeekdayIndex] + '_TOTAL_METRICS%'] = context.footer[weekdayStringArray[currentWeekdayIndex] + '_TOTAL_METRICS'].toLocaleString();
+                        context.footer['%WEEK_TOTAL_METRICS%'] = context.footer.WEEK_TOTAL_METRICS.toLocaleString();
+                        context.footer['%WEEK_AVG_METRICS%'] = Math.round(context.footer.WEEK_TOTAL_METRICS / parseInt(context.header.daysNum, 0)).toLocaleString();
                     }
                 }
                 
@@ -3074,10 +3088,10 @@ var jQuery = jQuery,
                 //    ["2017-04-28", "2017-04-29", "2017-04-30"],
                 //    ["2017-05-01", "2017-05-02", "2017-05-03", "2017-05-04"]
                 //]
-                function divideDayRangeIntoWeeks(StartDate, EndDate, DayIndex) {
+                function divideDayRangeIntoWeeks(StartDate, EndDate, SplitReferenceIndex) {
                     var startDate = StartDate || null,
                         endDate = EndDate || null,
-                        dayIndex = DayIndex || 1,
+                        splitReferenceIndex = SplitReferenceIndex || 1, //split by MON
                         weeksArray = [],
                         oneWeekArray = [],
                         currentDay;
@@ -3086,7 +3100,7 @@ var jQuery = jQuery,
                     for (currentDay = moment(startDate.format("YYYY-MM-DD")); !currentDay.isAfter(endDate); currentDay.add(1, 'days')) {
                         
                         //check if `currentDay` reach the new week
-                        if (currentDay.day() === dayIndex && !currentDay.isSame(startDate)) {
+                        if (currentDay.day() === SplitReferenceIndex && !currentDay.isSame(startDate)) {
                             weeksArray.push(oneWeekArray);
                             oneWeekArray = [];
                         }
@@ -3097,150 +3111,111 @@ var jQuery = jQuery,
                     
                     return weeksArray;
                 }
+                                
+                //convert postLogData to array for excel 
+                //resultData = [
+                //    '00:00:00-00:14:59': [editor, date, ...],
+                //    '00:00:00-00:14:59': [editor, date, ...],   //can duplicate
+                //    ...
+                //    '23:30:00-23:44:59': [editor, date, ...],
+                //    '23:45:00-23:59:59': [editor, date, ...]
+                //];
+                function getPostLogDataForExcel(PostLogData) {
+                    var postLogData = PostLogData || {},
+                        resultData = [],
+                        postPeriodKey,
+                        postIndex;
+
+                    //loop `postLogData`
+                    for (postPeriodKey in postLogData) {
+                        if (postLogData.hasOwnProperty(postPeriodKey)) {
+                            
+                            //empty slot
+                            if (postLogData[postPeriodKey].length === 0) {
+                                resultData.push({
+                                    '%PERIOD%': postPeriodKey
+                                });
+                            }
+
+                            //loop every post during `postPeriodKey`
+                            for (postIndex in postLogData[postPeriodKey]) {
+                                if (postLogData[postPeriodKey].hasOwnProperty(postIndex)) {
+
+                                    resultData.push(postLogData[postPeriodKey][postIndex]);
+                                }
+                            }
+                        }
+                    }
+
+                    return resultData;
+                }
                 
-                //build `weeklyReportData`
+                //build `writingScheduleExcelData`
                 //
-                function buildWeeklyReportData(StartDate, EndDate, DayIndex) {
+                function buildWritingScheduleExcelData(StartDate, EndDate, SplitReferenceIndex) {
                     var startDate = StartDate || null,
                         endDate = EndDate || null,
-                        dayIndex = DayIndex || 1,
+                        splitReferenceIndex = SplitReferenceIndex || 1,   //split by MON
                         weeksArray = [],
                         weeksIndex = 0,
                         oneWeekData = $.extend(true, {}, oneWeekDataInitObj),
                         daysIndex = 0,
-                        currentYearMonthDay = '',
+                        currentDateInYearMonthDay = '',
                         currentDay = '',
-                        dayStringIndex = '',
-                        dayString = '',
-                        weeklyReportData = [];
+                        currentWeekdayIndex = '',
+                        currentWeekdayString = '',
+                        writingScheduleExcelData = [];
                         
                     //get weeksArray
-                    weeksArray = divideDayRangeIntoWeeks(startDate, endDate, dayIndex);
+                    weeksArray = divideDayRangeIntoWeeks(startDate, endDate, splitReferenceIndex);
 
-                    //loop all weeks to save data to `weeklyReportData`
+                    //loop all weeks to save data to `writingScheduleExcelData`
                     for (weeksIndex = 0; weeksIndex < weeksArray.length; weeksIndex += 1) {
                         //initialize `oneWeekData`
                         oneWeekData = $.extend(true, {}, oneWeekDataInitObj);
 
                         //loop all days in one week
                         for (daysIndex = 0; daysIndex < weeksArray[weeksIndex].length; daysIndex += 1) {
-                            currentYearMonthDay = weeksArray[weeksIndex][daysIndex];
-                            currentDay = moment(currentYearMonthDay);
-                            dayStringIndex = currentDay.day();
-                            dayString = dayStringArray[dayStringIndex];
+                            currentDateInYearMonthDay = weeksArray[weeksIndex][daysIndex];
+                            currentDay = moment(currentDateInYearMonthDay);
+                            currentWeekdayIndex = currentDay.day();
+                            currentWeekdayString = weekdayStringArray[currentWeekdayIndex];
 
                             //save header
                             oneWeekData.header['%REPORT_HEADER_TEXT%'] = reportHeaderText + weeksArray[weeksIndex][0] + ' to ' + weeksArray[weeksIndex][weeksArray[weeksIndex].length - 1];
-                            oneWeekData.header['%WEEKS%'] = currentDay.week();
-                            oneWeekData.header['%' + dayString + '_DATE%'] = currentYearMonthDay;
+                            oneWeekData.header['%WEEKS%'] = moment(weeksArray[weeksIndex][0]).week();
+                            oneWeekData.header['%' + currentWeekdayString + '_DATE%'] = currentDateInYearMonthDay;
                             //save number of day in this week to footer
                             oneWeekData.header.daysNum = weeksArray[weeksIndex].length;
 
                             //save postLogData
-                            if (eachDayPosts.hasOwnProperty(currentYearMonthDay)) {
+                            if (writingScheduleData.hasOwnProperty(currentDateInYearMonthDay)) {
 
                                 //loop every post in this day
-                                eachDayPosts[currentYearMonthDay].map(iterator, oneWeekData.postLogData);
+                                writingScheduleData[currentDateInYearMonthDay].map(iterator, oneWeekData);
+                                
                             }
                         }
+                        
+                        //convert postLogData
+                        oneWeekData.postLogData = getPostLogDataForExcel(oneWeekData.postLogData);
 
-                        //save one week data to `weeklyReportData`
-                        weeklyReportData.push(oneWeekData);
+                        //save one week data to `writingScheduleExcelData`
+                        writingScheduleExcelData.push(oneWeekData);
                     }
-                    return weeklyReportData;
-                }
-                
-                //save footer to weeklyReport
-                function saveWeeklyReportFooter(OneWeekData, PostLogSummary, daysNum) {
-                    var postLogSummary = PostLogSummary;
-
-                    OneWeekData.footer['%SUN_TOTAL_FEEDS%'] = postLogSummary.feeds.SUN.toLocaleString();
-                    OneWeekData.footer['%MON_TOTAL_FEEDS%'] = postLogSummary.feeds.MON.toLocaleString();
-                    OneWeekData.footer['%TUE_TOTAL_FEEDS%'] = postLogSummary.feeds.TUE.toLocaleString();
-                    OneWeekData.footer['%WED_TOTAL_FEEDS%'] = postLogSummary.feeds.WED.toLocaleString();
-                    OneWeekData.footer['%THU_TOTAL_FEEDS%'] = postLogSummary.feeds.THU.toLocaleString();
-                    OneWeekData.footer['%FRI_TOTAL_FEEDS%'] = postLogSummary.feeds.FRI.toLocaleString();
-                    OneWeekData.footer['%SAT_TOTAL_FEEDS%'] = postLogSummary.feeds.SAT.toLocaleString();
-                    OneWeekData.footer['%WEEK_TOTAL_FEEDS%'] = postLogSummary.feeds.SUN + postLogSummary.feeds.MON + postLogSummary.feeds.TUE + postLogSummary.feeds.WED + postLogSummary.feeds.THU + postLogSummary.feeds.FRI + postLogSummary.feeds.SAT;
-                    OneWeekData.footer['%WEEK_AVG_FEEDS%'] = Math.round(OneWeekData.footer['%WEEK_TOTAL_FEEDS%'] / parseInt(daysNum, 0)).toLocaleString();
-                    OneWeekData.footer['%WEEK_TOTAL_FEEDS%'] = OneWeekData.footer['%WEEK_TOTAL_FEEDS%'].toLocaleString();
-                    //total reach
-                    OneWeekData.footer['%SUN_TOTAL_REACH%'] = postLogSummary.reach.SUN.toLocaleString();
-                    OneWeekData.footer['%MON_TOTAL_REACH%'] = postLogSummary.reach.MON.toLocaleString();
-                    OneWeekData.footer['%TUE_TOTAL_REACH%'] = postLogSummary.reach.TUE.toLocaleString();
-                    OneWeekData.footer['%WED_TOTAL_REACH%'] = postLogSummary.reach.WED.toLocaleString();
-                    OneWeekData.footer['%THU_TOTAL_REACH%'] = postLogSummary.reach.THU.toLocaleString();
-                    OneWeekData.footer['%FRI_TOTAL_REACH%'] = postLogSummary.reach.FRI.toLocaleString();
-                    OneWeekData.footer['%SAT_TOTAL_REACH%'] = postLogSummary.reach.SAT.toLocaleString();
-                    OneWeekData.footer['%WEEK_TOTAL_REACH%'] = postLogSummary.reach.SUN + postLogSummary.reach.MON + postLogSummary.reach.TUE + postLogSummary.reach.WED + postLogSummary.reach.THU + postLogSummary.reach.FRI + postLogSummary.reach.SAT;
-                    OneWeekData.footer['%WEEK_AVG_REACH%'] = Math.round(OneWeekData.footer['%WEEK_TOTAL_REACH%'] / parseInt(daysNum, 0)).toLocaleString();
-                    OneWeekData.footer['%WEEK_TOTAL_REACH%'] = OneWeekData.footer['%WEEK_TOTAL_REACH%'].toLocaleString();
-                }
-                
-                //format weeklyReportData's postLogData
-                function formatPostLogData(WeeklyReportData) {
-                    var weeklyReportDataKey = '',
-                        postLogDataKey = '',
-                        feedKey = '',
-                        originalPostLogData = {},
-                        formatedPostLogData = [];
-
-                    //loop weeklyReportDataKey
-                    for (weeklyReportDataKey in WeeklyReportData) {
-                        if (WeeklyReportData.hasOwnProperty(weeklyReportDataKey)) {
-                            originalPostLogData = WeeklyReportData[weeklyReportDataKey].postLogData;
-                            formatedPostLogData = [];
-
-                            //loop postLogData
-                            for (postLogDataKey in originalPostLogData) {
-                                if (originalPostLogData.hasOwnProperty(postLogDataKey)) {
-
-                                    //ignore `summary` attribute
-                                    if (postLogDataKey !== 'summary') {
-
-                                        //output empty slot
-                                        if (originalPostLogData[postLogDataKey].length === 0) {
-                                            formatedPostLogData.push({
-                                                '%PERIOD%': postLogDataKey
-                                            });
-                                        }
-
-                                        //loop every period
-                                        for (feedKey in originalPostLogData[postLogDataKey]) {
-                                            if (originalPostLogData[postLogDataKey].hasOwnProperty(feedKey)) {
-
-                                                //set empty if has more than one feed in the same period
-//                                                if (feedKey > 0) {
-//                                                    originalPostLogData[postLogDataKey][feedKey]['%PERIOD%'] = '';
-//                                                }
-                                                formatedPostLogData.push(originalPostLogData[postLogDataKey][feedKey]);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            //save footer
-                            saveWeeklyReportFooter(WeeklyReportData[weeklyReportDataKey], originalPostLogData.summary, WeeklyReportData[weeklyReportDataKey].header.daysNum);
-                            //modify postLogData
-                            WeeklyReportData[weeklyReportDataKey].postLogData = $.extend(true, {}, formatedPostLogData);
-                        }
-                    }
+                    return writingScheduleExcelData;
                 }
 
                 //check if param valid
-                if (Toolbox.isNull(startDate) || Toolbox.isNull(endDate) || Toolbox.isNull(eachDayPosts)) {
-                    Toolbox.assert('Function SocialReport.Operation.getPostLogDataInFacebookByDate generateWritingScheduleExcelData: `EachDayPosts` or `StartDate` or `EndDate` is undefined');
+                if (Toolbox.isNull(startDate) || Toolbox.isNull(endDate) || Toolbox.isNull(writingScheduleData)) {
+                    Toolbox.assert('Function SocialReport.Operation.getPostLogDataInFacebookByDate generateWritingScheduleExcelData: `writingScheduleData` or `StartDate` or `EndDate` is undefined');
                     return false;
                 }
                 
-                //build `weeklyReportData`
-                weeklyReportData = buildWeeklyReportData(moment(startDate), moment(endDate), 1);
-                
-                //change postLogData format and save footer
-                formatPostLogData(weeklyReportData);
-                
-                return weeklyReportData;
+                //build `writingScheduleExcelData`
+                writingScheduleExcelData = buildWritingScheduleExcelData(moment(startDate), moment(endDate), 1);
+
+                return writingScheduleExcelData;
             },
             
             //build facebook post log data in datatable format

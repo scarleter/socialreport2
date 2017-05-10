@@ -13,6 +13,8 @@ var window = window,
         googleRequestloadingLayer: '',
         googleLoadingLayer: '',
         accessToken: window.troperlaicos.google.accessToken,
+        base_url: window.troperlaicos.google.base_url,
+        controllerName: window.troperlaicos.google.controllerName,
         editorsSummaryObj: {},
         articlePageviews: {}
     };
@@ -184,8 +186,10 @@ var window = window,
             pageviews,
             writingScheduleData = {},
             writingScheduleDataKey,
-            TimeKeyInSourceData = 1,
-            EditorKeyInSourceData = 0,
+            timeKeyInSourceData = 1,
+            editorKeyInSourceData = 0,
+            descriptioinKeyInSourceData = 3,
+            metricsKeyInSourceData = 4,
             detailReportData = [],
             editorList = {};
 
@@ -247,7 +251,7 @@ var window = window,
         }
 
         //get writingScheduleData
-        writingScheduleData = SocialReport.Operation.prototype.generateWritingScheduleData.call(null, formatedData, TimeKeyInSourceData, EditorKeyInSourceData, {
+        writingScheduleData = SocialReport.Operation.prototype.generateWritingScheduleData.call(null, formatedData, timeKeyInSourceData, editorKeyInSourceData, {
             interval: interval,
             reservedEditor: reservedEditor,
             showEmptySlot: showEmptySlot
@@ -262,7 +266,12 @@ var window = window,
         }
 
         //generate `writingScheduleExcelData`
-        //gobal.writingScheduleExcelData = SocialReport.Operation.prototype.generateDataForWeeklyReport(writingScheduleData, start, end);
+        gobal.writingScheduleExcelData = SocialReport.Operation.prototype.generateWritingScheduleExcelData.call(null, writingScheduleData, start, end, {
+            timeKeyInPostData: timeKeyInSourceData,
+            editorKeyInPostData: editorKeyInSourceData,
+            descriptioinKeyInPostData: descriptioinKeyInSourceData,
+            metricsKeyInPostData: metricsKeyInSourceData
+        });
 
         Callback.call(null, {
             detailReportData: detailReportData,
@@ -317,7 +326,7 @@ var window = window,
 
         $.ajax({
             type: 'POST',
-            url: window.troperlaicos.facebook.base_url + window.troperlaicos.facebook.controllerName + '/generateWeeklyReportExcel',
+            url: gobal.base_url + gobal.controllerName + '/generateWeeklyReportExcel',
             data: {
                 'writingScheduleExcelData': JSON.stringify(gobal.writingScheduleExcelData),
                 'excelName': 'TOUCH Facebook\'s Writing Schedule ' + gobal.dataSelectorPanel.componentCombiner.getComponent('dateRangePicker').getDateRangeInText()
