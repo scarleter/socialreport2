@@ -242,16 +242,16 @@ var window = window,
 
         //loop `sourceData`
         for (sourceDataKey = sourceData.length - 1; sourceDataKey >= 0; sourceDataKey -= 1) {
-            articleid = sourceData[sourceDataKey].articleid;
+            articleid = sourceData[sourceDataKey].id;
             pageviews = SocialReport.Toolbox.isUndefined(articlePageviews[articleid]) ? 0 : articlePageviews[articleid].pageviews;
-            url = 'http://easttouch.my-magazine.me/main/' + sourceData[sourceDataKey].category + '/view/' + sourceData[sourceDataKey].articleid;
+            url = sourceData[sourceDataKey].url;
             editor = sourceData[sourceDataKey].author;
 
             // reserve editor
             if (reservedEditor === 'all' || reservedEditor === editor) {
                 data = [];
                 data.push(editor);
-                data.push(sourceData[sourceDataKey][dateType]);
+                data.push(sourceData[sourceDataKey].date);
                 data.push('<a href="' + url + '" target="_blank">' + url + '</a>');
                 data.push(sourceData[sourceDataKey].title);
                 data.push(pageviews);
