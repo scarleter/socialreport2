@@ -16,6 +16,7 @@ var window = window,
         base_url: window.troperlaicos.google.base_url,
         controllerName: window.troperlaicos.google.controllerName,
         websiteName: window.troperlaicos.google.websiteName,
+        cmsDataUrl: window.troperlaicos.google.cmsDataUrl,
         editorsSummaryObj: {},
         articlePageviews: {}
     };
@@ -174,7 +175,7 @@ var window = window,
     function getCmsDataBetweenDayRange(start, end, dateType, successCallback, errorCallback) {
         $.ajax({
             type: 'GET',
-            url: 'http://easttouch.my-magazine.me/main/home/getArticleFromDayRange',
+            url: gobal.cmsDataUrl,
             data: {
                 'startDateTime': start,
                 'endDateTime': end,
@@ -241,20 +242,20 @@ var window = window,
 
         //loop `sourceData`
         for (sourceDataKey = sourceData.length - 1; sourceDataKey >= 0; sourceDataKey -= 1) {
-            articleid = sourceData[sourceDataKey].articles.articleid;
+            articleid = sourceData[sourceDataKey].articleid;
             pageviews = SocialReport.Toolbox.isUndefined(articlePageviews[articleid]) ? 0 : articlePageviews[articleid].pageviews;
-            url = 'http://easttouch.my-magazine.me/main/' + sourceData[sourceDataKey].articles.category + '/view/' + sourceData[sourceDataKey].articles.articleid;
-            editor = sourceData[sourceDataKey].articles.author;
+            url = 'http://easttouch.my-magazine.me/main/' + sourceData[sourceDataKey].category + '/view/' + sourceData[sourceDataKey].articleid;
+            editor = sourceData[sourceDataKey].author;
 
             // reserve editor
             if (reservedEditor === 'all' || reservedEditor === editor) {
                 data = [];
                 data.push(editor);
-                data.push(sourceData[sourceDataKey].articles[dateType]);
+                data.push(sourceData[sourceDataKey][dateType]);
                 data.push('<a href="' + url + '" target="_blank">' + url + '</a>');
-                data.push(sourceData[sourceDataKey].articles.title);
+                data.push(sourceData[sourceDataKey].title);
                 data.push(pageviews);
-                data.push(sourceData[sourceDataKey].articles.state);
+                data.push(sourceData[sourceDataKey].state);
                 formatedData.push(data);
             }
 

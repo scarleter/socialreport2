@@ -116,6 +116,7 @@
             'ids': '<?php echo $ids;?>',
             'accessToken': '<?php echo $accessToken;?>',
             'base_url': '<?= base_url() ?>',
+            'cmsDataUrl': '<?php echo $cmsDataUrl;?>',
             'controllerName': '<?php if(isset($controllerName)) echo $controllerName;?>',
             'websiteName': '<?php if(isset($websiteName)) echo $websiteName;?>',
             'showWeeklyReportButton': '<?php if(isset($showWeeklyReportButton)) echo $showWeeklyReportButton;?>'
@@ -124,4 +125,4 @@
 
 </script>
 
-<script src="<?= base_url() ?>public/js/google/articlePerformanceReport.js?version=199952e093c67b8ad59916caf5aa4455"></script>
+<script src="<?= base_url() ?>public/js/google/articlePerformanceReport.js?version=d363382b0d25062d0798b27110282f4a"></script>
