@@ -88,12 +88,8 @@ var window = window,
             gobal.detailReport.repaint(chartData);
         } else {
             gobal.detailReport = new SocialReport.DataTables('detailReport', chartData, {
-                lengthChange: false,
                 searching: false,
                 ordering: false,
-                info: false,
-                autoWidth: false,
-                border: false,
                 columnDefs: [
                     {
                         "className": "breakall",
